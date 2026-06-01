@@ -197,9 +197,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 .sidebar-btn:hover{background:rgba(255,255,255,.06);color:var(--text);}
 .sidebar-btn.active{background:var(--accent);color:#fff;box-shadow:0 0 10px rgba(59,130,246,.3);}
 
-/* MAIN WRAP — shift right when sidebar open */
-#mainWrap{transition:margin-left .2s;}
-#mainWrap.with-sidebar{margin-left:200px;}
+/* MAIN WRAP */
+#mainWrap{transition:none;}
 .screen{display:none;padding:1.5rem;max-width:1440px;margin:0 auto;}
 .screen.active{display:block;}
 .prog-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.3rem;}
@@ -282,7 +281,23 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 @media(max-width:1100px){.kgrid{grid-template-columns:repeat(3,1fr);}.prog-stats{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:900px){.row2,.row3{grid-template-columns:1fr;}.kgrid{grid-template-columns:repeat(2,1fr);}.target-grid{grid-template-columns:1fr;}.prog-chart-row{grid-template-columns:1fr;}}
-@media(max-width:580px){.kgrid{grid-template-columns:1fr;}.screen{padding:1rem;}.prog-stats{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:768px){
+  .topbar{padding:0 1rem;height:auto;flex-wrap:wrap;gap:6px;padding-top:8px;padding-bottom:8px;}
+  .topbar-right{width:100%;flex-wrap:wrap;gap:4px;}
+  .nav-wrap{width:100%;overflow-x:auto;flex-wrap:nowrap;}
+  .nav-btn{padding:4px 8px;font-size:11px;white-space:nowrap;}
+  .screen{padding:1rem;}
+  .kgrid{grid-template-columns:repeat(2,1fr);}
+  .prog-stats{grid-template-columns:repeat(2,1fr) !important;}
+  #targetGrid{grid-template-columns:repeat(3,1fr) !important;}
+  .brand-sub{display:none;}
+  .upill span#ulabel{display:none;}
+}
+@media(max-width:480px){
+  .kgrid{grid-template-columns:1fr;}
+  .prog-stats{grid-template-columns:repeat(2,1fr) !important;}
+  .nav-btn{padding:4px 6px;font-size:10px;}
+}
 </style>
 </head>
 <body>
@@ -322,24 +337,20 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
   <div class="topbar-right">
     <div class="sync-pill" id="syncPill" style="display:none;"><span class="sdot" id="sdot"></span><span id="stext">-</span></div>
+    <div class="nav-wrap" id="navWrap" style="display:none;">
+      <button class="nav-btn active" id="tnav-dashboard" onclick="go('dashboard')">📊 Sales</button>
+      <button class="nav-btn" id="tnav-leaderboard" onclick="go('leaderboard')">🏆 Leaderboard</button>
+      <button class="nav-btn" id="tnav-progress" onclick="go('progress')">🎯 Progress</button>
+      <button class="nav-btn" id="tnav-transactions" onclick="go('transactions')">💳 Payment</button>
+      <button class="nav-btn" id="tnav-settlement" onclick="go('settlement')" style="display:none;">💰 Settlement</button>
+      <button class="nav-btn" id="tnav-setup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
+    </div>
     <div class="upill" id="upill" style="display:none;"><div class="uav" id="uav"></div><span id="ulabel"></span></div>
     <button class="btn btn-red" id="btnOut" style="display:none;" onclick="logout()">Logout</button>
   </div>
 </div>
 
-<!-- SIDEBAR -->
-<div id="sidebar" style="display:none;position:fixed;left:0;top:58px;bottom:0;width:200px;background:#0f172a;border-right:1px solid var(--border);z-index:200;display:none;flex-direction:column;padding:12px 8px;gap:4px;overflow-y:auto;">
-  <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px 4px;">MENU</div>
-  <button class="sidebar-btn active" id="snav-dashboard" onclick="go('dashboard')">📊 Sales Performance</button>
-  <button class="sidebar-btn" id="snav-leaderboard" onclick="go('leaderboard')">🏆 Leaderboard</button>
-  <button class="sidebar-btn" id="snav-progress" onclick="go('progress')">🎯 Progress</button>
-  <button class="sidebar-btn" id="snav-transactions" onclick="go('transactions')">💳 JMB Payment Tracking</button>
-  <button class="sidebar-btn" id="snav-settlement" onclick="go('settlement')">💰 Payment Settlement</button>
-  <div style="flex:1;"></div>
-  <button class="sidebar-btn" id="snav-setup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
-</div>
-
-<!-- MAIN WRAPPER (shifts right when sidebar visible) -->
+<!-- NO SIDEBAR — main content full width -->
 <div id="mainWrap">
 
 <!-- LOGIN -->
@@ -536,123 +547,98 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 <!-- PROGRESS TRACKER -->
 <div class="screen" id="screen-progress">
 
-  <!-- Papan Pemuka Header -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+  <!-- Header -->
+  <div class="ph">
     <div>
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">PROGRESS TRACKER</div>
-      <div style="font-size:20px;font-weight:700;color:#f1f5f9;" id="progHeadTitle">JUN 2026</div>
+      <div style="font-size:20px;font-weight:700;color:#f1f5f9;" id="progHeadTitle">ALL JMB</div>
       <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="progHeadDate"></div>
     </div>
     <button class="btn btn-outline" onclick="fetchProgressData()">🔄 Refresh</button>
   </div>
 
-  <!-- Top Slicer Row -->
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+  <!-- Year pills -->
+  <div style="margin-bottom:12px;">
+    <div class="ypills" id="ypills-prog"></div>
+  </div>
 
-    <!-- Total / Bulanan toggle -->
+  <!-- Slicer Row: TOTAL/MONTHLY + Marketer + Month pills -->
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
     <div class="nav-wrap" style="padding:3px;">
       <button class="nav-btn active" id="pmode-total" onclick="setProgMode('total',this)">TOTAL</button>
-      <button class="nav-btn" id="pmode-bulanan" onclick="setProgMode('bulanan',this)">MONTHLY</button>
+      <button class="nav-btn" id="pmode-monthly" onclick="setProgMode('monthly',this)">MONTHLY</button>
     </div>
-
-    <!-- Marketer slicer -->
     <div class="nav-wrap" style="padding:3px;">
       <button class="nav-btn active" id="pmk-all" onclick="setPMK('all',this)">All</button>
       <button class="nav-btn" id="pmk-hazim" onclick="setPMK('hazim',this)" style="color:#60a5fa;">Hazim</button>
       <button class="nav-btn" id="pmk-shahira" onclick="setPMK('shahira',this)" style="color:#34d399;">Shahira</button>
-      <button class="nav-btn" id="pmk-admin" onclick="setPMK('admin',this)" style="color:#a78bfa;">Admin</button>
+      <button class="nav-btn" id="pmk-admin" onclick="setPMK('admin',this)" style="color:#a78bfa;">SBM</button>
     </div>
-
-    <!-- Month pills (only show when bulanan mode) -->
-    <div id="monthPillsWrap" style="display:none;">
+    <div id="monthPillsWrap" style="display:none;flex-wrap:wrap;gap:4px;">
       <div class="fpills" style="margin-bottom:0;flex-wrap:wrap;" id="monthPills"></div>
     </div>
-
   </div>
 
-  <!-- Stats Cards — Big Numbers -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL JMB</div>
-      <div style="font-size:42px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">TOTAL · <span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
+  <!-- 5 Stats Cards -->
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL JMB</div>
+      <div style="font-size:36px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">WON</div>
-      <div style="font-size:42px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">WON · <span style="color:#10B981;" id="ps-won-pct">0%</span></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">WON</div>
+      <div style="font-size:36px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#10B981;" id="ps-won-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">IN PROGRESS</div>
-      <div style="font-size:42px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">IN PROGRESS · <span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">IN PROGRESS</div>
+      <div style="font-size:36px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
     </div>
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">REJECTED</div>
-      <div style="font-size:42px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">REJECTED · <span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">REJECTED</div>
+      <div style="font-size:36px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b8;"></div>
     </div>
-
+    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:#EF4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENT &lt;15 DAYS</div>
+      <div style="font-size:36px;font-weight:700;color:#EF4444;line-height:1;" id="ps-urgent">0</div>
+      <div style="font-size:10px;color:rgba(239,68,68,.7);margin-top:4px;"><span id="ps-urgent-pct">0%</span></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
+    </div>
   </div>
 
-  <!-- Second row — Urgent + Donut + Filters -->
-  <div style="display:grid;grid-template-columns:200px 1fr 280px;gap:12px;margin-bottom:16px;">
-
-    <!-- Urgent card -->
-    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-      <div style="font-size:11px;color:#EF4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">URGENT &lt;15 DAYS</div>
-      <div style="font-size:52px;font-weight:700;color:#EF4444;line-height:1;" id="ps-urgent">0</div>
-      <div style="font-size:11px;color:rgba(239,68,68,.7);margin-top:6px;" id="ps-urgent-pct">0%</div>
-    </div>
-
-    <!-- Donut -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+  <!-- Donut + Search -->
+  <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;margin-bottom:16px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
       <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Status Breakdown</div>
-      <div style="display:flex;align-items:center;gap:20px;">
-        <div class="prog-donut-wrap" style="width:120px;height:120px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="prog-donut-wrap" style="width:110px;height:110px;flex-shrink:0;">
           <svg viewBox="0 0 120 120" id="progDonutSvg">
             <circle cx="60" cy="60" r="50" fill="none" stroke="#2d3748" stroke-width="16"/>
           </svg>
           <div class="prog-donut-center">
-            <div class="prog-donut-total" id="progDonutTotal" style="font-size:22px;">0</div>
+            <div class="prog-donut-total" id="progDonutTotal" style="font-size:20px;">0</div>
             <div class="prog-donut-lbl">JMB</div>
           </div>
         </div>
-        <div style="flex:1;">
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#10B981;"></div><span style="font-size:12px;color:var(--text2);">Won</span></div><span style="font-weight:700;color:#10B981;" id="lg-won">0</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#3B82F6;"></div><span style="font-size:12px;color:var(--text2);">In Progress</span></div><span style="font-weight:700;color:#3B82F6;" id="lg-prog">0</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#94a3b8;"></div><span style="font-size:12px;color:var(--text2);">Rejected</span></div><span style="font-weight:700;color:#94a3b8;" id="lg-rej">0</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#EF4444;"></div><span style="font-size:12px;color:var(--text2);">Urgent</span></div><span style="font-weight:700;color:#EF4444;" id="lg-urgent">0</span></div>
-          </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:2px;background:#10B981;"></div><span style="font-size:11px;color:var(--text2);">Won</span></div><span style="font-weight:700;color:#10B981;font-size:12px;" id="lg-won">0</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:2px;background:#3B82F6;"></div><span style="font-size:11px;color:var(--text2);">In Progress</span></div><span style="font-weight:700;color:#3B82F6;font-size:12px;" id="lg-prog">0</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:2px;background:#94a3b8;"></div><span style="font-size:11px;color:var(--text2);">Rejected</span></div><span style="font-weight:700;color:#94a3b8;font-size:12px;" id="lg-rej">0</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:2px;background:#EF4444;"></div><span style="font-size:11px;color:var(--text2);">Urgent</span></div><span style="font-weight:700;color:#EF4444;font-size:12px;" id="lg-urgent">0</span></div>
         </div>
       </div>
     </div>
-
-    <!-- Filters -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Advanced Filters</div>
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENCY</div>
-      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
-        <button class="fp a-all" id="pu-all" onclick="setPU('all',this)" style="text-align:left;">All</button>
-        <button class="fp" id="pu-urgent" onclick="setPU('urgent',this)" style="color:#EF4444;border-color:#EF4444;text-align:left;">🔴 &lt;15 days</button>
-        <button class="fp" id="pu-warning" onclick="setPU('warning',this)" style="color:#F59E0B;border-color:#F59E0B;text-align:left;">🟠 15-30 days</button>
-        <button class="fp" id="pu-normal" onclick="setPU('normal',this)" style="color:#60a5fa;border-color:#3B82F6;text-align:left;">🔵 31-60 days</button>
-        <button class="fp" id="pu-won" onclick="setPU('won',this)" style="color:#10B981;border-color:#10B981;text-align:left;">🟢 Won</button>
-        <button class="fp" id="pu-rejected" onclick="setPU('rejected',this)" style="color:#94a3b8;border-color:#94a3b8;text-align:left;">⚫ Rejected</button>
-      </div>
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">SEARCH JMB</div>
-      <input class="prog-search" id="progSearch" placeholder="JMB name..." oninput="renderProgCards()" style="width:100%;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Search JMB</div>
+      <input class="prog-search" id="progSearch" placeholder="JMB name..." oninput="renderProgCards()" style="width:100%;max-width:400px;">
     </div>
-
   </div>
 
   <!-- Cards -->
@@ -676,14 +662,36 @@ let progFilterMk = 'all';
 let progFilterUrgency = 'all';
 let progFilterMonth = new Date().getMonth();
 let progFilterYear = new Date().getFullYear();
-let progMode = 'total'; // 'total' or 'bulanan'
+let progMode = 'total';
+let progYear = new Date().getFullYear();
 const MONTHS_MY = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildProgYearPills() {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear];
+  const container = document.getElementById('ypills-prog');
+  if (!container) return;
+  container.innerHTML = years.map(yr =>
+    `<button class="ypill ${yr === progYear ? 'active' : ''}" onclick="setProgYear(${yr},this)">${yr}</button>`
+  ).join('');
+}
+
+function setProgYear(yr, btn) {
+  progYear = yr;
+  progFilterYear = yr;
+  document.getElementById('ypills-prog').querySelectorAll('.ypill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateProgHeader();
+  updateProgStats();
+  renderProgCards();
+}
 
 function setProgMode(mode, btn) {
   progMode = mode;
-  document.querySelectorAll('#pmode-total,#pmode-bulanan').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pmode-total,#pmode-monthly').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('monthPillsWrap').style.display = mode === 'bulanan' ? 'flex' : 'none';
+  const wrap = document.getElementById('monthPillsWrap');
+  if (wrap) wrap.style.display = mode === 'monthly' ? 'flex' : 'none';
   updateProgHeader();
   updateProgStats();
   renderProgCards();
@@ -693,22 +701,27 @@ function setPMK(mk, btn) {
   progFilterMk = mk;
   ['all','hazim','shahira','admin'].forEach(id => {
     const b = document.getElementById('pmk-'+id);
-    if (b) { b.classList.remove('active'); }
+    if (b) b.classList.remove('active');
   });
   btn.classList.add('active');
   updateProgStats();
   renderProgCards();
 }
 
+function setPF(mk, btn) { setPMK(mk, btn); }
+
 function updateProgHeader() {
   const today = new Date();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dateStr = days[today.getDay()] + ', ' + today.getDate() + ' ' + MONTHS_MY[today.getMonth()] + ' ' + today.getFullYear();
-  document.getElementById('progHeadDate').textContent = dateStr;
+  const headDate = document.getElementById('progHeadDate');
+  if (headDate) headDate.textContent = dateStr;
+  const headTitle = document.getElementById('progHeadTitle');
+  if (!headTitle) return;
   if (progMode === 'total') {
-    document.getElementById('progHeadTitle').textContent = 'ALL JMB';
+    headTitle.textContent = progYear + ' — ALL JMB';
   } else {
-    document.getElementById('progHeadTitle').textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
+    headTitle.textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
   }
 }
 
@@ -807,6 +820,7 @@ function fetchJSONP(url) {
 
 async function fetchProgressData() {
   document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Loading progress data...</div></div>';
+  buildProgYearPills();
   buildMonthPills();
   updateProgHeader();
   try {
@@ -819,6 +833,7 @@ async function fetchProgressData() {
     const shahiraData = results[1].map(r => ({...r, _marketer: 'shahira'}));
     const adminData   = results[2].map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
+    buildProgYearPills();
     buildMonthPills();
     updateProgStats();
     renderProgCards();
@@ -858,16 +873,19 @@ function getFilteredProgData() {
   return progData.filter(r => {
     // Marketer filter
     if (progFilterMk !== 'all' && r._marketer !== progFilterMk) return false;
-    // Month filter (only in bulanan mode)
-    if (progMode === 'bulanan') {
-      const expiryStr = r['Expiry Date'] || '';
-      if (expiryStr) {
-        const parts = expiryStr.split('/');
-        let expDate;
-        if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
-        else expDate = new Date(expiryStr);
-        if (!isNaN(expDate)) {
-          if (expDate.getMonth() !== progFilterMonth || expDate.getFullYear() !== progFilterYear) return false;
+    // Year filter — filter by expiry year
+    const expiryStr = r['Expiry Date'] || '';
+    if (expiryStr) {
+      const parts = expiryStr.split('/');
+      let expDate;
+      if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
+      else expDate = new Date(expiryStr);
+      if (!isNaN(expDate)) {
+        // Year filter
+        if (expDate.getFullYear() !== progYear) return false;
+        // Month filter (only in monthly mode)
+        if (progMode === 'monthly') {
+          if (expDate.getMonth() !== progFilterMonth) return false;
         }
       }
     }
@@ -986,10 +1004,18 @@ function renderProgCards() {
     return da - db;
   });
 
-  document.getElementById('progCardsTitle').textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
+  const titleEl = document.getElementById('progCardsTitle');
+  if (titleEl) {
+    if (progMode === 'total') {
+      titleEl.textContent = `JMB Expiry ${progYear} (${filtered.length} JMB)`;
+    } else {
+      titleEl.textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
+    }
+  }
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>No JMB expiring in ${MONTHS_MY[progFilterMonth]} ${progFilterYear}</div></div>`;
+    const emptyMsg = progMode === 'total' ? `No JMB expiring in ${progYear}` : `No JMB expiring in ${MONTHS_MY[progFilterMonth]} ${progFilterYear}`;
+    grid.innerHTML = `<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>${emptyMsg}</div></div>`;
     return;
   }
 
@@ -1085,7 +1111,7 @@ const USERS_KEY= 'sd_jmb_users_v7';
 const HARDCODED_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 
 const DEFAULT_USERS = {
- admin:   {pass:'Admin@Jmb2024!', label:'SBM',   color:'#8B5CF6', role:'admin'},
+  admin:   {pass:'Admin@Jmb2024!', label:'Admin',   color:'#8B5CF6', role:'admin'},
   hazim:   {pass:'hazim123',       label:'Hazim',   color:'#3B82F6', role:'marketer'},
   shahira: {pass:'shahira123',     label:'Shahira', color:'#10B981', role:'marketer'},
   yazid:   {pass:'yazid123',       label:'Yazid',   color:'#F59E0B', role:'management'},
@@ -1127,19 +1153,17 @@ function doLogin(){
   document.getElementById('ulabel').textContent=u.label;
   document.getElementById('upill').style.display='flex';
   document.getElementById('btnOut').style.display='';
-  // Show sidebar
-  showSidebar(true);
-  // Show/hide role-based buttons
-  const setupBtn = document.getElementById('snav-setup');
-  const settlementBtn = document.getElementById('snav-settlement');
+  document.getElementById('navWrap').style.display='flex';
+  // Role-based nav
+  const setupBtn = document.getElementById('tnav-setup');
+  const settlementBtn = document.getElementById('tnav-settlement');
   if (setupBtn) setupBtn.style.display = u.role==='admin' ? '' : 'none';
   if (settlementBtn) settlementBtn.style.display = (u.role==='admin'||u.role==='management') ? '' : 'none';
   go('dashboard');startTimer();buildYearPills();
 }
 function logout(){
   cu=null;stopTimer();chartsBuilt=false;rawData=[];filterPrin=null;progData=[];
-  ['upill','btnOut','syncPill'].forEach(id=>document.getElementById(id).style.display='none');
-  showSidebar(false);
+  ['upill','btnOut','navWrap','syncPill'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('lu').value='';document.getElementById('lp').value='';
   [cM,cMk,cD,cCase,cPrin,cMkP,cTgt].forEach(c=>{if(c)c.destroy();});
   cM=cMk=cD=cCase=cPrin=cMkP=cTgt=null;
@@ -1511,25 +1535,19 @@ function renderTx(){
 
 populateLoginDropdown();
 
-// ── SIDEBAR ──────────────────────────────────────────────────────
 function showSidebar(show) {
-  const sb = document.getElementById('sidebar');
+  // No sidebar anymore — kept for compatibility
   const mw = document.getElementById('mainWrap');
-  if (show) {
-    sb.style.display = 'flex';
-    mw.classList.add('with-sidebar');
-  } else {
-    sb.style.display = 'none';
-    mw.classList.remove('with-sidebar');
-  }
+  if (mw) mw.classList.remove('with-sidebar');
 }
 
 function go(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById('screen-' + name);
   if (screen) screen.classList.add('active');
-  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-  const active = document.getElementById('snav-' + name);
+  // Update topbar nav active
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const active = document.getElementById('tnav-' + name);
   if (active) active.classList.add('active');
   if (name === 'dashboard') renderDash();
   if (name === 'leaderboard') renderLb();
