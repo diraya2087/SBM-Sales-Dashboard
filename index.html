@@ -551,19 +551,17 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="ph">
     <div>
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">PROGRESS TRACKER</div>
-      <div style="font-size:20px;font-weight:700;color:#f1f5f9;" id="progHeadTitle">ALL JMB</div>
+      <div style="font-size:20px;font-weight:700;color:#f1f5f9;" id="progHeadTitle">JUN 2026</div>
       <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="progHeadDate"></div>
     </div>
-    <button class="btn btn-outline" onclick="fetchProgressData()">🔄 Refresh</button>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div class="ypills" id="ypills-prog"></div>
+      <button class="btn btn-outline" onclick="fetchProgressData()">🔄 Refresh</button>
+    </div>
   </div>
 
-  <!-- Year pills -->
-  <div style="margin-bottom:8px;">
-    <div class="ypills" id="ypills-prog"></div>
-  </div>
-
-  <!-- Month pills — always visible, appear after year click -->
-  <div style="margin-bottom:12px;">
+  <!-- Month pills — hidden until year clicked -->
+  <div id="monthPillsWrap" style="display:none;margin-bottom:12px;">
     <div class="fpills" style="flex-wrap:wrap;margin-bottom:0;" id="monthPills"></div>
   </div>
 
@@ -682,6 +680,9 @@ function setProgYear(yr, btn) {
   // Reset month to current month if same year, else Jan
   const currentYear = new Date().getFullYear();
   progFilterMonth = (yr === currentYear) ? new Date().getMonth() : 0;
+  // Show month pills
+  const wrap = document.getElementById('monthPillsWrap');
+  if (wrap) wrap.style.display = 'block';
   buildMonthPills();
   updateProgHeader();
   updateProgStats();
@@ -739,57 +740,6 @@ function updateProgHeader() {
   if (headDate) headDate.textContent = dateStr;
   const headTitle = document.getElementById('progHeadTitle');
   if (headTitle) headTitle.textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
-}
-
-function buildMonthPills() {
-  const today = new Date();
-  const currentMi = today.getMonth();
-  const currentYear = today.getFullYear();
-  const pills = document.getElementById('monthPills');
-  if (!pills) return;
-
-  // 3 years rolling back from current year
-  const years = [currentYear - 2, currentYear - 1, currentYear];
-
-  // Year tabs + month pills
-  let html = '';
-
-  // Year selector tabs
-  html += `<div style="display:flex;gap:4px;margin-bottom:8px;width:100%;">`;
-  years.forEach(yr => {
-    const isActiveYr = yr === progFilterYear;
-    html += `<button class="fp ${isActiveYr?'a-all':''}" style="font-weight:600;" onclick="setProgYear(${yr},this)">${yr}</button>`;
-  });
-  html += `</div>`;
-
-  // Month pills for selected year
-  html += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
-  for (let mi = 0; mi < 12; mi++) {
-    const isCurrent = mi === currentMi && progFilterYear === currentYear;
-    const isActive = mi === progFilterMonth && progFilterYear === progFilterYear;
-    html += `<button class="fp ${isActive?'a-all':''}" style="${isCurrent?'border-color:#F59E0B;color:#F59E0B;':''}" onclick="setProgMonth(${mi},${progFilterYear},this)">${MONTHS_MY[mi]}${isCurrent?' 📌':''}</button>`;
-  }
-  html += `</div>`;
-
-  pills.innerHTML = html;
-}
-
-function setProgYear(yr, btn) {
-  progFilterYear = yr;
-  buildMonthPills();
-  updateProgHeader();
-  updateProgStats();
-  renderProgCards();
-}
-
-function setProgMonth(mi, yr, btn) {
-  progFilterMonth = mi;
-  progFilterYear = yr;
-  document.getElementById('monthPills').querySelectorAll('.fp').forEach(b => b.classList.remove('a-all'));
-  btn.classList.add('a-all');
-  updateProgHeader();
-  updateProgStats();
-  renderProgCards();
 }
 
 // Parse CSV for progress tracker
@@ -851,6 +801,9 @@ async function fetchProgressData() {
     progData = [...hazimData, ...shahiraData, ...adminData];
     buildProgYearPills();
     buildMonthPills();
+    const wrap = document.getElementById('monthPillsWrap');
+    if (wrap) wrap.style.display = 'block';
+    updateProgHeader();
     updateProgStats();
     renderProgCards();
   } catch(e) {
