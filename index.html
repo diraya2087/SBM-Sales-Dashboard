@@ -527,17 +527,20 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
 
   <!-- Marketer + Status filters -->
-  <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+  <div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
     <!-- Marketer filter -->
-    <div>
-      <div style="display:flex;gap:5px;margin-bottom:6px;">
-        <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
-        <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
+      <div style="display:flex;gap:5px;">
         <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
         <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
         <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
+      </div>
+    </div>
+    <!-- Status filter -->
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
+      <div style="display:flex;gap:5px;">
         <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
         <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
       </div>
