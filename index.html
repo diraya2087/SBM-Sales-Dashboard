@@ -575,33 +575,33 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
-  <!-- 5 Stats Cards -->
+  <!-- 5 Stats Cards — Clickable -->
   <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;">
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showProgList('all')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL JMB</div>
       <div style="font-size:36px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showProgList('won')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#10B981'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">WON</div>
       <div style="font-size:36px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#10B981;" id="ps-won-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showProgList('progress')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">IN PROGRESS</div>
       <div style="font-size:36px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showProgList('rejected')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">REJECTED</div>
       <div style="font-size:36px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b8;"></div>
     </div>
-    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showProgList('urgent')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#EF4444'" onmouseout="this.style.borderColor='rgba(239,68,68,.3)'">
       <div style="font-size:10px;color:#EF4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENT &lt;15 DAYS</div>
       <div style="font-size:36px;font-weight:700;color:#EF4444;line-height:1;" id="ps-urgent">0</div>
       <div style="font-size:10px;color:rgba(239,68,68,.7);margin-top:4px;"><span id="ps-urgent-pct">0%</span></div>
@@ -609,7 +609,19 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
-  <!-- Donut + Search -->
+  <!-- JMB List Modal (appears when stat card clicked) -->
+  <div id="progListPanel" style="display:none;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;" id="progListTitle">JMB List</div>
+      <button onclick="document.getElementById('progListPanel').style.display='none'" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt"><thead><tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Stage</th><th>Days to Expiry</th><th>Expiry Date</th></tr></thead>
+      <tbody id="progListBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Donut + Status Breakdown -->
   <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;margin-bottom:16px;">
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
       <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Status Breakdown</div>
@@ -631,9 +643,10 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
         </div>
       </div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:center;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Search JMB</div>
-      <input class="prog-search" id="progSearch" placeholder="JMB name..." oninput="renderProgCards()" style="width:100%;max-width:400px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Pipeline Health</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Stage distribution overview</div>
+      <div id="pipelineDonutDiv" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
     </div>
   </div>
 
@@ -920,6 +933,21 @@ function renderProgAnalysis(data) {
     }).join('');
   }
 
+  // Pipeline Health pills
+  const pipelineDonutDiv = document.getElementById('pipelineDonutDiv');
+  if (pipelineDonutDiv) {
+    pipelineDonutDiv.innerHTML = stages.map(s => {
+      const cnt = stageCounts[s] || 0;
+      if (!cnt) return '';
+      const col = stageColors[s] || '#3B82F6';
+      return `<div style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:20px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;"></div>
+        <span style="font-size:11px;color:var(--text2);">${s}</span>
+        <span style="font-size:11px;font-weight:700;color:${col};">${cnt}</span>
+      </div>`;
+    }).join('');
+  }
+
   // ── Marketer Performance ─────────────────────────────────────
   const mkCounts = {hazim:0, shahira:0, admin:0};
   data.forEach(r => { if (mkCounts[r._marketer] !== undefined) mkCounts[r._marketer]++; });
@@ -1020,6 +1048,48 @@ function renderProgAnalysis(data) {
       }).join('');
     }
   }
+}
+
+function showProgList(type) {
+  const data = getFilteredProgData();
+  const titles = {
+    all: 'All JMB', won: 'Won JMB', progress: 'In Progress JMB',
+    rejected: 'Rejected JMB', urgent: 'Urgent (<15 days) JMB'
+  };
+  const mkLabels = {hazim:'Hazim', shahira:'Shahira', admin:'SBM'};
+  const mkBadge = {hazim:'bh', shahira:'bs', admin:'bn'};
+
+  let filtered = data.filter(r => {
+    const u = getUrgency(r);
+    if (type === 'all') return true;
+    if (type === 'won') return u === 'won';
+    if (type === 'progress') return u !== 'won' && u !== 'rejected';
+    if (type === 'rejected') return u === 'rejected';
+    if (type === 'urgent') return u === 'urgent';
+    return true;
+  }).sort((a,b) => {
+    const da = daysToExpiry(a['Expiry Date']||'') ?? 999;
+    const db = daysToExpiry(b['Expiry Date']||'') ?? 999;
+    return da - db;
+  });
+
+  document.getElementById('progListTitle').textContent = `${titles[type]} (${filtered.length})`;
+  document.getElementById('progListBody').innerHTML = filtered.length ? filtered.map((r, i) => {
+    const days = daysToExpiry(r['Expiry Date']||'');
+    const daysColor = days === null ? 'var(--text3)' : days < 0 ? '#EF4444' : days < 15 ? '#EF4444' : days < 31 ? '#F59E0B' : '#10B981';
+    const mk = r._marketer || '';
+    return `<tr>
+      <td style="color:var(--text3);">${i+1}</td>
+      <td style="font-weight:500;">${r['JMB Name']||'-'}</td>
+      <td><span class="badge ${mkBadge[mk]||'bp'}">${mkLabels[mk]||mk}</span></td>
+      <td style="font-size:11px;color:var(--text2);">${r['Current Stage']||'-'}</td>
+      <td style="font-weight:700;color:${daysColor};">${days !== null ? days + ' days' : '-'}</td>
+      <td style="font-size:11px;color:var(--text3);">${r['Expiry Date']||'-'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No data</td></tr>';
+
+  document.getElementById('progListPanel').style.display = 'block';
+  document.getElementById('progListPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function getFilteredProgData() {
@@ -1129,7 +1199,8 @@ function quoteIcon(status) {
 
 function renderProgCards() {
   const grid = document.getElementById('jmbGrid');
-  const search = (document.getElementById('progSearch').value || '').toLowerCase();
+  const searchEl = document.getElementById('progSearch');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
   const urgencyOrder = { urgent:0, warning:1, normal:2, won:3, rejected:4, outside:5 };
 
   let filtered = getFilteredProgData().filter(r => {
