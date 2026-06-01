@@ -403,9 +403,15 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
   <div id="noConn">⚠ No Google Sheets connection. <span id="setupHint"></span></div>
-  <div class="kgrid">
+
+  <!-- KPI Row 1: 2 cards -->
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;">
     <div class="kpi" onclick="showKpiDetail('total')"><div class="klabel">Total Premium</div><div class="kval" id="k1">-</div><div class="ksub kup" id="k1s"></div></div>
     <div class="kpi" onclick="showKpiDetail('cases')"><div class="klabel">Total Cases</div><div class="kval" id="k2">-</div><div class="ksub" id="k2s"></div></div>
+  </div>
+
+  <!-- KPI Row 2: 3 cards -->
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.3rem;">
     <div class="kpi" onclick="showKpiDetail('top')"><div class="klabel">Top Marketer</div><div class="kval" id="k3">-</div><div class="ksub" id="k3s"></div></div>
     <div class="kpi" onclick="showKpiDetail('prin')"><div class="klabel">Top Principle</div><div class="kval" id="k4">-</div><div class="ksub" id="k4s"></div></div>
     <div class="kpi" onclick="showKpiDetail('case-type')"><div class="klabel">Renewal vs New</div><div class="kval" id="k5">-</div><div class="ksub" id="k5s"></div></div>
