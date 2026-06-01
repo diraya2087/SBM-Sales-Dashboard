@@ -520,8 +520,24 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 <div class="screen" id="screen-transactions">
   <div class="ph">
     <div><h1>💳 JMB Payment Tracking</h1><p>Payment status per JMB</p></div>
-    <div class="ph-ctrl">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="ypills" id="ypills-pay"></div>
       <button class="btn btn-outline" onclick="fetchPaymentData()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <!-- Marketer + Status filters -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <div class="fpills" style="margin-bottom:0;">
+      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
+      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
+      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
+      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
+    </div>
+    <div class="fpills" style="margin-bottom:0;">
+      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
+      <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
+      <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
     </div>
   </div>
 
@@ -547,11 +563,6 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="font-size:22px;font-weight:700;color:#F59E0B;line-height:1;" id="pay-premium">-</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
     </div>
-  </div>
-
-  <!-- Year pills -->
-  <div style="margin-bottom:12px;">
-    <div class="ypills" id="ypills-pay"></div>
   </div>
 
   <!-- Plan Cards — Big clickable -->
@@ -584,21 +595,6 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="ppc-Full">0</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
-    </div>
-  </div>
-
-  <!-- Marketer + Status filters -->
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-    <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
-      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
-      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
-      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
-    </div>
-    <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
-      <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
-      <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
     </div>
   </div>
 
