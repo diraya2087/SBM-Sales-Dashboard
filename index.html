@@ -557,28 +557,28 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
 
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">KESELURUHAN JMB</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL JMB</div>
       <div style="font-size:42px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px;">TOTAL · <span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
 
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">MENANG</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">WON</div>
       <div style="font-size:42px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px;">WON · <span style="color:#10B981;" id="ps-won-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
 
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">SEDANG BERJALAN</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">IN PROGRESS</div>
       <div style="font-size:42px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px;">IN PROGRESS · <span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
     </div>
 
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">DITOLAK</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">REJECTED</div>
       <div style="font-size:42px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px;">REJECTED · <span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b8;"></div>
@@ -598,7 +598,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
     <!-- Donut -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Pecahan Status</div>
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Status Breakdown</div>
       <div style="display:flex;align-items:center;gap:20px;">
         <div class="prog-donut-wrap" style="width:120px;height:120px;flex-shrink:0;">
           <svg viewBox="0 0 120 120" id="progDonutSvg">
@@ -611,9 +611,9 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
         </div>
         <div style="flex:1;">
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#10B981;"></div><span style="font-size:12px;color:var(--text2);">Menang</span></div><span style="font-weight:700;color:#10B981;" id="lg-won">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#10B981;"></div><span style="font-size:12px;color:var(--text2);">Won</span></div><span style="font-weight:700;color:#10B981;" id="lg-won">0</span></div>
             <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#3B82F6;"></div><span style="font-size:12px;color:var(--text2);">In Progress</span></div><span style="font-weight:700;color:#3B82F6;" id="lg-prog">0</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#94a3b8;"></div><span style="font-size:12px;color:var(--text2);">Ditolak</span></div><span style="font-weight:700;color:#94a3b8;" id="lg-rej">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#94a3b8;"></div><span style="font-size:12px;color:var(--text2);">Rejected</span></div><span style="font-weight:700;color:#94a3b8;" id="lg-rej">0</span></div>
             <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#EF4444;"></div><span style="font-size:12px;color:var(--text2);">Urgent</span></div><span style="font-weight:700;color:#EF4444;" id="lg-urgent">0</span></div>
           </div>
         </div>
@@ -622,18 +622,18 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
     <!-- Filters -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Filter Lanjutan</div>
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Advanced Filters</div>
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENCY</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
-        <button class="fp a-all" id="pu-all" onclick="setPU('all',this)" style="text-align:left;">Semua</button>
-        <button class="fp" id="pu-urgent" onclick="setPU('urgent',this)" style="color:#EF4444;border-color:#EF4444;text-align:left;">🔴 &lt;15 hari</button>
-        <button class="fp" id="pu-warning" onclick="setPU('warning',this)" style="color:#F59E0B;border-color:#F59E0B;text-align:left;">🟠 15-30 hari</button>
-        <button class="fp" id="pu-normal" onclick="setPU('normal',this)" style="color:#60a5fa;border-color:#3B82F6;text-align:left;">🔵 31-60 hari</button>
+        <button class="fp a-all" id="pu-all" onclick="setPU('all',this)" style="text-align:left;">All</button>
+        <button class="fp" id="pu-urgent" onclick="setPU('urgent',this)" style="color:#EF4444;border-color:#EF4444;text-align:left;">🔴 &lt;15 days</button>
+        <button class="fp" id="pu-warning" onclick="setPU('warning',this)" style="color:#F59E0B;border-color:#F59E0B;text-align:left;">🟠 15-30 days</button>
+        <button class="fp" id="pu-normal" onclick="setPU('normal',this)" style="color:#60a5fa;border-color:#3B82F6;text-align:left;">🔵 31-60 days</button>
         <button class="fp" id="pu-won" onclick="setPU('won',this)" style="color:#10B981;border-color:#10B981;text-align:left;">🟢 Won</button>
         <button class="fp" id="pu-rejected" onclick="setPU('rejected',this)" style="color:#94a3b8;border-color:#94a3b8;text-align:left;">⚫ Rejected</button>
       </div>
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">CARI JMB</div>
-      <input class="prog-search" id="progSearch" placeholder="Nama JMB..." oninput="renderProgCards()" style="width:100%;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">SEARCH JMB</div>
+      <input class="prog-search" id="progSearch" placeholder="JMB name..." oninput="renderProgCards()" style="width:100%;">
     </div>
 
   </div>
@@ -647,10 +647,11 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 <script>
 // ── PROGRESS TRACKER CSV URLS ─────────────────────────────────
+const AS_URL = 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 const PROG_URLS = {
-  hazim:   'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec?type=progress&tab=hazim',
-  shahira: 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec?type=progress&tab=shahira',
-  admin:   'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec?type=progress&tab=admin',
+  hazim:   AS_URL + '?type=progress&tab=hazim',
+  shahira: AS_URL + '?type=progress&tab=shahira',
+  admin:   AS_URL + '?type=progress&tab=admin',
 };
 
 let progData = [];
@@ -684,11 +685,11 @@ function setPMK(mk, btn) {
 
 function updateProgHeader() {
   const today = new Date();
-  const days = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dateStr = days[today.getDay()] + ', ' + today.getDate() + ' ' + MONTHS_MY[today.getMonth()] + ' ' + today.getFullYear();
   document.getElementById('progHeadDate').textContent = dateStr;
   if (progMode === 'total') {
-    document.getElementById('progHeadTitle').textContent = 'SEMUA JMB';
+    document.getElementById('progHeadTitle').textContent = 'ALL JMB';
   } else {
     document.getElementById('progHeadTitle').textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
   }
@@ -743,39 +744,32 @@ function parseProgCSV(txt) {
   }).filter(r => r['JMB Name'] && r['JMB Name'].length > 0);
 }
 
-async function fetchCSV(url) {
-  // Try direct first, then proxy
-  try {
-    const r = await fetch(url + '&t=' + Date.now(), {mode:'cors'});
-    if (r.ok) return await r.text();
-  } catch(e) {}
-  // Fallback to allorigins proxy
-  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-  const r = await fetch(proxy);
-  if (!r.ok) throw new Error('Failed');
-  return await r.text();
+async function fetchProgJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const txt = await r.text();
+  return JSON.parse(txt);
 }
 
 async function fetchProgressData() {
   document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Loading progress data...</div></div>';
-  // Build month pills immediately even before data loads
   buildMonthPills();
+  updateProgHeader();
   try {
     const results = await Promise.all([
-      fetchCSV(PROG_URLS.hazim),
-      fetchCSV(PROG_URLS.shahira),
-      fetchCSV(PROG_URLS.admin),
+      fetchProgJSON(PROG_URLS.hazim),
+      fetchProgJSON(PROG_URLS.shahira),
+      fetchProgJSON(PROG_URLS.admin),
     ]);
-    const hazimData = parseProgCSV(results[0]).map(r => ({...r, _marketer: 'hazim'}));
-    const shahiraData = parseProgCSV(results[1]).map(r => ({...r, _marketer: 'shahira'}));
-    const adminData = parseProgCSV(results[2]).map(r => ({...r, _marketer: 'admin'}));
+    const hazimData  = results[0].map(r => ({...r, _marketer: 'hazim'}));
+    const shahiraData = results[1].map(r => ({...r, _marketer: 'shahira'}));
+    const adminData  = results[2].map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
     buildMonthPills();
-    updateProgHeader();
     updateProgStats();
     renderProgCards();
   } catch(e) {
-    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load — check CSV links</div></div>';
+    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load data — ' + e.message + '</div></div>';
   }
 }
 
@@ -941,7 +935,7 @@ function renderProgCards() {
   document.getElementById('progCardsTitle').textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>Tiada JMB expiry bulan ${MONTHS_MY[progFilterMonth]} ${progFilterYear}</div></div>`;
+    grid.innerHTML = `<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>No JMB expiring in ${MONTHS_MY[progFilterMonth]} ${progFilterYear}</div></div>`;
     return;
   }
 
