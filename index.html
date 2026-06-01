@@ -483,19 +483,22 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div class="ypills" id="ypills-lb"></div>
     </div>
   </div>
-  <div class="card-full">
-    <div class="ct">Monthly Target Cards — RM 250K each</div>
-    <div class="cs">Click any month to see details</div>
-    <div id="targetGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px;"></div>
-  </div>
-  <div class="row2">
+
+  <!-- 3 equal cards: Annual Premium, Total Cases, Renewal vs New -->
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:1.3rem;">
     <div class="card"><div class="ct" style="margin-bottom:12px;">🥇 Annual Premium Ranking</div><div id="lbPremium"></div></div>
     <div class="card"><div class="ct" style="margin-bottom:12px;">📦 Total Cases Closed</div><div id="lbClose"></div></div>
-  </div>
-  <div class="row2">
     <div class="card"><div class="ct" style="margin-bottom:12px;">🔁 Renewal vs New per Marketer</div><div style="position:relative;width:100%;height:200px;"><canvas id="cLbCase"></canvas></div></div>
-    <div class="card"><div class="ct" style="margin-bottom:12px;">🕐 Recent Transactions</div><div id="recentDiv" style="max-height:220px;overflow-y:auto;"></div></div>
   </div>
+
+  <!-- Monthly Target Cards -->
+  <div class="card-full">
+    <div class="ct">Monthly Target Achievement — RM 250K each</div>
+    <div class="cs">Click any month to see details</div>
+    <div id="targetGrid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:8px;"></div>
+  </div>
+
+  <!-- Monthly Performance Table -->
   <div class="card-full">
     <div class="ct" style="margin-bottom:12px;">📊 Monthly Performance Table</div>
     <div style="overflow-x:auto;"><table class="dt" id="lbMonthTbl"></table></div>
@@ -1447,26 +1450,49 @@ function buildPrinLeg(){
 }
 
 function renderLb(){
-  const data=fd(cyLb),mks=['hazim','shahira'],users=getUsers();
+  const data=fd(cyLb),mks=['hazim','shahira','admin'],users=getUsers();
+
+  // Monthly Target Cards
   document.getElementById('targetGrid').innerHTML=MONTHS.map((m,mi)=>{
     const has=data.some(r=>r.mi===mi);
     if(!has)return`<div style="background:var(--card2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.4;"><div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;">${m}</div><div style="font-size:11px;color:var(--text3);">No data</div></div>`;
     return`<div onclick="showMonthDetail(${mi})" style="background:var(--card);border-radius:9px;padding:12px;border:1px solid var(--border);cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">${m}</div>
-      ${mks.map(mk=>{const v=sumPrem(data.filter(r=>r.mk===mk&&r.mi===mi));const p=pct(v,MONTHLY_TARGET);const hit=v>=MONTHLY_TARGET;return`<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:${MKCOL[mk]};">${users[mk]?.label||mk}</span><span style="color:${hit?'#10B981':v>0?'#F59E0B':'var(--text3)'};font-weight:600;">${v>0?p+'%':'–'}</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${Math.min(p,100)}%;background:${hit?'#10B981':MKCOL[mk]};border-radius:2px;transition:width .5s;"></div></div></div>`;}).join('')}
+      ${mks.map(mk=>{const v=sumPrem(data.filter(r=>r.mk===mk&&r.mi===mi));const p=pct(v,MONTHLY_TARGET);const hit=v>=MONTHLY_TARGET;return v>0?`<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:${MKCOL[mk]};">${users[mk]?.label||mk}</span><span style="color:${hit?'#10B981':'#F59E0B'};font-weight:600;">${p}%</span></div><div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${Math.min(p,100)}%;background:${hit?'#10B981':MKCOL[mk]};border-radius:2px;transition:width .5s;"></div></div></div>`:'';}).join('')}
     </div>`;
   }).join('');
-  const yt=mks.map(mk=>({mk,t:sumPrem(data.filter(r=>r.mk===mk))})).sort((a,b)=>b.t-a.t);
+
+  // Annual Premium Ranking
+  const yt=mks.map(mk=>({mk,t:sumPrem(data.filter(r=>r.mk===mk))})).filter(x=>x.t>0).sort((a,b)=>b.t-a.t);
   const maxT=Math.max(...yt.map(x=>x.t),1);
-  document.getElementById('lbPremium').innerHTML=yt.map((x,i)=>`<div class="lb-row"><div class="lb-rank ${i===0?'r1':'r2'}">${i+1}</div><div class="lb-name">${users[x.mk]?.label||x.mk}</div><span style="font-size:11px;color:${x.t>=MONTHLY_TARGET*12?'#10B981':'#F59E0B'};margin-right:4px;">${pct(x.t,MONTHLY_TARGET*12)}%</span><div class="lb-bar-wrap"><div class="lb-bar" style="width:${pct(x.t,maxT)}%;background:${MKCOL[x.mk]};box-shadow:0 0 6px ${MKCOL[x.mk]}66;"></div></div><div class="lb-val">${fmt(x.t)}</div></div>`).join('');
-  const yc=mks.map(mk=>({mk,c:data.filter(r=>r.mk===mk).length,ren:data.filter(r=>r.mk===mk&&r.caseType==='Renewal').length,nw:data.filter(r=>r.mk===mk&&r.caseType==='New').length})).sort((a,b)=>b.c-a.c);
+  const rankCls=['r1','r2','rn'];
+  document.getElementById('lbPremium').innerHTML=yt.map((x,i)=>`<div class="lb-row"><div class="lb-rank ${rankCls[i]||'rn'}">${i+1}</div><div class="lb-name">${users[x.mk]?.label||x.mk}</div><span style="font-size:11px;color:${x.t>=MONTHLY_TARGET*12?'#10B981':'#F59E0B'};margin-right:4px;">${pct(x.t,MONTHLY_TARGET*12)}%</span><div class="lb-bar-wrap"><div class="lb-bar" style="width:${pct(x.t,maxT)}%;background:${MKCOL[x.mk]};box-shadow:0 0 6px ${MKCOL[x.mk]}66;"></div></div><div class="lb-val">${fmt(x.t)}</div></div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No data</div>';
+
+  // Total Cases
+  const yc=mks.map(mk=>({mk,c:data.filter(r=>r.mk===mk).length,ren:data.filter(r=>r.mk===mk&&r.caseType==='Renewal').length,nw:data.filter(r=>r.mk===mk&&r.caseType==='New').length})).filter(x=>x.c>0).sort((a,b)=>b.c-a.c);
   const maxC=Math.max(...yc.map(x=>x.c),1);
-  document.getElementById('lbClose').innerHTML=yc.map((x,i)=>`<div class="lb-row" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 0;"><div style="display:flex;align-items:center;gap:10px;"><div class="lb-rank ${i===0?'r1':'r2'}">${i+1}</div><div class="lb-name">${users[x.mk]?.label||x.mk}</div><div class="lb-bar-wrap" style="flex:1;"><div class="lb-bar" style="width:${pct(x.c,maxC)}%;background:${MKCOL[x.mk]};"></div></div><div class="lb-val">${x.c} cases</div></div><div style="display:flex;gap:8px;padding-left:34px;"><span style="font-size:11px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:2px 9px;">Renewal: ${x.ren}</span><span style="font-size:11px;background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3);border-radius:10px;padding:2px 9px;">New: ${x.nw}</span></div></div>`).join('');
-  const recent=[...data].sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,8);
-  document.getElementById('recentDiv').innerHTML=recent.length?recent.map(r=>`<div class="lb-row" style="gap:8px;"><span class="badge ${r.mk==='hazim'?'bh':'bs'}">${users[r.mk]?.label||r.mk}</span><span style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.jmb||'-'}</span><span style="font-size:12px;font-weight:600;color:var(--accent);">${fmt(r.premTax)}</span></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--text3);">No data</div>';
-  document.getElementById('lbMonthTbl').innerHTML=`<thead><tr><th>Marketer</th>${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>Total</th><th>vs Target</th></tr></thead><tbody>${mks.map(mk=>{const cols=MONTHS.map((_,i)=>{const v=sumPrem(data.filter(r=>r.mk===mk&&r.mi===i));const hit=v>=MONTHLY_TARGET;return`<td style="${hit?'color:#10B981;font-weight:600;':v>0?'color:#F59E0B;':''}">${v?fmt(v)+'<br><span style="font-size:10px;opacity:.7;">'+pct(v,MONTHLY_TARGET)+'%</span>':'-'}</td>`;}).join('');const tot=sumPrem(data.filter(r=>r.mk===mk));const ap=pct(tot,MONTHLY_TARGET*12);return`<tr><td style="font-weight:600;color:${MKCOL[mk]};">${users[mk]?.label||mk}</td>${cols}<td style="font-weight:700;color:var(--accent);">${fmt(tot)}</td><td style="font-weight:600;color:${ap>=100?'#10B981':'#F59E0B'};">${ap}%</td></tr>`;}).join('')}</tbody>`;
+  document.getElementById('lbClose').innerHTML=yc.map((x,i)=>`<div class="lb-row" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 0;"><div style="display:flex;align-items:center;gap:10px;"><div class="lb-rank ${rankCls[i]||'rn'}">${i+1}</div><div class="lb-name">${users[x.mk]?.label||x.mk}</div><div class="lb-bar-wrap" style="flex:1;"><div class="lb-bar" style="width:${pct(x.c,maxC)}%;background:${MKCOL[x.mk]};"></div></div><div class="lb-val">${x.c} cases</div></div><div style="display:flex;gap:8px;padding-left:34px;"><span style="font-size:11px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:2px 9px;">Renewal: ${x.ren}</span><span style="font-size:11px;background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3);border-radius:10px;padding:2px 9px;">New: ${x.nw}</span></div></div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No data</div>';
+
+  // Monthly Performance Table
+  document.getElementById('lbMonthTbl').innerHTML=`<thead><tr><th>Marketer</th>${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>Total</th><th>vs Target</th></tr></thead><tbody>${mks.map(mk=>{
+    const hasData=data.some(r=>r.mk===mk);
+    if(!hasData)return'';
+    const cols=MONTHS.map((_,i)=>{const v=sumPrem(data.filter(r=>r.mk===mk&&r.mi===i));const hit=v>=MONTHLY_TARGET;return`<td style="${hit?'color:#10B981;font-weight:600;':v>0?'color:#F59E0B;':''}">${v?fmt(v)+'<br><span style="font-size:10px;opacity:.7;">'+pct(v,MONTHLY_TARGET)+'%</span>':'-'}</td>`;}).join('');
+    const tot=sumPrem(data.filter(r=>r.mk===mk));const ap=pct(tot,MONTHLY_TARGET*12);
+    return`<tr><td style="font-weight:600;color:${MKCOL[mk]};">${users[mk]?.label||mk}</td>${cols}<td style="font-weight:700;color:var(--accent);">${fmt(tot)}</td><td style="font-weight:600;color:${ap>=100?'#10B981':'#F59E0B'};">${ap}%</td></tr>`;
+  }).join('')}</tbody>`;
+
+  // Renewal vs New chart
   if(cLbCase){cLbCase.destroy();}
-  cLbCase=new Chart(document.getElementById('cLbCase'),{type:'bar',data:{labels:mks.map(mk=>users[mk]?.label||mk),datasets:[{label:'Renewal',data:mks.map(mk=>data.filter(r=>r.mk===mk&&r.caseType==='Renewal').length),backgroundColor:'rgba(251,191,36,.8)',borderColor:'#F59E0B',borderWidth:1,borderRadius:5},{label:'New',data:mks.map(mk=>data.filter(r=>r.mk===mk&&r.caseType==='New').length),backgroundColor:'rgba(244,114,182,.8)',borderColor:'#EC4899',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf},grid:{color:gc}}}}});
+  const activeMks=mks.filter(mk=>data.some(r=>r.mk===mk));
+  cLbCase=new Chart(document.getElementById('cLbCase'),{type:'bar',
+    data:{labels:activeMks.map(mk=>users[mk]?.label||mk),
+      datasets:[
+        {label:'Renewal',data:activeMks.map(mk=>data.filter(r=>r.mk===mk&&r.caseType==='Renewal').length),backgroundColor:'rgba(251,191,36,.8)',borderColor:'#F59E0B',borderWidth:1,borderRadius:5},
+        {label:'New',data:activeMks.map(mk=>data.filter(r=>r.mk===mk&&r.caseType==='New').length),backgroundColor:'rgba(244,114,182,.8)',borderColor:'#EC4899',borderWidth:1,borderRadius:5}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf},grid:{color:gc}}}}
+  });
 }
 
 function setTxF(val,type){
