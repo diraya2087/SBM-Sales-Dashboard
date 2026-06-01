@@ -647,11 +647,10 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 <script>
 // ── PROGRESS TRACKER CSV URLS ─────────────────────────────────
-const AS_URL = 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 const PROG_URLS = {
-  hazim:   AS_URL + '?type=progress&tab=hazim',
-  shahira: AS_URL + '?type=progress&tab=shahira',
-  admin:   AS_URL + '?type=progress&tab=admin',
+  hazim:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=1040464248&single=true&output=csv',
+  shahira: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=719269029&single=true&output=csv',
+  admin:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=434504663&single=true&output=csv',
 };
 
 let progData = [];
@@ -749,9 +748,10 @@ function setProgMonth(mi, yr, btn) {
 // Parse CSV for progress tracker
 function parseProgCSV(txt) {
   const lines = txt.trim().split('\n');
-  if (lines.length < 2) return [];
-  const hdrs = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
-  return lines.slice(1).map(line => {
+  if (lines.length < 3) return [];
+  // Row 0 = title (JMB PROGRESS TRACKER), Row 1 = headers, Row 2+ = data
+  const hdrs = lines[1].split(',').map(h => h.replace(/"/g,'').trim());
+  return lines.slice(2).map(line => {
     const vals = [];
     let cur = '', inQ = false;
     for (const ch of line) {
@@ -766,12 +766,17 @@ function parseProgCSV(txt) {
   }).filter(r => r['JMB Name'] && r['JMB Name'].length > 0);
 }
 
-async function fetchProgJSON(url) {
-  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-  const r = await fetch(proxy);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const txt = await r.text();
-  return JSON.parse(txt);
+async function fetchProgCSV(url) {
+  try {
+    const r = await fetch(url, {mode:'cors'});
+    if (r.ok) return parseProgCSV(await r.text());
+  } catch(e) {}
+  try {
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    const r = await fetch(proxy);
+    if (r.ok) return parseProgCSV(await r.text());
+  } catch(e) {}
+  throw new Error('Cannot fetch data');
 }
 
 async function fetchProgressData() {
@@ -780,9 +785,9 @@ async function fetchProgressData() {
   updateProgHeader();
   try {
     const results = await Promise.all([
-      fetchProgJSON(PROG_URLS.hazim),
-      fetchProgJSON(PROG_URLS.shahira),
-      fetchProgJSON(PROG_URLS.admin),
+      fetchProgCSV(PROG_URLS.hazim),
+      fetchProgCSV(PROG_URLS.shahira),
+      fetchProgCSV(PROG_URLS.admin),
     ]);
     const hazimData  = results[0].map(r => ({...r, _marketer: 'hazim'}));
     const shahiraData = results[1].map(r => ({...r, _marketer: 'shahira'}));
@@ -792,7 +797,7 @@ async function fetchProgressData() {
     updateProgStats();
     renderProgCards();
   } catch(e) {
-    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load data — ' + e.message + '</div></div>';
+    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load — ' + e.message + '</div></div>';
   }
 }
 
