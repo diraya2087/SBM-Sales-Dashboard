@@ -660,13 +660,28 @@ function parseProgCSV(txt) {
   }).filter(r => r['JMB Name'] && r['JMB Name'].length > 0);
 }
 
+async function fetchCSV(url) {
+  // Try direct first, then proxy
+  try {
+    const r = await fetch(url + '&t=' + Date.now(), {mode:'cors'});
+    if (r.ok) return await r.text();
+  } catch(e) {}
+  // Fallback to allorigins proxy
+  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  const r = await fetch(proxy);
+  if (!r.ok) throw new Error('Failed');
+  return await r.text();
+}
+
 async function fetchProgressData() {
-  document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Loading...</div></div>';
+  document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Loading progress data...</div></div>';
+  // Build month pills immediately even before data loads
+  buildMonthPills();
   try {
     const results = await Promise.all([
-      fetch(PROG_URLS.hazim + '&t=' + Date.now()).then(r => r.text()),
-      fetch(PROG_URLS.shahira + '&t=' + Date.now()).then(r => r.text()),
-      fetch(PROG_URLS.admin + '&t=' + Date.now()).then(r => r.text()),
+      fetchCSV(PROG_URLS.hazim),
+      fetchCSV(PROG_URLS.shahira),
+      fetchCSV(PROG_URLS.admin),
     ]);
     const hazimData = parseProgCSV(results[0]).map(r => ({...r, _marketer: 'hazim'}));
     const shahiraData = parseProgCSV(results[1]).map(r => ({...r, _marketer: 'shahira'}));
@@ -676,7 +691,7 @@ async function fetchProgressData() {
     updateProgStats();
     renderProgCards();
   } catch(e) {
-    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load data</div></div>';
+    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load — check CSV links</div></div>';
   }
 }
 
@@ -837,7 +852,7 @@ function renderProgCards() {
   document.getElementById('progCardsTitle').textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>Tiada JMB dalam window 60 hari</div></div>';
+    grid.innerHTML = `<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>Tiada JMB expiry bulan ${MONTHS_MY[progFilterMonth]} ${progFilterYear}</div></div>`;
     return;
   }
 
