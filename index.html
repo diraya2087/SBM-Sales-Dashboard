@@ -767,7 +767,10 @@ function parseProgCSV(txt) {
 }
 
 async function fetchProgJSON(url) {
-  const r = await fetch(url);
+  const r = await fetch(url, {
+    redirect: 'follow',
+    mode: 'cors'
+  });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const txt = await r.text();
   return JSON.parse(txt);
