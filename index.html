@@ -516,31 +516,73 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
 </div>
 
-<!-- RECORDS -->
+<!-- JMB PAYMENT TRACKING -->
 <div class="screen" id="screen-transactions">
   <div class="ph">
-    <div><h1>📋 Transaction Records</h1><p>All sales data from Google Sheets</p></div>
+    <div><h1>💳 JMB Payment Tracking</h1><p>Payment status per JMB</p></div>
     <div class="ph-ctrl">
-      <div class="ypills" id="ypills-tx"></div>
+      <button class="btn btn-outline" onclick="fetchPaymentData()">🔄 Refresh</button>
     </div>
   </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL POLICIES</div>
+      <div style="font-size:32px;font-weight:700;color:#f1f5f9;line-height:1;" id="pay-total">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">COMPLETED</div>
+      <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="pay-completed">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">INCOMPLETE</div>
+      <div style="font-size:32px;font-weight:700;color:#EF4444;line-height:1;" id="pay-incomplete">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL PREMIUM</div>
+      <div style="font-size:22px;font-weight:700;color:#F59E0B;line-height:1;" id="pay-premium">-</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
     <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="tf-all" onclick="setTxF('all','mk')">All Marketers</button>
-      <button class="fp" id="tf-hazim" onclick="setTxF('hazim','mk')">Hazim</button>
-      <button class="fp" id="tf-shahira" onclick="setTxF('shahira','mk')">Shahira</button>
+      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
+      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
+      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
+      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
     </div>
     <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="tf-allc" onclick="setTxF('all','case')">All Types</button>
-      <button class="fp" id="tf-new" onclick="setTxF('new','case')">New</button>
-      <button class="fp" id="tf-renewal" onclick="setTxF('renewal','case')">Renewal</button>
+      <button class="fp a-all" id="pf-plan-all" onclick="setPayFilter('all','plan')">All Plans</button>
+      <button class="fp" id="pf-plan-4x" onclick="setPayFilter('4x','plan')">4x</button>
+      <button class="fp" id="pf-plan-3x" onclick="setPayFilter('3x','plan')">3x</button>
+      <button class="fp" id="pf-plan-2x" onclick="setPayFilter('2x','plan')">2x</button>
+      <button class="fp" id="pf-plan-full" onclick="setPayFilter('Full','plan')">Full</button>
+    </div>
+    <div class="fpills" style="margin-bottom:0;">
+      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
+      <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
+      <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
     </div>
   </div>
+
+  <!-- Table -->
   <div class="tcard">
-    <table class="dt">
-      <thead><tr><th>#</th><th>Date</th><th>Marketer</th><th>Type</th><th>Sales Month</th><th>JMB Name</th><th>Principle</th><th>Premium (w/ Tax)</th><th>Premium (w/o Tax)</th><th>Payment</th></tr></thead>
-      <tbody id="txBody"></tbody>
-    </table>
+    <div style="overflow-x:auto;">
+      <table class="dt" id="paymentTable">
+        <thead id="paymentTableHead"></thead>
+        <tbody id="paymentTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="payLoadingMsg" style="text-align:center;padding:40px;color:var(--text3);">
+    Click 🔄 Refresh to load payment data
   </div>
 </div>
 
@@ -1729,18 +1771,148 @@ function renderLb(){
   });
 }
 
-function setTxF(val,type){
-  if(type==='mk'){txMkF=val;['all','hazim','shahira'].forEach(id=>{const b=document.getElementById('tf-'+id);if(b){b.className='fp';if(id===val)b.classList.add('a-'+id);}});}
-  else{txCaseF=val;['allc','new','renewal'].forEach(id=>{const b=document.getElementById('tf-'+id);if(b){b.className='fp';if((id==='allc'&&val==='all')||id===val)b.classList.add(val==='all'?'a-all':'a-'+val);}});}
-  renderTx();
+function setTxF(val,type){ /* legacy */ }
+
+function renderTx(){ /* legacy — payment tab uses renderPaymentTable */ }
+
+// ── PAYMENT TRACKING ─────────────────────────────────────────────
+let paymentData = [];
+let payFilterMk = 'all';
+let payFilterPlan = 'all';
+let payFilterStatus = 'all';
+
+async function fetchPaymentData() {
+  const loadMsg = document.getElementById('payLoadingMsg');
+  const table = document.getElementById('paymentTable');
+  if (loadMsg) { loadMsg.style.display='block'; loadMsg.textContent = '⏳ Loading payment data...'; }
+  if (table) table.style.display = 'none';
+  try {
+    const data = await fetchJSONP(AS_BASE + '?type=payment');
+    paymentData = data || [];
+    if (loadMsg) loadMsg.style.display = 'none';
+    if (table) table.style.display = '';
+    renderPaymentTable();
+  } catch(e) {
+    if (loadMsg) loadMsg.textContent = '❌ Failed to load — ' + e.message;
+  }
 }
-function renderTx(){
-  const users=getUsers();
-  let data=fd(cyTx);
-  if(txMkF!=='all')data=data.filter(r=>r.mk===txMkF);
-  if(txCaseF!=='all')data=data.filter(r=>r.caseType.toLowerCase()===txCaseF);
-  data=[...data].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
-  document.getElementById('txBody').innerHTML=data.length?data.map((r,idx)=>`<tr><td style="color:var(--text3);">${idx+1}</td><td style="color:var(--text3);">${r.ts?r.ts.split(' ')[0]:'-'}</td><td><span class="badge ${r.mk==='hazim'?'bh':'bs'}">${users[r.mk]?.label||r.mk}</span></td><td><span class="badge ${r.caseType==='New'?'bn':'br'}">${r.caseType}</span></td><td>${MONTHS[r.mi]||'-'} ${r.year}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${r.jmb||'-'}</td><td><span class="bp">${r.prin||'-'}</span></td><td style="font-weight:600;color:var(--accent);">${fmt(r.premTax)}</td><td style="color:var(--text2);">${fmt(r.premNoTax)}</td><td style="color:var(--text3);">${r.payment||'-'}</td></tr>`).join(''):'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';
+
+function setPayFilter(val, type) {
+  if (type === 'mk') {
+    payFilterMk = val;
+    ['all','hazim','shahira','admin'].forEach(id => {
+      const b = document.getElementById('pf-mk-'+id);
+      if (b) { b.className = 'fp'; if (id === val) b.classList.add('a-all'); }
+    });
+  } else if (type === 'plan') {
+    payFilterPlan = val;
+    ['all','4x','3x','2x','Full'].forEach(id => {
+      const b = document.getElementById('pf-plan-'+id.toLowerCase());
+      if (b) { b.className = 'fp'; if (id === val) b.classList.add('a-all'); }
+    });
+  } else if (type === 'status') {
+    payFilterStatus = val;
+    ['all','completed','incomplete'].forEach(id => {
+      const b = document.getElementById('pf-status-'+id);
+      if (b) b.className = 'fp';
+    });
+    const active = document.getElementById('pf-status-'+val);
+    if (active) active.classList.add('a-all');
+  }
+  renderPaymentTable();
+}
+
+function getPayStatus(row, plan) {
+  const p = (plan || '').toLowerCase().trim();
+  let total = 0, paid = 0;
+  const isTrue = v => v === true || v === 'TRUE' || v === 'true' || v === 1 || v === '1';
+  if (p === '4x') {
+    total = 4;
+    ['4x Pay 1 \u2713','4x Pay 2 \u2713','4x Pay 3 \u2713','4x Pay 4 \u2713'].forEach(k => { if (isTrue(row[k])) paid++; });
+  } else if (p === '3x') {
+    total = 3;
+    ['3x Pay 1 \u2713','3x Pay 2 \u2713','3x Pay 3 \u2713'].forEach(k => { if (isTrue(row[k])) paid++; });
+  } else if (p === '2x') {
+    total = 2;
+    ['2x Pay 1 \u2713','2x Pay 2 \u2713'].forEach(k => { if (isTrue(row[k])) paid++; });
+  } else if (p === 'full') {
+    total = 1;
+    if (isTrue(row['Full Pay \u2713'])) paid = 1;
+  }
+  return { total, paid, completed: total > 0 && paid >= total };
+}
+
+function renderPayCheckboxes(paid, total) {
+  let html = '<div style="display:flex;gap:3px;">';
+  for (let i = 0; i < total; i++) {
+    const checked = i < paid;
+    html += `<div style="width:16px;height:16px;border-radius:3px;border:1.5px solid ${checked?'#10B981':'var(--border)'};background:${checked?'#10B981':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      ${checked?'<span style="color:#fff;font-size:9px;font-weight:700;">✓</span>':''}
+    </div>`;
+  }
+  html += `<span style="font-size:10px;color:var(--text3);margin-left:4px;">${paid}/${total}</span></div>`;
+  return html;
+}
+
+function renderPaymentTable() {
+  let filtered = paymentData.filter(r => {
+    const mk = (r['Marketer'] || '').toLowerCase();
+    const plan = (r['Payment Plan'] || '').trim();
+    const status = getPayStatus(r, plan);
+    if (payFilterMk !== 'all') {
+      if (payFilterMk === 'admin' && !mk.includes('admin') && !mk.includes('sbm')) return false;
+      else if (payFilterMk !== 'admin' && !mk.includes(payFilterMk)) return false;
+    }
+    if (payFilterPlan !== 'all' && plan !== payFilterPlan) return false;
+    if (payFilterStatus === 'completed' && !status.completed) return false;
+    if (payFilterStatus === 'incomplete' && status.completed) return false;
+    return r['JMB Name'] && r['JMB Name'].toString().trim() !== '';
+  });
+
+  const total = filtered.length;
+  const completed = filtered.filter(r => getPayStatus(r, r['Payment Plan']).completed).length;
+  const incomplete = total - completed;
+  const totalPrem = filtered.reduce((s,r) => {
+    const v = parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;
+    return s + v;
+  }, 0);
+
+  document.getElementById('pay-total').textContent = total;
+  document.getElementById('pay-completed').textContent = completed;
+  document.getElementById('pay-incomplete').textContent = incomplete;
+  document.getElementById('pay-premium').textContent = fmt(totalPrem);
+
+  const tbody = document.getElementById('paymentTableBody');
+  const thead = document.getElementById('paymentTableHead');
+  if (!tbody || !thead) return;
+
+  thead.innerHTML = `<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Nett (RM)</th><th>Plan</th><th>Payment</th><th>Status</th></tr>`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((r, idx) => {
+    const plan = r['Payment Plan'] || '-';
+    const mk = (r['Marketer'] || '').toLowerCase();
+    const mkLabel = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
+    const mkBadge = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
+    const prem = parseFloat(String(r['Premium Nett (RM)']||r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;
+    const status = getPayStatus(r, plan);
+    const statusHtml = status.total > 0
+      ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${status.completed?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${status.completed?'#10B981':'#EF4444'};">${status.completed?'Completed':'Incomplete'}</span>`
+      : '<span style="color:var(--text3);font-size:11px;">-</span>';
+    return `<tr>
+      <td style="color:var(--text3);">${idx+1}</td>
+      <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r['JMB Name']}</td>
+      <td><span class="badge ${mkBadge}">${mkLabel}</span></td>
+      <td style="font-weight:600;color:var(--accent);">${prem?fmt(prem):'-'}</td>
+      <td><span class="bp">${plan}</span></td>
+      <td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td>
+      <td>${statusHtml}</td>
+    </tr>`;
+  }).join('');
 }
 
 populateLoginDropdown();
