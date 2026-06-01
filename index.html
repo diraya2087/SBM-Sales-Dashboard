@@ -568,6 +568,11 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
         </div>
       </div>
       <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">EXPIRY MONTH</div>
+        <div class="fpills" style="margin-bottom:0;flex-wrap:wrap;" id="monthPills"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">URGENCY</div>
         <div class="fpills" style="margin-bottom:0;">
           <button class="fp a-all" id="pu-all" onclick="setPU('all',this)">All</button>
@@ -604,6 +609,36 @@ const PROG_URLS = {
 let progData = [];
 let progFilterMk = 'all';
 let progFilterUrgency = 'all';
+let progFilterMonth = new Date().getMonth();
+let progFilterYear = new Date().getFullYear();
+const MONTHS_MY = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildMonthPills() {
+  const today = new Date();
+  const currentMi = today.getMonth();
+  const currentYear = today.getFullYear();
+  const pills = document.getElementById('monthPills');
+  if (!pills) return;
+  let html = '';
+  for (let i = -1; i <= 5; i++) {
+    const d = new Date(currentYear, currentMi + i, 1);
+    const mi = d.getMonth();
+    const yr = d.getFullYear();
+    const label = MONTHS_MY[mi] + ' ' + yr;
+    const isCurrent = i === 0;
+    const isActive = mi === progFilterMonth && yr === progFilterYear;
+    html += `<button class="fp ${isActive?'a-all':''}" style="${isCurrent?'border-color:#F59E0B;color:#F59E0B;':''}" onclick="setProgMonth(${mi},${yr},this)">${label}${isCurrent?' 📌':''}</button>`;
+  }
+  pills.innerHTML = html;
+}
+
+function setProgMonth(mi, yr, btn) {
+  progFilterMonth = mi;
+  progFilterYear = yr;
+  document.getElementById('monthPills').querySelectorAll('.fp').forEach(b => b.classList.remove('a-all'));
+  btn.classList.add('a-all');
+  renderProgCards();
+}
 
 // Parse CSV for progress tracker
 function parseProgCSV(txt) {
@@ -637,6 +672,7 @@ async function fetchProgressData() {
     const shahiraData = parseProgCSV(results[1]).map(r => ({...r, _marketer: 'shahira'}));
     const adminData = parseProgCSV(results[2]).map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
+    buildMonthPills();
     updateProgStats();
     renderProgCards();
   } catch(e) {
@@ -774,8 +810,19 @@ function renderProgCards() {
     if (search && !name.includes(search)) return false;
     if (progFilterMk !== 'all' && mk !== progFilterMk) return false;
     if (progFilterUrgency !== 'all' && urg !== progFilterUrgency) return false;
-    // Only show ≤60 days or won/rejected
-    if (urg === 'outside') return false;
+    // Filter by expiry month
+    const expiryStr = r['Expiry Date'] || '';
+    if (expiryStr) {
+      const parts = expiryStr.split('/');
+      let expDate;
+      if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
+      else expDate = new Date(expiryStr);
+      if (!isNaN(expDate)) {
+        if (expDate.getMonth() !== progFilterMonth || expDate.getFullYear() !== progFilterYear) return false;
+      }
+    }
+    // Won/rejected always show if month matches
+    if (urg === 'won' || urg === 'rejected') return true;
     return true;
   });
 
@@ -787,7 +834,7 @@ function renderProgCards() {
     return da - db;
   });
 
-  document.getElementById('progCardsTitle').textContent = `JMB Progress (${filtered.length} JMB dalam window 60 hari)`;
+  document.getElementById('progCardsTitle').textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
 
   if (filtered.length === 0) {
     grid.innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">📭</div><div>Tiada JMB dalam window 60 hari</div></div>';
