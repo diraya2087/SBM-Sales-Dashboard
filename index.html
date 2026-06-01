@@ -637,6 +637,54 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
+  <!-- Pipeline + Marketer Performance -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;">
+
+    <!-- Sales Pipeline Funnel -->
+    <div class="card">
+      <div class="ct">Sales Pipeline Funnel</div>
+      <div class="cs">Cases by current stage</div>
+      <div id="pipelineDiv" style="margin-top:4px;"></div>
+    </div>
+
+    <!-- Marketer Performance -->
+    <div class="card">
+      <div class="ct">Marketer Performance</div>
+      <div class="cs">Active cases per marketer</div>
+      <div id="marketerPerfDiv" style="margin-top:4px;"></div>
+      <div id="topPerformerDiv" style="margin-top:12px;padding:10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;display:none;">
+        <div style="font-size:12px;font-weight:600;color:#10B981;" id="topPerformerText">🥇 TOP PERFORMER</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="pipelineStatus"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottleneck + Critical Alerts -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;">
+
+    <!-- Bottleneck Analysis -->
+    <div class="card">
+      <div class="ct">Bottleneck Analysis</div>
+      <div class="cs">Where cases are stuck</div>
+      <div id="bottleneckDiv" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="bottleneckMsg" style="margin-top:10px;font-size:12px;color:var(--text3);font-style:italic;"></div>
+    </div>
+
+    <!-- Critical Alerts -->
+    <div class="card">
+      <div class="ct">⚠️ Critical Alerts</div>
+      <div class="cs">Cases stuck &gt;15 days</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table class="dt" style="font-size:12px;">
+          <thead><tr><th>JMB Name</th><th>Marketer</th><th>Days</th><th>Stage</th><th>Status</th></tr></thead>
+          <tbody id="criticalAlertsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
   <!-- Cards -->
   <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;" id="progCardsTitle">JMB Progress</div>
   <div class="jmb-grid" id="jmbGrid">
@@ -832,6 +880,148 @@ function getUrgency(row) {
   return 'outside'; // > 60 days, don't show
 }
 
+function renderProgAnalysis(data) {
+  // ── Pipeline Funnel ──────────────────────────────────────────
+  const stages = [
+    'Prospecting','Quoting','Comparative','Appointment',
+    'Decision','Hold Cover','Policy Issued','Rejected'
+  ];
+  const stageCounts = {};
+  stages.forEach(s => stageCounts[s] = 0);
+  data.forEach(r => {
+    const stage = r['Current Stage'] || '';
+    const matched = stages.find(s => stage.toLowerCase().includes(s.toLowerCase()));
+    if (matched) stageCounts[matched]++;
+    else if (stage) {
+      stageCounts['Prospecting'] = (stageCounts['Prospecting'] || 0) + 1;
+    }
+  });
+  const maxStage = Math.max(...Object.values(stageCounts), 1);
+  const stageColors = {
+    'Prospecting':'#3B82F6','Quoting':'#6366F1','Comparative':'#8B5CF6',
+    'Appointment':'#F59E0B','Decision':'#EF4444','Hold Cover':'#10B981',
+    'Policy Issued':'#059669','Rejected':'#94a3b8'
+  };
+  const pipelineDiv = document.getElementById('pipelineDiv');
+  if (pipelineDiv) {
+    pipelineDiv.innerHTML = stages.map(s => {
+      const cnt = stageCounts[s] || 0;
+      const pct = Math.round(cnt / maxStage * 100);
+      const col = stageColors[s] || '#3B82F6';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <div style="font-size:11px;color:var(--text2);min-width:100px;text-align:right;">${s}</div>
+        <div style="flex:1;height:18px;background:var(--border);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${Math.max(pct,2)}%;background:${col};border-radius:4px;display:flex;align-items:center;padding-left:6px;transition:width .5s;">
+            ${cnt > 0 ? `<span style="font-size:10px;font-weight:700;color:#fff;">${cnt}</span>` : ''}
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);min-width:20px;">${cnt}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Marketer Performance ─────────────────────────────────────
+  const mkCounts = {hazim:0, shahira:0, admin:0};
+  data.forEach(r => { if (mkCounts[r._marketer] !== undefined) mkCounts[r._marketer]++; });
+  const mkMax = Math.max(...Object.values(mkCounts), 1);
+  const mkLabels = {hazim:'Hazim', shahira:'Shahira', admin:'SBM'};
+  const mkColors = {hazim:'#3B82F6', shahira:'#10B981', admin:'#8B5CF6'};
+  const mkPerfDiv = document.getElementById('marketerPerfDiv');
+  if (mkPerfDiv) {
+    mkPerfDiv.innerHTML = Object.entries(mkCounts).map(([mk, cnt]) => {
+      const pct = Math.round(cnt / mkMax * 100);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--text2);min-width:60px;">${mkLabels[mk]}</div>
+        <div style="flex:1;height:20px;background:var(--border);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${Math.max(pct,2)}%;background:${mkColors[mk]};border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .5s;">
+            ${cnt > 0 ? `<span style="font-size:11px;font-weight:700;color:#fff;">${cnt}</span>` : ''}
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);min-width:20px;">${cnt}</div>
+      </div>`;
+    }).join('');
+  }
+  // Top performer
+  const topMk = Object.entries(mkCounts).sort((a,b)=>b[1]-a[1])[0];
+  const topDiv = document.getElementById('topPerformerDiv');
+  const topText = document.getElementById('topPerformerText');
+  const total = data.length;
+  if (topDiv && topMk && topMk[1] > 0) {
+    topDiv.style.display = 'block';
+    topText.textContent = `🥇 TOP PERFORMER: ${mkLabels[topMk[0]].toUpperCase()} (${topMk[1]} cases)`;
+    document.getElementById('pipelineStatus').textContent = total > 0 ? `${Math.round(topMk[1]/total*100)}% of total pipeline` : '';
+  }
+
+  // ── Bottleneck Analysis ──────────────────────────────────────
+  let waitJMB=0, waitPrincipal=0, internalFollow=0;
+  data.forEach(r => {
+    const stage = (r['Current Stage'] || '').toLowerCase();
+    const stageDate = r['Stage Date'] || '';
+    let daysInStage = 0;
+    if (stageDate) {
+      const sd = new Date(stageDate);
+      if (!isNaN(sd)) daysInStage = Math.floor((new Date() - sd) / (1000*60*60*24));
+    }
+    if (daysInStage > 7) {
+      if (stage.includes('prospect') || stage.includes('appointment') || stage.includes('decision')) waitJMB++;
+      else if (stage.includes('quot') || stage.includes('hold') || stage.includes('policy')) waitPrincipal++;
+      else internalFollow++;
+    }
+  });
+  const bnDiv = document.getElementById('bottleneckDiv');
+  if (bnDiv) {
+    const bnItems = [
+      {label:'Waiting JMB', count:waitJMB, color:'#EF4444', icon:'🔴'},
+      {label:'Waiting Principal', count:waitPrincipal, color:'#F59E0B', icon:'🟠'},
+      {label:'Internal Follow-up', count:internalFollow, color:'#FFD966', icon:'🟡'},
+    ];
+    bnDiv.innerHTML = bnItems.map(item => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;">
+        <div style="font-size:12px;color:var(--text);">${item.icon} ${item.label}</div>
+        <div style="font-size:18px;font-weight:700;color:${item.color};">${item.count}</div>
+      </div>`).join('');
+    const maxBn = Math.max(waitJMB, waitPrincipal, internalFollow);
+    const bnMsg = document.getElementById('bottleneckMsg');
+    if (bnMsg) {
+      if (maxBn === 0) bnMsg.textContent = '"Pipeline flowing smoothly"';
+      else if (waitJMB >= waitPrincipal && waitJMB >= internalFollow) bnMsg.textContent = '"Business needs attention on JMB side"';
+      else if (waitPrincipal >= waitJMB) bnMsg.textContent = '"Follow up needed with Principals"';
+      else bnMsg.textContent = '"Internal follow-up required"';
+    }
+  }
+
+  // ── Critical Alerts ──────────────────────────────────────────
+  const criticalBody = document.getElementById('criticalAlertsBody');
+  if (criticalBody) {
+    const critical = data.filter(r => {
+      const days = daysToExpiry(r['Expiry Date'] || '');
+      return days !== null && days >= 0 && days <= 15;
+    }).sort((a,b) => {
+      const da = daysToExpiry(a['Expiry Date']||'') ?? 999;
+      const db = daysToExpiry(b['Expiry Date']||'') ?? 999;
+      return da - db;
+    }).slice(0, 10);
+
+    if (critical.length === 0) {
+      criticalBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);">No critical cases</td></tr>';
+    } else {
+      criticalBody.innerHTML = critical.map(r => {
+        const days = daysToExpiry(r['Expiry Date']||'') ?? '?';
+        const status = days <= 7 ? '🚨 CRITICAL' : '⚠️ URGENT';
+        const statusColor = days <= 7 ? '#EF4444' : '#F59E0B';
+        const mkLabel = {hazim:'Hazim',shahira:'Shahira',admin:'SBM'}[r._marketer] || r._marketer;
+        return `<tr>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">${r['JMB Name']||'-'}</td>
+          <td><span class="badge ${r._marketer==='hazim'?'bh':r._marketer==='shahira'?'bs':'bn'}">${mkLabel}</span></td>
+          <td style="font-weight:700;color:${statusColor};">${days}</td>
+          <td style="color:var(--text2);font-size:11px;">${r['Current Stage']||'-'}</td>
+          <td style="color:${statusColor};font-weight:600;font-size:11px;">${status}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
 function getFilteredProgData() {
   return progData.filter(r => {
     if (progFilterMk !== 'all' && r._marketer !== progFilterMk) return false;
@@ -876,6 +1066,9 @@ function updateProgStats() {
   document.getElementById('lg-rej').textContent = rej;
   document.getElementById('lg-urgent').textContent = urgent;
   document.getElementById('progDonutTotal').textContent = total;
+
+  // Render pipeline analysis
+  renderProgAnalysis(data);
 
   // Donut
   const svg = document.getElementById('progDonutSvg');
