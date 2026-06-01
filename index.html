@@ -398,10 +398,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="ph">
     <div><h1>Sales Performance Dashboard</h1><p id="dsub">Live from Google Sheets</p></div>
     <div class="ph-ctrl">
-      <div class="ypills" id="ypills-dash">
-        <button class="ypill" onclick="setYear(2025,this,'dash')">2025</button>
-        <button class="ypill active" onclick="setYear(2026,this,'dash')">2026</button>
-      </div>
+      <div class="ypills" id="ypills-dash"></div>
       <button class="btn btn-outline" onclick="fetchNow()">🔄 Refresh</button>
     </div>
   </div>
@@ -477,10 +474,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="ph">
     <div><h1>🏆 Leaderboard</h1><p>Marketer ranking & performance vs target</p></div>
     <div class="ph-ctrl">
-      <div class="ypills" id="ypills-lb">
-        <button class="ypill" onclick="setYear(2025,this,'lb')">2025</button>
-        <button class="ypill active" onclick="setYear(2026,this,'lb')">2026</button>
-      </div>
+      <div class="ypills" id="ypills-lb"></div>
     </div>
   </div>
   <div class="card-full">
@@ -507,10 +501,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="ph">
     <div><h1>📋 Transaction Records</h1><p>All sales data from Google Sheets</p></div>
     <div class="ph-ctrl">
-      <div class="ypills" id="ypills-tx">
-        <button class="ypill" onclick="setYear(2025,this,'tx')">2025</button>
-        <button class="ypill active" onclick="setYear(2026,this,'tx')">2026</button>
-      </div>
+      <div class="ypills" id="ypills-tx"></div>
     </div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
@@ -1134,7 +1125,7 @@ function doLogin(){
   const settlementBtn = document.getElementById('snav-settlement');
   if (setupBtn) setupBtn.style.display = u.role==='admin' ? '' : 'none';
   if (settlementBtn) settlementBtn.style.display = (u.role==='admin'||u.role==='management') ? '' : 'none';
-  go('dashboard');startTimer();
+  go('dashboard');startTimer();buildYearPills();
 }
 function logout(){
   cu=null;stopTimer();chartsBuilt=false;rawData=[];filterPrin=null;progData=[];
@@ -1270,6 +1261,7 @@ async function fetchNow(){
     rawData=parseAuto(txt,url).map(normalizeRow).filter(Boolean);
     setSyncUI('ok',new Date().toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})+' · '+rawData.length+' records');
     document.getElementById('dsub').textContent='Live from Google Sheets · '+rawData.length+' records';
+    buildYearPills();
     renderDash();renderLb();renderTx();
   }catch(e){setSyncUI('err','Failed — check link');}
 }
@@ -1304,9 +1296,23 @@ const fmt=v=>v>=1000000?'RM '+(v/1000000).toFixed(2)+'M':v>=1000?'RM '+(v/1000).
 const pct=(a,b)=>b?Math.round(a/b*100):0;
 const getLatestMi=y=>{let l=-1;fd(y).forEach(r=>{if(r.mi>l)l=r.mi;});return l;}
 
+function buildYearPills() {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear];
+  ['dash','lb','tx'].forEach(scope => {
+    const container = document.getElementById('ypills-' + scope);
+    if (!container) return;
+    const activeYear = scope === 'dash' ? cy : scope === 'lb' ? cyLb : cyTx;
+    container.innerHTML = years.map(yr => 
+      `<button class="ypill ${yr === activeYear ? 'active' : ''}" onclick="setYear(${yr},this,'${scope}')">${yr}</button>`
+    ).join('');
+  });
+}
+
 function setYear(y,btn,scope){
   if(scope==='dash')cy=y;else if(scope==='lb')cyLb=y;else cyTx=y;
-  document.getElementById('ypills-'+scope).querySelectorAll('.ypill').forEach(b=>b.classList.remove('active'));
+  const container = document.getElementById('ypills-'+scope);
+  if (container) container.querySelectorAll('.ypill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(scope==='dash')renderDash();if(scope==='lb')renderLb();if(scope==='tx')renderTx();
 }
