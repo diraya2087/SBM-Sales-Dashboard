@@ -813,13 +813,7 @@ async function fetchProgressData() {
 
 function daysToExpiry(expiryStr) {
   if (!expiryStr) return null;
-  let d;
-  const parts = expiryStr.split('/');
-  if (parts.length === 3) {
-    d = new Date(parts[2], parts[1]-1, parts[0]);
-  } else {
-    d = new Date(expiryStr);
-  }
+  const d = new Date(expiryStr);
   if (isNaN(d)) return null;
   const today = new Date(); today.setHours(0,0,0,0);
   return Math.ceil((d - today) / (1000*60*60*24));
@@ -842,16 +836,11 @@ function getFilteredProgData() {
   return progData.filter(r => {
     if (progFilterMk !== 'all' && r._marketer !== progFilterMk) return false;
     const expiryStr = r['Expiry Date'] || '';
-    if (expiryStr) {
-      const parts = expiryStr.split('/');
-      let expDate;
-      if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
-      else expDate = new Date(expiryStr);
-      if (!isNaN(expDate)) {
-        if (expDate.getFullYear() !== progYear) return false;
-        if (expDate.getMonth() !== progFilterMonth) return false;
-      }
-    }
+    if (!expiryStr) return false;
+    const expDate = new Date(expiryStr);
+    if (isNaN(expDate)) return false;
+    if (expDate.getFullYear() !== progYear) return false;
+    if (expDate.getMonth() !== progFilterMonth) return false;
     return true;
   });
 }
