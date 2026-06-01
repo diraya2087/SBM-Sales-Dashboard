@@ -559,41 +559,37 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL PREMIUM</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PENDING PREMIUM</div>
       <div style="font-size:22px;font-weight:700;color:#F59E0B;line-height:1;" id="pay-premium">-</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">from incomplete policies</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
     </div>
   </div>
 
-  <!-- Plan Cards — Big clickable -->
-  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;">
-    <div onclick="setPayPlan('all',this)" id="payplan-all" style="background:var(--accent);border:1px solid var(--accent);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;">
-      <div style="font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ALL PLANS</div>
-      <div style="font-size:32px;font-weight:700;color:#fff;line-height:1;" id="ppc-all">0</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px;">policies</div>
-    </div>
-    <div onclick="setPayPlan('4x',this)" id="payplan-4x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+  <!-- Plan Cards — 4 cards same size -->
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+    <div onclick="setPayPlan('4x',this)" id="payplan-4x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="if(!this.classList.contains('ppactive'))this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">4X PAYMENT</div>
       <div style="font-size:32px;font-weight:700;color:#3B82F6;line-height:1;" id="ppc-4x">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="font-size:11px;color:#EF4444;font-weight:600;margin-top:4px;" id="ppend-4x">0/0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
     </div>
-    <div onclick="setPayPlan('3x',this)" id="payplan-3x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#8B5CF6'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+    <div onclick="setPayPlan('3x',this)" id="payplan-3x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#8B5CF6'" onmouseout="if(!this.classList.contains('ppactive'))this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">3X PAYMENT</div>
       <div style="font-size:32px;font-weight:700;color:#8B5CF6;line-height:1;" id="ppc-3x">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="font-size:11px;color:#EF4444;font-weight:600;margin-top:4px;" id="ppend-3x">0/0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#8B5CF6;"></div>
     </div>
-    <div onclick="setPayPlan('2x',this)" id="payplan-2x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#F59E0B'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+    <div onclick="setPayPlan('2x',this)" id="payplan-2x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#F59E0B'" onmouseout="if(!this.classList.contains('ppactive'))this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">2X PAYMENT</div>
       <div style="font-size:32px;font-weight:700;color:#F59E0B;line-height:1;" id="ppc-2x">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="font-size:11px;color:#EF4444;font-weight:600;margin-top:4px;" id="ppend-2x">0/0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
     </div>
-    <div onclick="setPayPlan('Full',this)" id="payplan-Full" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#10B981'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+    <div onclick="setPayPlan('Full',this)" id="payplan-Full" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#10B981'" onmouseout="if(!this.classList.contains('ppactive'))this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">FULL PAYMENT</div>
       <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="ppc-Full">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="font-size:11px;color:#EF4444;font-weight:600;margin-top:4px;" id="ppend-Full">0/0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
   </div>
@@ -1828,23 +1824,19 @@ function setPayYear(yr, btn) {
 
 function setPayPlan(plan, el) {
   payFilterPlan = plan;
-  // Reset all plan cards
-  ['all','4x','3x','2x','Full'].forEach(p => {
+  const planColors = {'4x':'#3B82F6','3x':'#8B5CF6','2x':'#F59E0B','Full':'#10B981'};
+  ['4x','3x','2x','Full'].forEach(p => {
     const card = document.getElementById('payplan-' + p);
     if (!card) return;
-    if (p === plan) {
-      card.style.background = p === 'all' ? 'var(--accent)' : {
-        '4x':'rgba(59,130,246,.2)','3x':'rgba(139,92,246,.2)',
-        '2x':'rgba(245,158,11,.2)','Full':'rgba(16,185,129,.2)'
-      }[p];
-      card.style.borderColor = p === 'all' ? 'var(--accent)' : {
-        '4x':'#3B82F6','3x':'#8B5CF6','2x':'#F59E0B','Full':'#10B981'
-      }[p];
-    } else {
-      card.style.background = p === 'all' ? 'var(--card2)' : 'var(--card)';
-      card.style.borderColor = 'var(--border)';
-    }
+    card.classList.remove('ppactive');
+    card.style.background = 'var(--card)';
+    card.style.borderColor = 'var(--border)';
   });
+  if (plan !== 'all') {
+    el.classList.add('ppactive');
+    el.style.background = planColors[plan] ? planColors[plan] + '22' : 'var(--card2)';
+    el.style.borderColor = planColors[plan] || 'var(--accent)';
+  }
   renderPaymentTable();
 }
 
@@ -1923,17 +1915,21 @@ function renderPayCheckboxes(paid, total) {
 }
 
 function renderPaymentTable() {
-  // Update plan card counts
+  // Update plan card counts with pending ratio
   const allData = paymentData.filter(r => r['JMB Name'] && r['JMB Name'].toString().trim());
   const plans = ['4x','3x','2x','Full'];
-  const planCounts = {all: allData.length};
   plans.forEach(p => {
-    planCounts[p] = allData.filter(r => (r['Payment Plan']||'').trim() === p).length;
+    const planRows = allData.filter(r => (r['Payment Plan']||'').trim() === p);
+    const total = planRows.length;
+    const pending = planRows.filter(r => !getPayStatus(r, p).completed).length;
     const el = document.getElementById('ppc-'+p);
-    if (el) el.textContent = planCounts[p];
+    if (el) el.textContent = total;
+    const pendEl = document.getElementById('ppend-'+p);
+    if (pendEl) {
+      pendEl.textContent = `${pending}/${total} pending`;
+      pendEl.style.color = pending > 0 ? '#EF4444' : '#10B981';
+    }
   });
-  const allEl = document.getElementById('ppc-all');
-  if (allEl) allEl.textContent = planCounts.all;
 
   let filtered = allData.filter(r => {
     const mk = (r['Marketer'] || '').toLowerCase();
@@ -1952,10 +1948,12 @@ function renderPaymentTable() {
   const total = filtered.length;
   const completed = filtered.filter(r => getPayStatus(r, r['Payment Plan']).completed).length;
   const incomplete = total - completed;
-  const totalPrem = filtered.reduce((s,r) => {
-    const v = parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;
-    return s + v;
-  }, 0);
+  const totalPrem = filtered
+    .filter(r => !getPayStatus(r, r['Payment Plan']).completed)
+    .reduce((s,r) => {
+      const v = parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;
+      return s + v;
+    }, 0);
 
   document.getElementById('pay-total').textContent = total;
   document.getElementById('pay-completed').textContent = completed;
