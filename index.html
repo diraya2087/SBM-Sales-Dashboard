@@ -192,7 +192,16 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 /* NO CONN */
 #noConn{display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:12px 16px;margin-bottom:1.3rem;font-size:13px;color:#fbbf24;}
 
-/* ── PROGRESS TRACKER ── */
+/* SIDEBAR */
+.sidebar-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;font-size:13px;border-radius:8px;cursor:pointer;font-weight:500;color:var(--text2);border:none;background:transparent;transition:all .15s;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+.sidebar-btn:hover{background:rgba(255,255,255,.06);color:var(--text);}
+.sidebar-btn.active{background:var(--accent);color:#fff;box-shadow:0 0 10px rgba(59,130,246,.3);}
+
+/* MAIN WRAP — shift right when sidebar open */
+#mainWrap{transition:margin-left .2s;}
+#mainWrap.with-sidebar{margin-left:200px;}
+.screen{display:none;padding:1.5rem;max-width:1440px;margin:0 auto;}
+.screen.active{display:block;}
 .prog-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.3rem;}
 .pstat{background:var(--card);border-radius:10px;padding:14px 16px;border:1px solid var(--border);text-align:center;}
 .pstat-val{font-size:24px;font-weight:700;margin-bottom:4px;}
@@ -307,23 +316,31 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="brand">
     <div class="brand-logo">S</div>
     <div>
-      <div class="brand-name">Sales Dashboard</div>
+      <div class="brand-name">SBM Dashboard</div>
       <div class="brand-sub">JMB Management</div>
     </div>
   </div>
   <div class="topbar-right">
     <div class="sync-pill" id="syncPill" style="display:none;"><span class="sdot" id="sdot"></span><span id="stext">-</span></div>
-    <div class="nav-wrap" id="navWrap" style="display:none;">
-      <button class="nav-btn active" onclick="go('dashboard')">📊 Dashboard</button>
-      <button class="nav-btn" onclick="go('leaderboard')">🏆 Leaderboard</button>
-      <button class="nav-btn" onclick="go('transactions')">📋 Records</button>
-      <button class="nav-btn" onclick="go('progress')">🎯 Progress</button>
-      <button class="nav-btn" id="navSetup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
-    </div>
     <div class="upill" id="upill" style="display:none;"><div class="uav" id="uav"></div><span id="ulabel"></span></div>
     <button class="btn btn-red" id="btnOut" style="display:none;" onclick="logout()">Logout</button>
   </div>
 </div>
+
+<!-- SIDEBAR -->
+<div id="sidebar" style="display:none;position:fixed;left:0;top:58px;bottom:0;width:200px;background:#0f172a;border-right:1px solid var(--border);z-index:200;display:none;flex-direction:column;padding:12px 8px;gap:4px;overflow-y:auto;">
+  <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px 4px;">MENU</div>
+  <button class="sidebar-btn active" id="snav-dashboard" onclick="go('dashboard')">📊 Sales Performance</button>
+  <button class="sidebar-btn" id="snav-leaderboard" onclick="go('leaderboard')">🏆 Leaderboard</button>
+  <button class="sidebar-btn" id="snav-progress" onclick="go('progress')">🎯 Progress</button>
+  <button class="sidebar-btn" id="snav-transactions" onclick="go('transactions')">💳 JMB Payment Tracking</button>
+  <button class="sidebar-btn" id="snav-settlement" onclick="go('settlement')">💰 Payment Settlement</button>
+  <div style="flex:1;"></div>
+  <button class="sidebar-btn" id="snav-setup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
+</div>
+
+<!-- MAIN WRAPPER (shifts right when sidebar visible) -->
+<div id="mainWrap">
 
 <!-- LOGIN -->
 <div class="screen active" id="screen-login">
@@ -1110,31 +1127,26 @@ function doLogin(){
   document.getElementById('ulabel').textContent=u.label;
   document.getElementById('upill').style.display='flex';
   document.getElementById('btnOut').style.display='';
-  document.getElementById('navWrap').style.display='flex';
-  document.getElementById('navSetup').style.display=u.role==='admin'?'':'none';
+  // Show sidebar
+  showSidebar(true);
+  // Show/hide role-based buttons
+  const setupBtn = document.getElementById('snav-setup');
+  const settlementBtn = document.getElementById('snav-settlement');
+  if (setupBtn) setupBtn.style.display = u.role==='admin' ? '' : 'none';
+  if (settlementBtn) settlementBtn.style.display = (u.role==='admin'||u.role==='management') ? '' : 'none';
   go('dashboard');startTimer();
 }
 function logout(){
   cu=null;stopTimer();chartsBuilt=false;rawData=[];filterPrin=null;progData=[];
-  ['upill','btnOut','navWrap','syncPill'].forEach(id=>document.getElementById(id).style.display='none');
+  ['upill','btnOut','syncPill'].forEach(id=>document.getElementById(id).style.display='none');
+  showSidebar(false);
   document.getElementById('lu').value='';document.getElementById('lp').value='';
   [cM,cMk,cD,cCase,cPrin,cMkP,cTgt].forEach(c=>{if(c)c.destroy();});
   cM=cMk=cD=cCase=cPrin=cMkP=cTgt=null;
   if(cLbCase){cLbCase.destroy();cLbCase=null;}
-  populateLoginDropdown();go('login');
-}
-function go(name){
+  populateLoginDropdown();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const btns=document.querySelectorAll('.nav-btn');
-  const map={dashboard:0,leaderboard:1,transactions:2,progress:3,setup:4};
-  if(map[name]!==undefined&&btns[map[name]])btns[map[name]].classList.add('active');
-  if(name==='dashboard')renderDash();
-  if(name==='leaderboard')renderLb();
-  if(name==='transactions')renderTx();
-  if(name==='progress')fetchProgressData();
-  if(name==='setup'){renderSetup();renderUserList();}
+  document.getElementById('screen-login').classList.add('active');
 }
 
 function renderUserList(){
@@ -1460,6 +1472,48 @@ function renderTx(){
 }
 
 populateLoginDropdown();
+
+// ── SIDEBAR ──────────────────────────────────────────────────────
+function showSidebar(show) {
+  const sb = document.getElementById('sidebar');
+  const mw = document.getElementById('mainWrap');
+  if (show) {
+    sb.style.display = 'flex';
+    mw.classList.add('with-sidebar');
+  } else {
+    sb.style.display = 'none';
+    mw.classList.remove('with-sidebar');
+  }
+}
+
+function go(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  const active = document.getElementById('snav-' + name);
+  if (active) active.classList.add('active');
+  if (name === 'dashboard') renderDash();
+  if (name === 'leaderboard') renderLb();
+  if (name === 'transactions') renderTx();
+  if (name === 'progress') fetchProgressData();
+  if (name === 'setup') { renderSetup(); renderUserList(); }
+}
 </script>
+
+<!-- PAYMENT SETTLEMENT SCREEN -->
+<div class="screen" id="screen-settlement" style="display:none;">
+  <div class="ph">
+    <div><h1>💰 Payment Settlement</h1><p>Settlement summary — Admin & Management view</p></div>
+  </div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--text3);">
+    <div style="font-size:40px;margin-bottom:16px;">🚧</div>
+    <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">Coming Soon</div>
+    <div style="font-size:13px;">Payment Settlement will be connected to Payment Tracking data.</div>
+  </div>
+</div>
+
+</div><!-- end mainWrap -->
+
 </body>
 </html>
