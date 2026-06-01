@@ -647,10 +647,11 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 <script>
 // ── PROGRESS TRACKER CSV URLS ─────────────────────────────────
+const AS_BASE = 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 const PROG_URLS = {
-  hazim:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=1040464248&single=true&output=csv',
-  shahira: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=719269029&single=true&output=csv',
-  admin:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrTg65o1onv3LkcVtqtkmrjb4_APs2ouOSp7LvYCWxwYAWh0W54Hi-5nRBXkCe2ySCHbJn4YEygpFA/pub?gid=434504663&single=true&output=csv',
+  hazim:   AS_BASE + '?type=progress&tab=hazim',
+  shahira: AS_BASE + '?type=progress&tab=shahira',
+  admin:   AS_BASE + '?type=progress&tab=admin',
 };
 
 let progData = [];
@@ -766,18 +767,25 @@ function parseProgCSV(txt) {
   }).filter(r => r['JMB Name'] && r['JMB Name'].length > 0);
 }
 
-async function fetchProgCSV(url) {
-  try {
-    const proxy = 'https://corsproxy.io/?' + url;
-    const r = await fetch(proxy);
-    if (r.ok) return parseProgCSV(await r.text());
-  } catch(e) {}
-  try {
-    const proxy2 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-    const r = await fetch(proxy2);
-    if (r.ok) return parseProgCSV(await r.text());
-  } catch(e) {}
-  throw new Error('Cannot fetch data');
+function fetchJSONP(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('Timeout'));
+    }, 15000);
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timeout); reject(new Error('Script error')); };
+    document.body.appendChild(script);
+  });
 }
 
 async function fetchProgressData() {
@@ -786,13 +794,13 @@ async function fetchProgressData() {
   updateProgHeader();
   try {
     const results = await Promise.all([
-      fetchProgCSV(PROG_URLS.hazim),
-      fetchProgCSV(PROG_URLS.shahira),
-      fetchProgCSV(PROG_URLS.admin),
+      fetchJSONP(PROG_URLS.hazim),
+      fetchJSONP(PROG_URLS.shahira),
+      fetchJSONP(PROG_URLS.admin),
     ]);
-    const hazimData  = results[0].map(r => ({...r, _marketer: 'hazim'}));
+    const hazimData   = results[0].map(r => ({...r, _marketer: 'hazim'}));
     const shahiraData = results[1].map(r => ({...r, _marketer: 'shahira'}));
-    const adminData  = results[2].map(r => ({...r, _marketer: 'admin'}));
+    const adminData   = results[2].map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
     buildMonthPills();
     updateProgStats();
