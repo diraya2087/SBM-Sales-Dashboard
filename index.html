@@ -518,76 +518,124 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 <!-- PROGRESS TRACKER -->
 <div class="screen" id="screen-progress">
-  <div class="ph">
-    <div><h1>🎯 JMB Progress Tracker</h1><p id="progSub">Monitor marketer progress — 60 hari ke expiry</p></div>
-    <div class="ph-ctrl">
-      <button class="btn btn-outline" onclick="fetchProgressData()">🔄 Refresh</button>
+
+  <!-- Papan Pemuka Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">PAPAN PEMUKA</div>
+      <div style="font-size:20px;font-weight:700;color:#f1f5f9;" id="progHeadTitle">JUN 2026</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="progHeadDate"></div>
     </div>
+    <button class="btn btn-outline" onclick="fetchProgressData()">🔄 Refresh</button>
   </div>
 
-  <!-- Stats -->
-  <div class="prog-stats">
-    <div class="pstat total"><div class="pstat-val" id="ps-total">0</div><div class="pstat-lbl">Total JMB</div></div>
-    <div class="pstat won"><div class="pstat-val" id="ps-won">0</div><div class="pstat-lbl">Won ✓</div></div>
-    <div class="pstat progress"><div class="pstat-val" id="ps-prog">0</div><div class="pstat-lbl">In Progress</div></div>
-    <div class="pstat rejected"><div class="pstat-val" id="ps-rej">0</div><div class="pstat-lbl">Rejected</div></div>
-    <div class="pstat urgent"><div class="pstat-val" id="ps-urgent">0</div><div class="pstat-lbl">Urgent &lt;15 Hari</div></div>
+  <!-- Top Slicer Row -->
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+
+    <!-- Total / Bulanan toggle -->
+    <div class="nav-wrap" style="padding:3px;">
+      <button class="nav-btn active" id="pmode-total" onclick="setProgMode('total',this)">TOTAL</button>
+      <button class="nav-btn" id="pmode-bulanan" onclick="setProgMode('bulanan',this)">BULANAN</button>
+    </div>
+
+    <!-- Marketer slicer -->
+    <div class="nav-wrap" style="padding:3px;">
+      <button class="nav-btn active" id="pmk-all" onclick="setPMK('all',this)">All</button>
+      <button class="nav-btn" id="pmk-hazim" onclick="setPMK('hazim',this)" style="color:#60a5fa;">Hazim</button>
+      <button class="nav-btn" id="pmk-shahira" onclick="setPMK('shahira',this)" style="color:#34d399;">Shahira</button>
+      <button class="nav-btn" id="pmk-admin" onclick="setPMK('admin',this)" style="color:#a78bfa;">Admin</button>
+    </div>
+
+    <!-- Month pills (only show when bulanan mode) -->
+    <div id="monthPillsWrap" style="display:none;">
+      <div class="fpills" style="margin-bottom:0;flex-wrap:wrap;" id="monthPills"></div>
+    </div>
+
   </div>
 
-  <!-- Chart + Filters -->
-  <div class="prog-chart-row">
-    <div class="prog-chart-card">
-      <div class="ct" style="margin-bottom:12px;">Status Breakdown</div>
-      <div class="prog-donut-wrap">
-        <svg viewBox="0 0 120 120" id="progDonutSvg">
-          <circle cx="60" cy="60" r="50" fill="none" stroke="#2d3748" stroke-width="16"/>
-        </svg>
-        <div class="prog-donut-center">
-          <div class="prog-donut-total" id="progDonutTotal">0</div>
-          <div class="prog-donut-lbl">Total</div>
+  <!-- Stats Cards — Big Numbers -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">KESELURUHAN JMB</div>
+      <div style="font-size:42px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">TOTAL · <span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">MENANG</div>
+      <div style="font-size:42px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">WON · <span style="color:#10B981;" id="ps-won-pct">0%</span></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">SEDANG BERJALAN</div>
+      <div style="font-size:42px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">IN PROGRESS · <span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">DITOLAK</div>
+      <div style="font-size:42px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">REJECTED · <span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b8;"></div>
+    </div>
+
+  </div>
+
+  <!-- Second row — Urgent + Donut + Filters -->
+  <div style="display:grid;grid-template-columns:200px 1fr 280px;gap:12px;margin-bottom:16px;">
+
+    <!-- Urgent card -->
+    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <div style="font-size:11px;color:#EF4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">URGENT &lt;15 HARI</div>
+      <div style="font-size:52px;font-weight:700;color:#EF4444;line-height:1;" id="ps-urgent">0</div>
+      <div style="font-size:11px;color:rgba(239,68,68,.7);margin-top:6px;" id="ps-urgent-pct">0%</div>
+    </div>
+
+    <!-- Donut -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Pecahan Status</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div class="prog-donut-wrap" style="width:120px;height:120px;flex-shrink:0;">
+          <svg viewBox="0 0 120 120" id="progDonutSvg">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2d3748" stroke-width="16"/>
+          </svg>
+          <div class="prog-donut-center">
+            <div class="prog-donut-total" id="progDonutTotal" style="font-size:22px;">0</div>
+            <div class="prog-donut-lbl">JMB</div>
+          </div>
         </div>
-      </div>
-      <div class="prog-legend">
-        <div class="prog-legend-item"><div style="display:flex;align-items:center;"><div class="prog-legend-dot" style="background:#10B981"></div><span style="font-size:12px;color:var(--text2);">Won</span></div><div style="display:flex;gap:6px;font-family:monospace;"><span id="lg-won" style="color:#f1f5f9;font-weight:600;">0</span><span id="lg-won-pct" style="color:var(--text3);font-size:11px;">0%</span></div></div>
-        <div class="prog-legend-item"><div style="display:flex;align-items:center;"><div class="prog-legend-dot" style="background:#3B82F6"></div><span style="font-size:12px;color:var(--text2);">In Progress</span></div><div style="display:flex;gap:6px;font-family:monospace;"><span id="lg-prog" style="color:#f1f5f9;font-weight:600;">0</span><span id="lg-prog-pct" style="color:var(--text3);font-size:11px;">0%</span></div></div>
-        <div class="prog-legend-item"><div style="display:flex;align-items:center;"><div class="prog-legend-dot" style="background:#94a3b8"></div><span style="font-size:12px;color:var(--text2);">Rejected</span></div><div style="display:flex;gap:6px;font-family:monospace;"><span id="lg-rej" style="color:#f1f5f9;font-weight:600;">0</span><span id="lg-rej-pct" style="color:var(--text3);font-size:11px;">0%</span></div></div>
-        <div class="prog-legend-item"><div style="display:flex;align-items:center;"><div class="prog-legend-dot" style="background:#EF4444"></div><span style="font-size:12px;color:var(--text2);">Urgent</span></div><div style="display:flex;gap:6px;font-family:monospace;"><span id="lg-urgent" style="color:#f1f5f9;font-weight:600;">0</span><span id="lg-urgent-pct" style="color:var(--text3);font-size:11px;">0%</span></div></div>
+        <div style="flex:1;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#10B981;"></div><span style="font-size:12px;color:var(--text2);">Menang</span></div><span style="font-weight:700;color:#10B981;" id="lg-won">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#3B82F6;"></div><span style="font-size:12px;color:var(--text2);">In Progress</span></div><span style="font-weight:700;color:#3B82F6;" id="lg-prog">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#94a3b8;"></div><span style="font-size:12px;color:var(--text2);">Ditolak</span></div><span style="font-weight:700;color:#94a3b8;" id="lg-rej">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:3px;background:#EF4444;"></div><span style="font-size:12px;color:var(--text2);">Urgent</span></div><span style="font-weight:700;color:#EF4444;" id="lg-urgent">0</span></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="prog-chart-card">
-      <div class="ct" style="margin-bottom:12px;">Filters</div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">MARKETER</div>
-        <div class="fpills" style="margin-bottom:0;">
-          <button class="fp a-all" id="pf-all" onclick="setPF('all',this)">All</button>
-          <button class="fp" id="pf-hazim" onclick="setPF('hazim',this)">Hazim</button>
-          <button class="fp" id="pf-shahira" onclick="setPF('shahira',this)">Shahira</button>
-          <button class="fp" id="pf-admin" onclick="setPF('admin',this)">Admin</button>
-        </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Filter Lanjutan</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENCY</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+        <button class="fp a-all" id="pu-all" onclick="setPU('all',this)" style="text-align:left;">Semua</button>
+        <button class="fp" id="pu-urgent" onclick="setPU('urgent',this)" style="color:#EF4444;border-color:#EF4444;text-align:left;">🔴 &lt;15 hari</button>
+        <button class="fp" id="pu-warning" onclick="setPU('warning',this)" style="color:#F59E0B;border-color:#F59E0B;text-align:left;">🟠 15-30 hari</button>
+        <button class="fp" id="pu-normal" onclick="setPU('normal',this)" style="color:#60a5fa;border-color:#3B82F6;text-align:left;">🔵 31-60 hari</button>
+        <button class="fp" id="pu-won" onclick="setPU('won',this)" style="color:#10B981;border-color:#10B981;text-align:left;">🟢 Won</button>
+        <button class="fp" id="pu-rejected" onclick="setPU('rejected',this)" style="color:#94a3b8;border-color:#94a3b8;text-align:left;">⚫ Rejected</button>
       </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">EXPIRY MONTH</div>
-        <div class="fpills" style="margin-bottom:0;flex-wrap:wrap;" id="monthPills"></div>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">URGENCY</div>
-        <div class="fpills" style="margin-bottom:0;">
-          <button class="fp a-all" id="pu-all" onclick="setPU('all',this)">All</button>
-          <button class="fp" id="pu-urgent" onclick="setPU('urgent',this)" style="color:#EF4444;border-color:#EF4444;">🔴 &lt;15 hari</button>
-          <button class="fp" id="pu-warning" onclick="setPU('warning',this)" style="color:#F59E0B;border-color:#F59E0B;">🟠 15-30 hari</button>
-          <button class="fp" id="pu-normal" onclick="setPU('normal',this)" style="color:#60a5fa;border-color:#3B82F6;">🔵 31-60 hari</button>
-          <button class="fp" id="pu-won" onclick="setPU('won',this)" style="color:#10B981;border-color:#10B981;">🟢 Won</button>
-          <button class="fp" id="pu-rejected" onclick="setPU('rejected',this)" style="color:#94a3b8;border-color:#94a3b8;">⚫ Rejected</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">SEARCH</div>
-        <input class="prog-search" id="progSearch" placeholder="Cari nama JMB..." oninput="renderProgCards()">
-      </div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">CARI JMB</div>
+      <input class="prog-search" id="progSearch" placeholder="Nama JMB..." oninput="renderProgCards()" style="width:100%;">
     </div>
+
   </div>
 
   <!-- Cards -->
@@ -611,7 +659,41 @@ let progFilterMk = 'all';
 let progFilterUrgency = 'all';
 let progFilterMonth = new Date().getMonth();
 let progFilterYear = new Date().getFullYear();
+let progMode = 'total'; // 'total' or 'bulanan'
 const MONTHS_MY = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function setProgMode(mode, btn) {
+  progMode = mode;
+  document.querySelectorAll('#pmode-total,#pmode-bulanan').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('monthPillsWrap').style.display = mode === 'bulanan' ? 'flex' : 'none';
+  updateProgHeader();
+  updateProgStats();
+  renderProgCards();
+}
+
+function setPMK(mk, btn) {
+  progFilterMk = mk;
+  ['all','hazim','shahira','admin'].forEach(id => {
+    const b = document.getElementById('pmk-'+id);
+    if (b) { b.classList.remove('active'); }
+  });
+  btn.classList.add('active');
+  updateProgStats();
+  renderProgCards();
+}
+
+function updateProgHeader() {
+  const today = new Date();
+  const days = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+  const dateStr = days[today.getDay()] + ', ' + today.getDate() + ' ' + MONTHS_MY[today.getMonth()] + ' ' + today.getFullYear();
+  document.getElementById('progHeadDate').textContent = dateStr;
+  if (progMode === 'total') {
+    document.getElementById('progHeadTitle').textContent = 'SEMUA JMB';
+  } else {
+    document.getElementById('progHeadTitle').textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
+  }
+}
 
 function buildMonthPills() {
   const today = new Date();
@@ -637,6 +719,8 @@ function setProgMonth(mi, yr, btn) {
   progFilterYear = yr;
   document.getElementById('monthPills').querySelectorAll('.fp').forEach(b => b.classList.remove('a-all'));
   btn.classList.add('a-all');
+  updateProgHeader();
+  updateProgStats();
   renderProgCards();
 }
 
@@ -688,6 +772,7 @@ async function fetchProgressData() {
     const adminData = parseProgCSV(results[2]).map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
     buildMonthPills();
+    updateProgHeader();
     updateProgStats();
     renderProgCards();
   } catch(e) {
@@ -722,32 +807,57 @@ function getUrgency(row) {
   return 'outside'; // > 60 days, don't show
 }
 
+function getFilteredProgData() {
+  return progData.filter(r => {
+    // Marketer filter
+    if (progFilterMk !== 'all' && r._marketer !== progFilterMk) return false;
+    // Month filter (only in bulanan mode)
+    if (progMode === 'bulanan') {
+      const expiryStr = r['Expiry Date'] || '';
+      if (expiryStr) {
+        const parts = expiryStr.split('/');
+        let expDate;
+        if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
+        else expDate = new Date(expiryStr);
+        if (!isNaN(expDate)) {
+          if (expDate.getMonth() !== progFilterMonth || expDate.getFullYear() !== progFilterYear) return false;
+        }
+      }
+    }
+    return true;
+  });
+}
+
 function updateProgStats() {
-  const total = progData.length;
+  const data = getFilteredProgData();
+  const total = data.length;
   let won=0, prog=0, rej=0, urgent=0;
-  progData.forEach(r => {
+  data.forEach(r => {
     const u = getUrgency(r);
     if (u === 'won') won++;
     else if (u === 'rejected') rej++;
-    else urgent += (u === 'urgent') ? 1 : 0;
-    if (u !== 'won' && u !== 'rejected' && u !== 'outside') prog++;
+    else {
+      prog++;
+      if (u === 'urgent') urgent++;
+    }
   });
+
+  const pct = v => total ? Math.round(v/total*100) + '%' : '0%';
 
   document.getElementById('ps-total').textContent = total;
   document.getElementById('ps-won').textContent = won;
   document.getElementById('ps-prog').textContent = prog;
   document.getElementById('ps-rej').textContent = rej;
   document.getElementById('ps-urgent').textContent = urgent;
-
-  const pct = v => total ? Math.round(v/total*100) + '%' : '0%';
+  document.getElementById('ps-total-pct').textContent = '100%';
+  document.getElementById('ps-won-pct').textContent = pct(won);
+  document.getElementById('ps-prog-pct').textContent = pct(prog);
+  document.getElementById('ps-rej-pct').textContent = pct(rej);
+  document.getElementById('ps-urgent-pct').textContent = pct(urgent);
   document.getElementById('lg-won').textContent = won;
   document.getElementById('lg-prog').textContent = prog;
   document.getElementById('lg-rej').textContent = rej;
   document.getElementById('lg-urgent').textContent = urgent;
-  document.getElementById('lg-won-pct').textContent = pct(won);
-  document.getElementById('lg-prog-pct').textContent = pct(prog);
-  document.getElementById('lg-rej-pct').textContent = pct(rej);
-  document.getElementById('lg-urgent-pct').textContent = pct(urgent);
   document.getElementById('progDonutTotal').textContent = total;
 
   // Donut
@@ -755,7 +865,7 @@ function updateProgStats() {
   svg.querySelectorAll('.pseg').forEach(s => s.remove());
   if (total === 0) return;
   const R = 50, circ = 2 * Math.PI * R;
-  const segs = [{v:won,c:'#10B981'},{v:prog,c:'#3B82F6'},{v:rej,c:'#94a3b8'},{v:urgent,c:'#EF4444'}];
+  const segs = [{v:won,c:'#10B981'},{v:prog-urgent,c:'#3B82F6'},{v:rej,c:'#94a3b8'},{v:urgent,c:'#EF4444'}];
   let offset = 0;
   segs.forEach(seg => {
     if (!seg.v) return;
@@ -773,12 +883,7 @@ function updateProgStats() {
 }
 
 function setPF(mk, btn) {
-  progFilterMk = mk;
-  ['all','hazim','shahira','admin'].forEach(id => {
-    const b = document.getElementById('pf-'+id);
-    if (b) { b.className = 'fp'; if (id === mk) b.classList.add('a-'+id); }
-  });
-  renderProgCards();
+  setPMK(mk, btn);
 }
 
 function setPU(urg, btn) {
@@ -815,29 +920,14 @@ function quoteIcon(status) {
 function renderProgCards() {
   const grid = document.getElementById('jmbGrid');
   const search = (document.getElementById('progSearch').value || '').toLowerCase();
-
   const urgencyOrder = { urgent:0, warning:1, normal:2, won:3, rejected:4, outside:5 };
 
-  let filtered = progData.filter(r => {
+  let filtered = getFilteredProgData().filter(r => {
     const name = (r['JMB Name'] || '').toLowerCase();
-    const mk = r._marketer || '';
     const urg = getUrgency(r);
     if (search && !name.includes(search)) return false;
-    if (progFilterMk !== 'all' && mk !== progFilterMk) return false;
     if (progFilterUrgency !== 'all' && urg !== progFilterUrgency) return false;
-    // Filter by expiry month
-    const expiryStr = r['Expiry Date'] || '';
-    if (expiryStr) {
-      const parts = expiryStr.split('/');
-      let expDate;
-      if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
-      else expDate = new Date(expiryStr);
-      if (!isNaN(expDate)) {
-        if (expDate.getMonth() !== progFilterMonth || expDate.getFullYear() !== progFilterYear) return false;
-      }
-    }
-    // Won/rejected always show if month matches
-    if (urg === 'won' || urg === 'rejected') return true;
+    if (progMode === 'total' && urg === 'outside') return false;
     return true;
   });
 
