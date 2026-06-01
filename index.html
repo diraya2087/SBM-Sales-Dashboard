@@ -558,24 +558,22 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
 
   <!-- Year pills -->
-  <div style="margin-bottom:12px;">
+  <div style="margin-bottom:8px;">
     <div class="ypills" id="ypills-prog"></div>
   </div>
 
-  <!-- Slicer Row: TOTAL/MONTHLY + Marketer + Month pills -->
+  <!-- Month pills — always visible, appear after year click -->
+  <div style="margin-bottom:12px;">
+    <div class="fpills" style="flex-wrap:wrap;margin-bottom:0;" id="monthPills"></div>
+  </div>
+
+  <!-- Marketer slicer -->
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
-    <div class="nav-wrap" style="padding:3px;">
-      <button class="nav-btn active" id="pmode-total" onclick="setProgMode('total',this)">TOTAL</button>
-      <button class="nav-btn" id="pmode-monthly" onclick="setProgMode('monthly',this)">MONTHLY</button>
-    </div>
     <div class="nav-wrap" style="padding:3px;">
       <button class="nav-btn active" id="pmk-all" onclick="setPMK('all',this)">All</button>
       <button class="nav-btn" id="pmk-hazim" onclick="setPMK('hazim',this)" style="color:#60a5fa;">Hazim</button>
       <button class="nav-btn" id="pmk-shahira" onclick="setPMK('shahira',this)" style="color:#34d399;">Shahira</button>
       <button class="nav-btn" id="pmk-admin" onclick="setPMK('admin',this)" style="color:#a78bfa;">SBM</button>
-    </div>
-    <div id="monthPillsWrap" style="display:none;flex-wrap:wrap;gap:4px;">
-      <div class="fpills" style="margin-bottom:0;flex-wrap:wrap;" id="monthPills"></div>
     </div>
   </div>
 
@@ -681,17 +679,40 @@ function setProgYear(yr, btn) {
   progFilterYear = yr;
   document.getElementById('ypills-prog').querySelectorAll('.ypill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  // Reset month to current month if same year, else Jan
+  const currentYear = new Date().getFullYear();
+  progFilterMonth = (yr === currentYear) ? new Date().getMonth() : 0;
+  buildMonthPills();
   updateProgHeader();
   updateProgStats();
   renderProgCards();
 }
 
 function setProgMode(mode, btn) {
-  progMode = mode;
-  document.querySelectorAll('#pmode-total,#pmode-monthly').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const wrap = document.getElementById('monthPillsWrap');
-  if (wrap) wrap.style.display = mode === 'monthly' ? 'flex' : 'none';
+  // Legacy — no longer used
+  updateProgStats();
+  renderProgCards();
+}
+
+function buildMonthPills() {
+  const pills = document.getElementById('monthPills');
+  if (!pills) return;
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  let html = '';
+  for (let mi = 0; mi < 12; mi++) {
+    const isCurrent = mi === currentMonth && progFilterYear === currentYear;
+    const isActive = mi === progFilterMonth;
+    html += `<button class="fp ${isActive?'a-all':''}" style="${isCurrent?'border-color:#F59E0B;color:#F59E0B;':''}" onclick="setProgMonth(${mi},${progFilterYear},this)">${MONTHS_MY[mi]}${isCurrent?' 📌':''}</button>`;
+  }
+  pills.innerHTML = html;
+}
+
+function setProgMonth(mi, yr, btn) {
+  progFilterMonth = mi;
+  progFilterYear = yr;
+  document.getElementById('monthPills').querySelectorAll('.fp').forEach(b => b.classList.remove('a-all'));
+  btn.classList.add('a-all');
   updateProgHeader();
   updateProgStats();
   renderProgCards();
@@ -717,12 +738,7 @@ function updateProgHeader() {
   const headDate = document.getElementById('progHeadDate');
   if (headDate) headDate.textContent = dateStr;
   const headTitle = document.getElementById('progHeadTitle');
-  if (!headTitle) return;
-  if (progMode === 'total') {
-    headTitle.textContent = progYear + ' — ALL JMB';
-  } else {
-    headTitle.textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
-  }
+  if (headTitle) headTitle.textContent = MONTHS_MY[progFilterMonth].toUpperCase() + ' ' + progFilterYear;
 }
 
 function buildMonthPills() {
@@ -871,9 +887,7 @@ function getUrgency(row) {
 
 function getFilteredProgData() {
   return progData.filter(r => {
-    // Marketer filter
     if (progFilterMk !== 'all' && r._marketer !== progFilterMk) return false;
-    // Year filter — filter by expiry year
     const expiryStr = r['Expiry Date'] || '';
     if (expiryStr) {
       const parts = expiryStr.split('/');
@@ -881,12 +895,8 @@ function getFilteredProgData() {
       if (parts.length === 3) expDate = new Date(parts[2], parts[1]-1, parts[0]);
       else expDate = new Date(expiryStr);
       if (!isNaN(expDate)) {
-        // Year filter
         if (expDate.getFullYear() !== progYear) return false;
-        // Month filter (only in monthly mode)
-        if (progMode === 'monthly') {
-          if (expDate.getMonth() !== progFilterMonth) return false;
-        }
+        if (expDate.getMonth() !== progFilterMonth) return false;
       }
     }
     return true;
@@ -1005,13 +1015,7 @@ function renderProgCards() {
   });
 
   const titleEl = document.getElementById('progCardsTitle');
-  if (titleEl) {
-    if (progMode === 'total') {
-      titleEl.textContent = `JMB Expiry ${progYear} (${filtered.length} JMB)`;
-    } else {
-      titleEl.textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
-    }
-  }
+  if (titleEl) titleEl.textContent = `JMB Expiry — ${MONTHS_MY[progFilterMonth]} ${progFilterYear} (${filtered.length} JMB)`;
 
   if (filtered.length === 0) {
     const emptyMsg = progMode === 'total' ? `No JMB expiring in ${progYear}` : `No JMB expiring in ${MONTHS_MY[progFilterMonth]} ${progFilterYear}`;
