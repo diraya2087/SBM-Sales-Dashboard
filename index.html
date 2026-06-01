@@ -527,17 +527,20 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
 
   <!-- Marketer + Status filters -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
-      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
-      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
-      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
-    </div>
-    <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
-      <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
-      <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
+  <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+    <!-- Marketer filter -->
+    <div>
+      <div style="display:flex;gap:5px;margin-bottom:6px;">
+        <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
+        <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
+        <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
+        <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
+        <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
+        <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
+      </div>
     </div>
   </div>
 
@@ -1964,7 +1967,7 @@ function renderPaymentTable() {
   const thead = document.getElementById('paymentTableHead');
   if (!tbody || !thead) return;
 
-  thead.innerHTML = `<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Nett (RM)</th><th>Plan</th><th>Payment</th><th>Status</th></tr>`;
+  thead.innerHTML = `<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Plan</th><th>Payment</th><th>Status</th></tr>`;
 
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';
@@ -1976,7 +1979,7 @@ function renderPaymentTable() {
     const mk = (r['Marketer'] || '').toLowerCase();
     const mkLabel = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
     const mkBadge = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
-    const prem = parseFloat(String(r['Premium Nett (RM)']||r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;
+    const prem = parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;
     const status = getPayStatus(r, plan);
     const statusHtml = status.total > 0
       ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${status.completed?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${status.completed?'#10B981':'#EF4444'};">${status.completed?'Completed':'Incomplete'}</span>`
