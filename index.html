@@ -549,20 +549,51 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
-  <!-- Filters -->
+  <!-- Year pills -->
+  <div style="margin-bottom:12px;">
+    <div class="ypills" id="ypills-pay"></div>
+  </div>
+
+  <!-- Plan Cards — Big clickable -->
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+    <div onclick="setPayPlan('all',this)" id="payplan-all" style="background:var(--accent);border:1px solid var(--accent);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ALL PLANS</div>
+      <div style="font-size:32px;font-weight:700;color:#fff;line-height:1;" id="ppc-all">0</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:4px;">policies</div>
+    </div>
+    <div onclick="setPayPlan('4x',this)" id="payplan-4x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">4X PAYMENT</div>
+      <div style="font-size:32px;font-weight:700;color:#3B82F6;line-height:1;" id="ppc-4x">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
+    </div>
+    <div onclick="setPayPlan('3x',this)" id="payplan-3x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#8B5CF6'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">3X PAYMENT</div>
+      <div style="font-size:32px;font-weight:700;color:#8B5CF6;line-height:1;" id="ppc-3x">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#8B5CF6;"></div>
+    </div>
+    <div onclick="setPayPlan('2x',this)" id="payplan-2x" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#F59E0B'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">2X PAYMENT</div>
+      <div style="font-size:32px;font-weight:700;color:#F59E0B;line-height:1;" id="ppc-2x">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
+    </div>
+    <div onclick="setPayPlan('Full',this)" id="payplan-Full" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='#10B981'" onmouseout="if(!this.classList.contains('active'))this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">FULL PAYMENT</div>
+      <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="ppc-Full">0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">policies</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+  </div>
+
+  <!-- Marketer + Status filters -->
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
     <div class="fpills" style="margin-bottom:0;">
       <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
       <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
       <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
       <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
-    </div>
-    <div class="fpills" style="margin-bottom:0;">
-      <button class="fp a-all" id="pf-plan-all" onclick="setPayFilter('all','plan')">All Plans</button>
-      <button class="fp" id="pf-plan-4x" onclick="setPayFilter('4x','plan')">4x</button>
-      <button class="fp" id="pf-plan-3x" onclick="setPayFilter('3x','plan')">3x</button>
-      <button class="fp" id="pf-plan-2x" onclick="setPayFilter('2x','plan')">2x</button>
-      <button class="fp" id="pf-plan-full" onclick="setPayFilter('Full','plan')">Full</button>
     </div>
     <div class="fpills" style="margin-bottom:0;">
       <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
@@ -1780,12 +1811,53 @@ let paymentData = [];
 let payFilterMk = 'all';
 let payFilterPlan = 'all';
 let payFilterStatus = 'all';
+let payYear = new Date().getFullYear();
+
+function buildPayYearPills() {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear];
+  const container = document.getElementById('ypills-pay');
+  if (!container) return;
+  container.innerHTML = years.map(yr =>
+    `<button class="ypill ${yr === payYear ? 'active' : ''}" onclick="setPayYear(${yr},this)">${yr}</button>`
+  ).join('');
+}
+
+function setPayYear(yr, btn) {
+  payYear = yr;
+  document.getElementById('ypills-pay').querySelectorAll('.ypill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPaymentTable();
+}
+
+function setPayPlan(plan, el) {
+  payFilterPlan = plan;
+  // Reset all plan cards
+  ['all','4x','3x','2x','Full'].forEach(p => {
+    const card = document.getElementById('payplan-' + p);
+    if (!card) return;
+    if (p === plan) {
+      card.style.background = p === 'all' ? 'var(--accent)' : {
+        '4x':'rgba(59,130,246,.2)','3x':'rgba(139,92,246,.2)',
+        '2x':'rgba(245,158,11,.2)','Full':'rgba(16,185,129,.2)'
+      }[p];
+      card.style.borderColor = p === 'all' ? 'var(--accent)' : {
+        '4x':'#3B82F6','3x':'#8B5CF6','2x':'#F59E0B','Full':'#10B981'
+      }[p];
+    } else {
+      card.style.background = p === 'all' ? 'var(--card2)' : 'var(--card)';
+      card.style.borderColor = 'var(--border)';
+    }
+  });
+  renderPaymentTable();
+}
 
 async function fetchPaymentData() {
   const loadMsg = document.getElementById('payLoadingMsg');
   const table = document.getElementById('paymentTable');
   if (loadMsg) { loadMsg.style.display='block'; loadMsg.textContent = '⏳ Loading payment data...'; }
   if (table) table.style.display = 'none';
+  buildPayYearPills();
   try {
     const data = await fetchJSONP(AS_BASE + '?type=payment');
     paymentData = data || [];
@@ -1855,7 +1927,19 @@ function renderPayCheckboxes(paid, total) {
 }
 
 function renderPaymentTable() {
-  let filtered = paymentData.filter(r => {
+  // Update plan card counts
+  const allData = paymentData.filter(r => r['JMB Name'] && r['JMB Name'].toString().trim());
+  const plans = ['4x','3x','2x','Full'];
+  const planCounts = {all: allData.length};
+  plans.forEach(p => {
+    planCounts[p] = allData.filter(r => (r['Payment Plan']||'').trim() === p).length;
+    const el = document.getElementById('ppc-'+p);
+    if (el) el.textContent = planCounts[p];
+  });
+  const allEl = document.getElementById('ppc-all');
+  if (allEl) allEl.textContent = planCounts.all;
+
+  let filtered = allData.filter(r => {
     const mk = (r['Marketer'] || '').toLowerCase();
     const plan = (r['Payment Plan'] || '').trim();
     const status = getPayStatus(r, plan);
@@ -1866,7 +1950,7 @@ function renderPaymentTable() {
     if (payFilterPlan !== 'all' && plan !== payFilterPlan) return false;
     if (payFilterStatus === 'completed' && !status.completed) return false;
     if (payFilterStatus === 'incomplete' && status.completed) return false;
-    return r['JMB Name'] && r['JMB Name'].toString().trim() !== '';
+    return true;
   });
 
   const total = filtered.length;
@@ -1933,7 +2017,7 @@ function go(name) {
   if (active) active.classList.add('active');
   if (name === 'dashboard') renderDash();
   if (name === 'leaderboard') renderLb();
-  if (name === 'transactions') renderTx();
+  if (name === 'transactions') { buildPayYearPills(); renderPaymentTable(); }
   if (name === 'progress') fetchProgressData();
   if (name === 'setup') { renderSetup(); renderUserList(); }
 }
