@@ -1999,13 +1999,123 @@ function renderPaymentTable() {
   }).join('');
 }
 
-populateLoginDropdown();
+// ── PAYMENT SETTLEMENT ───────────────────────────────────────────
+let settleYear = new Date().getFullYear();
+
+const PRIN_CONFIG = {
+  'STM':         { color: '#10B981', bg: 'rgba(16,185,129,.15)',  border: '#10B981' },
+  'Zurich':      { color: '#2563EB', bg: 'rgba(37,99,235,.15)',   border: '#2563EB' },
+  'Tokio Marine':{ color: '#38BDF8', bg: 'rgba(56,189,248,.15)',  border: '#38BDF8' },
+  'Allianz':     { color: '#60A5FA', bg: 'rgba(96,165,250,.15)',  border: '#60A5FA' },
+  'MPI':         { color: '#EF4444', bg: 'rgba(239,68,68,.15)',   border: '#EF4444' },
+  'Etiqa':       { color: '#F59E0B', bg: 'rgba(245,158,11,.15)',  border: '#F59E0B' },
+};
+
+function buildSettleYearPills() {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear];
+  const container = document.getElementById('ypills-settle');
+  if (!container) return;
+  container.innerHTML = years.map(yr =>
+    `<button class="ypill ${yr === settleYear ? 'active' : ''}" onclick="setSettleYear(${yr},this)">${yr}</button>`
+  ).join('');
+}
+
+function setSettleYear(yr, btn) {
+  settleYear = yr;
+  document.getElementById('ypills-settle').querySelectorAll('.ypill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSettlement();
+}
+
+function renderSettlement() {
+  buildSettleYearPills();
+  if (!paymentData || paymentData.length === 0) {
+    fetchPaymentData().then(() => _renderSettlementUI());
+    return;
+  }
+  _renderSettlementUI();
+}
+
+function _renderSettlementUI() {
+  const data = paymentData.filter(r => r['JMB Name'] && r['JMB Name'].toString().trim());
+  const total = data.length;
+  const completed = data.filter(r => getPayStatus(r, r['Payment Plan']).completed).length;
+  const incomplete = total - completed;
+  const pct = v => total ? Math.round(v/total*100) + '%' : '0%';
+  const totalPrem = data.reduce((s,r) => s + (parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+  const completedPrem = data.filter(r => getPayStatus(r, r['Payment Plan']).completed).reduce((s,r) => s + (parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+  const incompletePrem = totalPrem - completedPrem;
+
+  document.getElementById('settle-total').textContent = total;
+  document.getElementById('settle-total-prem').textContent = fmt(totalPrem);
+  document.getElementById('settle-completed').textContent = completed;
+  document.getElementById('settle-completed-pct').textContent = pct(completed) + ' · ' + fmt(completedPrem);
+  document.getElementById('settle-incomplete').textContent = incomplete;
+  document.getElementById('settle-incomplete-pct').textContent = pct(incomplete) + ' · ' + fmt(incompletePrem) + ' pending';
+
+  const grid = document.getElementById('settlePrinGrid');
+  if (!grid) return;
+  const prins = Object.keys(PRIN_CONFIG);
+  grid.innerHTML = prins.map(prin => {
+    const cfg = PRIN_CONFIG[prin];
+    const keyword = prin.toLowerCase().split(' ')[0];
+    const prinRows = data.filter(r => {
+      const p = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
+      return p.includes(keyword);
+    });
+    const prinTotal = prinRows.length;
+    const prinPending = prinRows.filter(r => !getPayStatus(r, r['Payment Plan']).completed).length;
+    const prinPrem = prinRows.reduce((s,r) => s + (parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+    const pendingPrem = prinRows.filter(r => !getPayStatus(r, r['Payment Plan']).completed).reduce((s,r) => s + (parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+    return `<div onclick="showSettleList('${prin}')" style="background:${cfg.bg};border:1px solid ${cfg.border};border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <div style="font-size:12px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">${prin}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+        <div style="font-size:32px;font-weight:700;color:${cfg.color};line-height:1;">${prinPending}</div>
+        <div style="font-size:14px;color:var(--text3);">/ ${prinTotal}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">pending / total</div>
+      <div style="height:1px;background:${cfg.border};opacity:.3;margin-bottom:8px;"></div>
+      <div style="font-size:12px;font-weight:600;color:${cfg.color};">${fmt(prinPrem)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${fmt(pendingPrem)} pending</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:${cfg.color};"></div>
+    </div>`;
+  }).join('');
+}
+
+function showSettleList(prin) {
+  const keyword = prin.toLowerCase().split(' ')[0];
+  const data = paymentData.filter(r => {
+    const p = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
+    return p.includes(keyword) && !getPayStatus(r, r['Payment Plan']).completed;
+  });
+  document.getElementById('settleListTitle').textContent = `${prin} — Pending JMB (${data.length})`;
+  document.getElementById('settleListBody').innerHTML = data.length ? data.map((r,i) => {
+    const mk = (r['Marketer']||'').toLowerCase();
+    const mkLbl = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
+    const mkBdg = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
+    const prem = parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;
+    const status = getPayStatus(r, r['Payment Plan']);
+    return `<tr>
+      <td style="color:var(--text3);">${i+1}</td>
+      <td style="font-weight:500;">${r['JMB Name']||'-'}</td>
+      <td><span class="badge ${mkBdg}">${mkLbl}</span></td>
+      <td style="font-weight:600;color:var(--accent);">${fmt(prem)}</td>
+      <td>${renderPayCheckboxes(status.paid, status.total)}</td>
+      <td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(239,68,68,.15);color:#EF4444;">Incomplete</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No pending JMB</td></tr>';
+  document.getElementById('settleListPanel').style.display = 'block';
+  document.getElementById('settleListPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
 
 function showSidebar(show) {
   // No sidebar anymore — kept for compatibility
   const mw = document.getElementById('mainWrap');
   if (mw) mw.classList.remove('with-sidebar');
 }
+
+populateLoginDropdown();
 
 function go(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -2019,6 +2129,7 @@ function go(name) {
   if (name === 'leaderboard') renderLb();
   if (name === 'transactions') { buildPayYearPills(); renderPaymentTable(); }
   if (name === 'progress') fetchProgressData();
+  if (name === 'settlement') renderSettlement();
   if (name === 'setup') { renderSetup(); renderUserList(); }
 }
 </script>
@@ -2026,12 +2137,45 @@ function go(name) {
 <!-- PAYMENT SETTLEMENT SCREEN -->
 <div class="screen" id="screen-settlement" style="display:none;">
   <div class="ph">
-    <div><h1>💰 Payment Settlement</h1><p>Settlement summary — Admin & Management view</p></div>
+    <div><h1>💰 Payment Settlement</h1><p>Settlement by Principle — Admin & Management view</p></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="ypills" id="ypills-settle"></div>
+      <button class="btn btn-outline" onclick="renderSettlement()">🔄 Refresh</button>
+    </div>
   </div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--text3);">
-    <div style="font-size:40px;margin-bottom:16px;">🚧</div>
-    <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">Coming Soon</div>
-    <div style="font-size:13px;">Payment Settlement will be connected to Payment Tracking data.</div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL POLICIES</div>
+      <div style="font-size:40px;font-weight:700;color:#f1f5f9;line-height:1;" id="settle-total">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-total-prem">RM 0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">COMPLETED</div>
+      <div style="font-size:40px;font-weight:700;color:#10B981;line-height:1;" id="settle-completed">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-completed-pct">0% · RM 0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">INCOMPLETE</div>
+      <div style="font-size:40px;font-weight:700;color:#EF4444;line-height:1;" id="settle-incomplete">0</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-incomplete-pct">0% · RM 0 pending</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Settlement by Principle</div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;" id="settlePrinGrid"></div>
+  <div id="settleListPanel" style="display:none;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;" id="settleListTitle">JMB List</div>
+      <button onclick="document.getElementById('settleListPanel').style.display='none'" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total</th><th>Payment</th><th>Status</th></tr></thead>
+        <tbody id="settleListBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
