@@ -2031,7 +2031,11 @@ function setSettleYear(yr, btn) {
 function renderSettlement() {
   buildSettleYearPills();
   if (!paymentData || paymentData.length === 0) {
-    fetchPaymentData().then(() => _renderSettlementUI());
+    const grid = document.getElementById('settlePrinGrid');
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">⏳ Loading data...</div>';
+    fetchPaymentData().then(() => _renderSettlementUI()).catch(() => {
+      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">❌ Failed to load — click Refresh</div>';
+    });
     return;
   }
   _renderSettlementUI();
