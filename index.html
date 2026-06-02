@@ -2031,19 +2031,41 @@ function setSettleYear(yr, btn) {
 
 function renderSettlement() {
   buildSettleYearPills();
+  
+  // Use dummy data if no real data
+  const dummyData = paymentData.length > 0 ? paymentData : [
+    {_dummy:true,'JMB Name':'1 Desa Residence','Marketer':'Hazim','Premium Total (RM)':20000,'Payment Plan':'4x','Principle':'STM','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+    {_dummy:true,'JMB Name':'1 Razak Mansion','Marketer':'Hazim','Premium Total (RM)':15000,'Payment Plan':'3x','Principle':'Zurich','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':false,'3x Pay 3 \u2713':false},
+    {_dummy:true,'JMB Name':'162 Residency','Marketer':'Hazim','Premium Total (RM)':12000,'Payment Plan':'4x','Principle':'Etiqa','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':true,'4x Pay 4 \u2713':true},
+    {_dummy:true,'JMB Name':'3 Kia Peng KLCC','Marketer':'Shahira','Premium Total (RM)':45000,'Payment Plan':'2x','Principle':'Allianz','2x Pay 1 \u2713':true,'2x Pay 2 \u2713':false},
+    {_dummy:true,'JMB Name':'28 Boulevard','Marketer':'Shahira','Premium Total (RM)':8000,'Payment Plan':'Full','Principle':'MPI','Full Pay \u2713':false},
+    {_dummy:true,'JMB Name':'6 Capsquare','Marketer':'Hazim','Premium Total (RM)':18000,'Payment Plan':'4x','Principle':'Tokio Marine','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+    {_dummy:true,'JMB Name':'7 Tree Seven','Marketer':'Admin','Premium Total (RM)':25000,'Payment Plan':'3x','Principle':'STM','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':true,'3x Pay 3 \u2713':true},
+    {_dummy:true,'JMB Name':'Akasia Apartment','Marketer':'Admin','Premium Total (RM)':9000,'Payment Plan':'Full','Principle':'Zurich','Full Pay \u2713':true},
+    {_dummy:true,'JMB Name':'Alam Puri','Marketer':'Shahira','Premium Total (RM)':32000,'Payment Plan':'4x','Principle':'Allianz','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':false,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+    {_dummy:true,'JMB Name':'Aman Heights','Marketer':'Hazim','Premium Total (RM)':11000,'Payment Plan':'2x','Principle':'Etiqa','2x Pay 1 \u2713':true,'2x Pay 2 \u2713':true},
+    {_dummy:true,'JMB Name':'Amanja semi D','Marketer':'Admin','Premium Total (RM)':55000,'Payment Plan':'4x','Principle':'MPI','4x Pay 1 \u2713':false,'4x Pay 2 \u2713':false,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+    {_dummy:true,'JMB Name':'Alpha Villa','Marketer':'Shahira','Premium Total (RM)':14000,'Payment Plan':'3x','Principle':'Tokio Marine','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':true,'3x Pay 3 \u2713':false},
+  ];
+
+  const isDummy = paymentData.length === 0;
+  
   if (!paymentData || paymentData.length === 0) {
     const grid = document.getElementById('settlePrinGrid');
-    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">⏳ Loading data...</div>';
-    fetchPaymentData().then(() => _renderSettlementUI()).catch(() => {
-      if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);">❌ Failed to load — click Refresh</div>';
-    });
-    return;
+    if (grid) {
+      const notice = document.createElement('div');
+      notice.style.cssText = 'grid-column:1/-1;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#fbbf24;margin-bottom:12px;';
+      notice.textContent = '⚠ Showing sample data — connect Payment Tracking sheet for live data';
+      grid.parentNode.insertBefore(notice, grid);
+    }
   }
-  _renderSettlementUI();
+  
+  _renderSettlementUI(dummyData);
 }
 
-function _renderSettlementUI() {
-  const data = paymentData.filter(r => r['JMB Name'] && r['JMB Name'].toString().trim());
+function _renderSettlementUI(data) {
+  if (!data) data = paymentData;
+  data = data.filter(r => r['JMB Name'] && r['JMB Name'].toString().trim());
   const total = data.length;
   const completed = data.filter(r => getPayStatus(r, r['Payment Plan']).completed).length;
   const incomplete = total - completed;
