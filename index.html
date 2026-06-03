@@ -1910,9 +1910,11 @@ function getPayStatus(row, plan) {
 }
 
 function renderPayCheckboxes(paid, total) {
+  if (total === 0) return '-';
+  const allPaid = paid >= total;
   let html = '<div style="display:flex;gap:3px;">';
   for (let i = 0; i < total; i++) {
-    const checked = i < paid;
+    const checked = allPaid || i < paid;
     html += `<div style="width:16px;height:16px;border-radius:3px;border:1.5px solid ${checked?'#10B981':'var(--border)'};background:${checked?'#10B981':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
       ${checked?'<span style="color:#fff;font-size:9px;font-weight:700;">✓</span>':''}
     </div>`;
@@ -2081,9 +2083,9 @@ function _renderSettlementUI(data) {
   document.getElementById('settle-total').textContent = total;
   document.getElementById('settle-total-prem').textContent = fmt(totalPrem);
   document.getElementById('settle-completed').textContent = completed;
-  document.getElementById('settle-completed-pct').textContent = pct(completed) + ' · ' + fmt(completedPrem);
+  document.getElementById('settle-completed-pct').textContent = fmt(completedPrem);
   document.getElementById('settle-incomplete').textContent = incomplete;
-  document.getElementById('settle-incomplete-pct').textContent = pct(incomplete) + ' · ' + fmt(incompletePrem) + ' pending';
+  document.getElementById('settle-incomplete-pct').textContent = fmt(incompletePrem) + ' pending';
 
   const grid = document.getElementById('settlePrinGrid');
   if (!grid) return;
@@ -2118,24 +2120,34 @@ function showSettleList(prin) {
   const keyword = prin.toLowerCase().split(' ')[0];
   const data = settleData.filter(r => {
     const p = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
-    return p.includes(keyword) && !getPayStatus(r, r['Payment Plan']).completed;
+    return p.includes(keyword);
+  }).sort((a,b) => {
+    const sa = getPayStatus(a, a['Payment Plan']).completed;
+    const sb = getPayStatus(b, b['Payment Plan']).completed;
+    return sa - sb; // incomplete first
   });
-  document.getElementById('settleListTitle').textContent = `${prin} — Pending JMB (${data.length})`;
+
+  document.getElementById('settleListTitle').textContent = `${prin} — ${data.length} JMB`;
   document.getElementById('settleListBody').innerHTML = data.length ? data.map((r,i) => {
     const mk = (r['Marketer']||'').toLowerCase();
     const mkLbl = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
     const mkBdg = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
     const prem = parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;
     const status = getPayStatus(r, r['Payment Plan']);
-    return `<tr>
+    const isCompleted = status.completed;
+    const statusHtml = isCompleted
+      ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(16,185,129,.15);color:#10B981;">✓ Completed</span>`
+      : `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(239,68,68,.15);color:#EF4444;">Incomplete</span>`;
+    return `<tr style="${isCompleted?'opacity:0.6;':''}">
       <td style="color:var(--text3);">${i+1}</td>
       <td style="font-weight:500;">${r['JMB Name']||'-'}</td>
       <td><span class="badge ${mkBdg}">${mkLbl}</span></td>
-      <td style="font-weight:600;color:var(--accent);">${fmt(prem)}</td>
+      <td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${fmt(prem)}</td>
       <td>${renderPayCheckboxes(status.paid, status.total)}</td>
-      <td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(239,68,68,.15);color:#EF4444;">Incomplete</span></td>
+      <td>${statusHtml}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No pending JMB</td></tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No JMB found</td></tr>';
+
   document.getElementById('settleListPanel').style.display = 'block';
   document.getElementById('settleListPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
@@ -2191,19 +2203,19 @@ function go(name) {
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL POLICIES</div>
       <div style="font-size:40px;font-weight:700;color:#f1f5f9;line-height:1;" id="settle-total">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-total-prem">RM 0</div>
+      <div style="font-size:13px;font-weight:600;color:#60a5fa;margin-top:6px;" id="settle-total-prem">RM 0</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">COMPLETED</div>
       <div style="font-size:40px;font-weight:700;color:#10B981;line-height:1;" id="settle-completed">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-completed-pct">0% · RM 0</div>
+      <div style="font-size:13px;font-weight:600;color:#10B981;margin-top:6px;" id="settle-completed-pct">RM 0</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">INCOMPLETE</div>
       <div style="font-size:40px;font-weight:700;color:#EF4444;line-height:1;" id="settle-incomplete">0</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="settle-incomplete-pct">0% · RM 0 pending</div>
+      <div style="font-size:13px;font-weight:600;color:#EF4444;margin-top:6px;" id="settle-incomplete-pct">RM 0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
     </div>
   </div>
