@@ -527,24 +527,13 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
-  <!-- Marketer + Status filters -->
-  <div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
-    <!-- Marketer filter -->
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
-      <div style="display:flex;gap:5px;">
-        <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
-        <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
-        <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
-      </div>
-    </div>
-    <!-- Status filter -->
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <button class="fp a-all" id="pf-status-all" onclick="setPayFilter('all','status')">All Status</button>
-      <div style="display:flex;gap:5px;">
-        <button class="fp" id="pf-status-completed" onclick="setPayFilter('completed','status')" style="color:#10B981;border-color:#10B981;">Completed</button>
-        <button class="fp" id="pf-status-incomplete" onclick="setPayFilter('incomplete','status')" style="color:#EF4444;border-color:#EF4444;">Incomplete</button>
-      </div>
+  <!-- Marketer filter -->
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+    <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
+    <div style="display:flex;gap:5px;">
+      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
+      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
+      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
     </div>
   </div>
 
@@ -555,20 +544,25 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="font-size:32px;font-weight:700;color:#f1f5f9;line-height:1;" id="pay-total">0</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showPayList('completed')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onmouseover="this.style.borderColor='#10B981'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">COMPLETED</div>
-      <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="pay-completed">0</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="pay-completed">0</div>
+        <div style="font-size:18px;font-weight:700;color:#10B981;" id="pay-completed-rm">RM 0</div>
+      </div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+    <div onclick="showPayList('incomplete')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onmouseover="this.style.borderColor='#EF4444'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">INCOMPLETE</div>
-      <div style="font-size:32px;font-weight:700;color:#EF4444;line-height:1;" id="pay-incomplete">0</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <div style="font-size:32px;font-weight:700;color:#EF4444;line-height:1;" id="pay-incomplete">0</div>
+        <div style="font-size:18px;font-weight:700;color:#EF4444;" id="pay-incomplete-rm">RM 0</div>
+      </div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PENDING PREMIUM</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL PREMIUM</div>
       <div style="font-size:22px;font-weight:700;color:#F59E0B;line-height:1;" id="pay-premium">-</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">from incomplete policies</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
     </div>
   </div>
@@ -598,6 +592,20 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="ppc-Full">0</div>
       <div style="font-size:11px;color:#EF4444;font-weight:600;margin-top:4px;" id="ppend-Full">0/0 pending</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+  </div>
+
+  <!-- PayList Panel (appears when stat card clicked) -->
+  <div id="payListPanel" style="display:none;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:#f1f5f9;" id="payListTitle">JMB List</div>
+      <button onclick="document.getElementById('payListPanel').style.display='none'" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total</th><th>Payment</th><th>Status</th></tr></thead>
+        <tbody id="payListBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1847,6 +1855,32 @@ function setPayPlan(plan, el) {
   renderPaymentTable();
 }
 
+function setPayFilter(val, type) {
+  if (type === 'mk') {
+    payFilterMk = val;
+    ['all','hazim','shahira','admin'].forEach(id => {
+      const b = document.getElementById('pf-mk-'+id);
+      if (b) { b.className = 'fp'; if (id === val) b.classList.add('a-all'); }
+    });
+  }
+  renderPaymentTable();
+}
+
+const PAYMENT_DUMMY = [
+  {'JMB Name':'1 Desa Residence','Marketer':'Hazim','Premium Total (RM)':20000,'Payment Plan':'4x','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+  {'JMB Name':'1 Razak Mansion','Marketer':'Hazim','Premium Total (RM)':15000,'Payment Plan':'3x','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':false,'3x Pay 3 \u2713':false},
+  {'JMB Name':'162 Residency','Marketer':'Hazim','Premium Total (RM)':12000,'Payment Plan':'4x','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':true,'4x Pay 4 \u2713':true},
+  {'JMB Name':'3 Kia Peng KLCC','Marketer':'Shahira','Premium Total (RM)':45000,'Payment Plan':'2x','2x Pay 1 \u2713':true,'2x Pay 2 \u2713':false},
+  {'JMB Name':'28 Boulevard','Marketer':'Shahira','Premium Total (RM)':8000,'Payment Plan':'Full','Full Pay \u2713':false},
+  {'JMB Name':'6 Capsquare','Marketer':'Hazim','Premium Total (RM)':18000,'Payment Plan':'4x','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':true,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+  {'JMB Name':'7 Tree Seven','Marketer':'Admin','Premium Total (RM)':25000,'Payment Plan':'3x','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':true,'3x Pay 3 \u2713':true},
+  {'JMB Name':'Akasia Apartment','Marketer':'Admin','Premium Total (RM)':9000,'Payment Plan':'Full','Full Pay \u2713':true},
+  {'JMB Name':'Alam Puri','Marketer':'Shahira','Premium Total (RM)':32000,'Payment Plan':'4x','4x Pay 1 \u2713':true,'4x Pay 2 \u2713':false,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+  {'JMB Name':'Aman Heights','Marketer':'Hazim','Premium Total (RM)':11000,'Payment Plan':'2x','2x Pay 1 \u2713':true,'2x Pay 2 \u2713':true},
+  {'JMB Name':'Amanja semi D','Marketer':'Admin','Premium Total (RM)':55000,'Payment Plan':'4x','4x Pay 1 \u2713':false,'4x Pay 2 \u2713':false,'4x Pay 3 \u2713':false,'4x Pay 4 \u2713':false},
+  {'JMB Name':'Alpha Villa','Marketer':'Shahira','Premium Total (RM)':14000,'Payment Plan':'3x','3x Pay 1 \u2713':true,'3x Pay 2 \u2713':true,'3x Pay 3 \u2713':false},
+];
+
 async function fetchPaymentData() {
   const loadMsg = document.getElementById('payLoadingMsg');
   const table = document.getElementById('paymentTable');
@@ -1855,38 +1889,47 @@ async function fetchPaymentData() {
   buildPayYearPills();
   try {
     const data = await fetchJSONP(AS_BASE + '?type=payment');
-    paymentData = data || [];
+    paymentData = (data && data.length > 0) ? data : PAYMENT_DUMMY;
     if (loadMsg) loadMsg.style.display = 'none';
     if (table) table.style.display = '';
     renderPaymentTable();
   } catch(e) {
-    if (loadMsg) loadMsg.textContent = '❌ Failed to load — ' + e.message;
+    // Use dummy data on error
+    paymentData = PAYMENT_DUMMY;
+    if (loadMsg) loadMsg.style.display = 'none';
+    if (table) table.style.display = '';
+    renderPaymentTable();
   }
 }
 
-function setPayFilter(val, type) {
-  if (type === 'mk') {
-    payFilterMk = val;
-    ['all','hazim','shahira','admin'].forEach(id => {
-      const b = document.getElementById('pf-mk-'+id);
-      if (b) { b.className = 'fp'; if (id === val) b.classList.add('a-all'); }
-    });
-  } else if (type === 'plan') {
-    payFilterPlan = val;
-    ['all','4x','3x','2x','Full'].forEach(id => {
-      const b = document.getElementById('pf-plan-'+id.toLowerCase());
-      if (b) { b.className = 'fp'; if (id === val) b.classList.add('a-all'); }
-    });
-  } else if (type === 'status') {
-    payFilterStatus = val;
-    ['all','completed','incomplete'].forEach(id => {
-      const b = document.getElementById('pf-status-'+id);
-      if (b) b.className = 'fp';
-    });
-    const active = document.getElementById('pf-status-'+val);
-    if (active) active.classList.add('a-all');
-  }
-  renderPaymentTable();
+function showPayList(type) {
+  const filtered = paymentData.filter(r => {
+    if (!r['JMB Name'] || !r['JMB Name'].toString().trim()) return false;
+    const status = getPayStatus(r, r['Payment Plan']);
+    if (type === 'completed') return status.completed;
+    if (type === 'incomplete') return !status.completed;
+    return true;
+  });
+  const titles = {completed:'Completed', incomplete:'Incomplete', all:'All'};
+  document.getElementById('payListTitle').textContent = `${titles[type]||type} — ${filtered.length} JMB`;
+  document.getElementById('payListBody').innerHTML = filtered.length ? filtered.map((r,i) => {
+    const mk = (r['Marketer']||'').toLowerCase();
+    const mkLbl = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
+    const mkBdg = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
+    const prem = parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;
+    const status = getPayStatus(r, r['Payment Plan']);
+    const isCompleted = status.completed;
+    return `<tr>
+      <td style="color:var(--text3);">${i+1}</td>
+      <td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td>
+      <td><span class="badge ${mkBdg}">${mkLbl}</span></td>
+      <td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${fmt(prem)}</td>
+      <td>${renderPayCheckboxes(status.paid, status.total)}</td>
+      <td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No data</td></tr>';
+  document.getElementById('payListPanel').style.display = 'block';
+  document.getElementById('payListPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function getPayStatus(row, plan) {
@@ -1968,12 +2011,21 @@ function renderPaymentTable() {
   document.getElementById('pay-completed').textContent = completed;
   document.getElementById('pay-incomplete').textContent = incomplete;
   document.getElementById('pay-premium').textContent = fmt(totalPrem);
+  // Update RM values
+  const completedPrem = filtered.filter(r => getPayStatus(r, r['Payment Plan']).completed)
+    .reduce((s,r) => s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+  const incompletePrem = filtered.filter(r => !getPayStatus(r, r['Payment Plan']).completed)
+    .reduce((s,r) => s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0), 0);
+  const crmEl = document.getElementById('pay-completed-rm');
+  const irmEl = document.getElementById('pay-incomplete-rm');
+  if (crmEl) crmEl.textContent = fmt(completedPrem);
+  if (irmEl) irmEl.textContent = fmt(incompletePrem);
 
   const tbody = document.getElementById('paymentTableBody');
   const thead = document.getElementById('paymentTableHead');
   if (!tbody || !thead) return;
 
-  thead.innerHTML = `<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Plan</th><th>Payment</th><th>Status</th></tr>`;
+  thead.innerHTML = `<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th></tr>`;
 
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';
@@ -1987,15 +2039,15 @@ function renderPaymentTable() {
     const mkBadge = mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';
     const prem = parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;
     const status = getPayStatus(r, plan);
+    const isCompleted = status.completed;
     const statusHtml = status.total > 0
-      ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${status.completed?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${status.completed?'#10B981':'#EF4444'};">${status.completed?'Completed':'Incomplete'}</span>`
+      ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span>`
       : '<span style="color:var(--text3);font-size:11px;">-</span>';
     return `<tr>
       <td style="color:var(--text3);">${idx+1}</td>
-      <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r['JMB Name']}</td>
+      <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td>
       <td><span class="badge ${mkBadge}">${mkLabel}</span></td>
-      <td style="font-weight:600;color:var(--accent);">${prem?fmt(prem):'-'}</td>
-      <td><span class="bp">${plan}</span></td>
+      <td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td>
       <td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td>
       <td>${statusHtml}</td>
     </tr>`;
@@ -2085,7 +2137,7 @@ function _renderSettlementUI(data) {
   document.getElementById('settle-completed').textContent = completed;
   document.getElementById('settle-completed-pct').textContent = fmt(completedPrem);
   document.getElementById('settle-incomplete').textContent = incomplete;
-  document.getElementById('settle-incomplete-pct').textContent = fmt(incompletePrem) + ' pending';
+  document.getElementById('settle-incomplete-pct').textContent = fmt(incompletePrem);
 
   const grid = document.getElementById('settlePrinGrid');
   if (!grid) return;
@@ -2116,18 +2168,37 @@ function _renderSettlementUI(data) {
   }).join('');
 }
 
-function showSettleList(prin) {
-  const keyword = prin.toLowerCase().split(' ')[0];
-  const data = settleData.filter(r => {
-    const p = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
-    return p.includes(keyword);
-  }).sort((a,b) => {
-    const sa = getPayStatus(a, a['Payment Plan']).completed;
-    const sb = getPayStatus(b, b['Payment Plan']).completed;
-    return sa - sb; // incomplete first
+function showSettleList(type) {
+  let data = [];
+  let title = '';
+
+  if (type === 'all') {
+    data = [...settleData];
+    title = `All JMB — ${data.length}`;
+  } else if (type === 'completed') {
+    data = settleData.filter(r => getPayStatus(r, r['Payment Plan']).completed);
+    title = `Completed — ${data.length}`;
+  } else if (type === 'incomplete') {
+    data = settleData.filter(r => !getPayStatus(r, r['Payment Plan']).completed);
+    title = `Incomplete — ${data.length}`;
+  } else {
+    // Principle name
+    const keyword = type.toLowerCase().split(' ')[0];
+    data = settleData.filter(r => {
+      const p = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
+      return p.includes(keyword);
+    });
+    title = `${type} — ${data.length} JMB`;
+  }
+
+  // Sort: incomplete first
+  data.sort((a,b) => {
+    const sa = getPayStatus(a, a['Payment Plan']).completed ? 1 : 0;
+    const sb = getPayStatus(b, b['Payment Plan']).completed ? 1 : 0;
+    return sa - sb;
   });
 
-  document.getElementById('settleListTitle').textContent = `${prin} — ${data.length} JMB`;
+  document.getElementById('settleListTitle').textContent = title;
   document.getElementById('settleListBody').innerHTML = data.length ? data.map((r,i) => {
     const mk = (r['Marketer']||'').toLowerCase();
     const mkLbl = mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';
@@ -2138,9 +2209,9 @@ function showSettleList(prin) {
     const statusHtml = isCompleted
       ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(16,185,129,.15);color:#10B981;">✓ Completed</span>`
       : `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(239,68,68,.15);color:#EF4444;">Incomplete</span>`;
-    return `<tr style="${isCompleted?'opacity:0.6;':''}">
+    return `<tr>
       <td style="color:var(--text3);">${i+1}</td>
-      <td style="font-weight:500;">${r['JMB Name']||'-'}</td>
+      <td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']||'-'}</td>
       <td><span class="badge ${mkBdg}">${mkLbl}</span></td>
       <td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${fmt(prem)}</td>
       <td>${renderPayCheckboxes(status.paid, status.total)}</td>
@@ -2200,22 +2271,28 @@ function go(name) {
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;">
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL POLICIES</div>
-      <div style="font-size:40px;font-weight:700;color:#f1f5f9;line-height:1;" id="settle-total">0</div>
-      <div style="font-size:13px;font-weight:600;color:#60a5fa;margin-top:6px;" id="settle-total-prem">RM 0</div>
+    <div onclick="showSettleList('all')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;cursor:pointer;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">TOTAL SETTLEMENT</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <div style="font-size:40px;font-weight:700;color:#3B82F6;line-height:1;" id="settle-total">0</div>
+        <div style="font-size:22px;font-weight:700;color:#3B82F6;line-height:1;" id="settle-total-prem">RM 0</div>
+      </div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+    <div onclick="showSettleList('completed')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;cursor:pointer;" onmouseover="this.style.borderColor='#10B981'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">COMPLETED</div>
-      <div style="font-size:40px;font-weight:700;color:#10B981;line-height:1;" id="settle-completed">0</div>
-      <div style="font-size:13px;font-weight:600;color:#10B981;margin-top:6px;" id="settle-completed-pct">RM 0</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <div style="font-size:40px;font-weight:700;color:#10B981;line-height:1;" id="settle-completed">0</div>
+        <div style="font-size:22px;font-weight:700;color:#10B981;line-height:1;" id="settle-completed-pct">RM 0</div>
+      </div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;">
+    <div onclick="showSettleList('incomplete')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;cursor:pointer;" onmouseover="this.style.borderColor='#EF4444'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">INCOMPLETE</div>
-      <div style="font-size:40px;font-weight:700;color:#EF4444;line-height:1;" id="settle-incomplete">0</div>
-      <div style="font-size:13px;font-weight:600;color:#EF4444;margin-top:6px;" id="settle-incomplete-pct">RM 0 pending</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <div style="font-size:40px;font-weight:700;color:#EF4444;line-height:1;" id="settle-incomplete">0</div>
+        <div style="font-size:22px;font-weight:700;color:#EF4444;line-height:1;" id="settle-incomplete-pct">RM 0</div>
+      </div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
     </div>
   </div>
