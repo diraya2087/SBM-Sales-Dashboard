@@ -4,117 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sales Dashboard — JMB</title>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<!-- v202606060717 -->
-<script>
-// Minimal Chart.js compatible stub — no CDN needed
-window.Chart = (function(){
-  function Chart(canvas, config) {
-    this.canvas = canvas;
-    this.config = config;
-    this.data = config.data || {datasets:[]};
-    this._draw();
-  }
-  Chart.prototype._draw = function() {
-    try {
-      const ctx = this.canvas.getContext('2d');
-      const w = this.canvas.width || this.canvas.offsetWidth || 300;
-      const h = this.canvas.height || this.canvas.offsetHeight || 200;
-      this.canvas.width = w; this.canvas.height = h;
-      ctx.clearRect(0, 0, w, h);
-      const type = this.config.type;
-      const data = this.data;
-      const labels = data.labels || [];
-      const datasets = data.datasets || [];
-      const opts = this.config.options || {};
-      if (!datasets.length || !labels.length) {
-        ctx.fillStyle = '#475569';
-        ctx.font = '12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('No data', w/2, h/2);
-        return;
-      }
-      if (type === 'doughnut' || type === 'pie') {
-        this._drawDonut(ctx, w, h, datasets, labels);
-      } else {
-        this._drawBar(ctx, w, h, datasets, labels, type === 'line');
-      }
-    } catch(e) {}
-  };
-  Chart.prototype._drawBar = function(ctx, w, h, datasets, labels, isLine) {
-    const pad = {top:20, right:10, bottom:35, left:45};
-    const cw = w - pad.left - pad.right;
-    const ch = h - pad.top - pad.bottom;
-    // Find max value
-    let maxVal = 0;
-    datasets.forEach(ds => (ds.data||[]).forEach(v => { if(+v > maxVal) maxVal = +v; }));
-    if (!maxVal) maxVal = 1;
-    // Draw grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 1;
-    for (let i=0;i<=4;i++) {
-      const y = pad.top + ch - (ch*i/4);
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left+cw, y); ctx.stroke();
-      ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(Math.round(maxVal*i/4), pad.left-4, y+3);
-    }
-    // Draw bars/lines
-    const n = labels.length;
-    const bw = Math.max(4, (cw / (n * datasets.length + 1)) - 2);
-    datasets.forEach((ds, di) => {
-      const color = (Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor) || ds.borderColor || '#3B82F6';
-      const pts = [];
-      (ds.data||[]).forEach((val, li) => {
-        const x = pad.left + (li * cw / n) + (di * (bw+2)) + bw/2 + 2;
-        const y = pad.top + ch - (ch * Math.min(+val, maxVal) / maxVal);
-        pts.push({x, y});
-        if (!isLine) {
-          ctx.fillStyle = typeof color === 'string' ? color : '#3B82F6';
-          ctx.fillRect(x - bw/2, y, bw, pad.top + ch - y);
-        }
-      });
-      if (isLine && pts.length) {
-        ctx.strokeStyle = ds.borderColor || '#3B82F6';
-        ctx.lineWidth = 2; ctx.beginPath();
-        pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
-        ctx.stroke();
-        pts.forEach(p => { ctx.fillStyle=ds.borderColor||'#3B82F6'; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill(); });
-      }
-    });
-    // X labels
-    ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-    labels.forEach((lbl, li) => {
-      const x = pad.left + (li * cw / n) + cw/(n*2);
-      ctx.fillText(String(lbl).slice(0,3), x, pad.top + ch + 14);
-    });
-  };
-  Chart.prototype._drawDonut = function(ctx, w, h, datasets, labels) {
-    const cx=w/2, cy=h/2, r=Math.min(cx,cy)*0.7, ri=r*0.55;
-    const vals = datasets[0].data || [];
-    const colors = datasets[0].backgroundColor || ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#60A5FA'];
-    const total = vals.reduce((a,b)=>a+(+b||0),0) || 1;
-    let angle = -Math.PI/2;
-    vals.forEach((v, i) => {
-      const slice = (v/total) * Math.PI * 2;
-      ctx.beginPath(); ctx.moveTo(cx,cy);
-      ctx.arc(cx, cy, r, angle, angle+slice);
-      ctx.fillStyle = colors[i%colors.length];
-      ctx.fill();
-      angle += slice;
-    });
-    ctx.beginPath(); ctx.arc(cx,cy,ri,0,Math.PI*2);
-    ctx.fillStyle = '#1e2433'; ctx.fill();
-  };
-  Chart.prototype.update = function() { this._draw(); };
-  Chart.prototype.destroy = function() {
-    try { const ctx = this.canvas.getContext('2d'); ctx.clearRect(0,0,this.canvas.width,this.canvas.height); } catch(e) {}
-  };
-  Chart.register = function(){};
-  return Chart;
-})();
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root{
   --bg:'';
@@ -339,7 +229,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 .mk-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
 .mk-tag.hazim{background:rgba(59,130,246,.2);color:#60a5fa;}
 .mk-tag.shahira{background:rgba(16,185,129,.2);color:#34d399;}
-.mk-tag.admin,.mk-tag.sbm{background:rgba(139,92,246,.2);color:#a78bfa;}
+.mk-tag.admin{background:rgba(139,92,246,.2);color:#a78bfa;}
 
 .exp-txt{font-size:11px;color:var(--text3);font-family:monospace;}
 
@@ -463,15 +353,15 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     <div class="sync-pill" id="syncPill" style="display:none;"><span class="sdot" id="sdot"></span><span id="stext">-</span></div>
     <div class="nav-wrap" id="navWrap" style="display:none;">
       <button class="nav-btn active" id="tnav-dashboard" onclick="go('dashboard')">📊 Sales</button>
-      <button class="nav-btn" id="tnav-progress" onclick="go('progress')">🎯 Progress</button>
       <button class="nav-btn" id="tnav-leaderboard" onclick="go('leaderboard')">🏆 Leaderboard</button>
+      <button class="nav-btn" id="tnav-progress" onclick="go('progress')">🎯 Progress</button>
       <button class="nav-btn" id="tnav-ciamend" onclick="go('ciamend')">📝 CI Amendment</button>
       <button class="nav-btn" id="tnav-transactions" onclick="go('transactions')">💳 Payment</button>
       <button class="nav-btn" id="tnav-settlement" onclick="go('settlement')" style="display:none;">💰 Settlement</button>
       <button class="nav-btn" id="tnav-setup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
     </div>
     <div class="upill" id="upill" style="display:none;"><div class="uav" id="uav"></div><span id="ulabel"></span></div>
-    <button class="btn btn-primary" id="btnNewCase" style="display:none;" onclick="openGlobalCreate()" title="Create New Entry">+ Create New Entry</button>
+    <button class="btn btn-primary" id="btnNewCase" style="display:none;" onclick="openGlobalCreate()" title="Create New Case">+ New Case</button>
     <button class="btn btn-red" id="btnOut" style="display:none;" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -487,14 +377,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <h2>Welcome Back</h2>
       <div class="lsub">Sales Dashboard · JMB</div>
       <div class="field"><label>User</label>
-        <select id="lu">
-            <option value="">-- Select user --</option>
-            <option value="sbm">SBM (Admin)</option>
-            <option value="hazim">Hazim (Marketer)</option>
-            <option value="shahira">Shahira (Marketer)</option>
-            <option value="ibrahim">Ibrahim (Management)</option>
-            <option value="natasha">Natasha (Management)</option>
-          </select>
+        <select id="lu"><option value="">-- Select user --</option></select>
       </div>
       <div class="field"><label>Password</label><input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="lerr" id="lerr">⚠ Incorrect username or password.</div>
@@ -546,7 +429,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <button class="btn btn-outline" onclick="fetchNow()">🔄 Refresh</button>
     </div>
   </div>
-  <div id="noConn" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:9px;padding:12px 16px;margin-bottom:1.3rem;font-size:13px;color:#60a5fa;">📋 No data loaded yet. <span id="setupHint"></span></div>
+  <div id="noConn">⚠ No Google Sheets connection. <span id="setupHint"></span></div>
 
   <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;">
     <div class="kpi" onclick="showKpiDetail('total')"><div class="klabel">Total Premium</div><div class="kval" id="k1">-</div><div class="ksub kup" id="k1s"></div></div>
@@ -558,10 +441,9 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     <div class="kpi" onclick="showKpiDetail('prin')"><div class="klabel">Top Principle</div><div class="kval" id="k4">-</div><div class="ksub" id="k4s"></div></div>
     <div class="kpi" onclick="showKpiDetail('case-type')"><div class="klabel">Renewal vs New</div><div class="kval" id="k5">-</div><div class="ksub" id="k5s"></div></div>
   </div>
-  <div class="target-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+  <div class="target-grid">
     <div class="kpi-target" id="tgt-hazim"></div>
     <div class="kpi-target" id="tgt-shahira"></div>
-    <div class="kpi-target" id="tgt-admin"></div>
   </div>
   <div class="card-full">
     <div class="ct">Monthly Target Achievement — RM 250K per Marketer</div>
@@ -579,9 +461,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div class="cs">Hazim vs Shahira grouped — click bar for details</div>
       <div class="fpills">
         <button class="fp a-all" id="fmk-all" onclick="setMkFilter('all')">All</button>
-        <button class="fp" id="fmk-hazim" onclick="setMkFilter('hazim')" style="color:#60a5fa;">Hazim</button>
-        <button class="fp" id="fmk-shahira" onclick="setMkFilter('shahira')" style="color:#34d399;">Shahira</button>
-        <button class="fp" id="fmk-admin" onclick="setMkFilter('admin')" style="color:#a78bfa;">SBM</button>
+        <button class="fp" id="fmk-hazim" onclick="setMkFilter('hazim')">Hazim</button>
+        <button class="fp" id="fmk-shahira" onclick="setMkFilter('shahira')">Shahira</button>
       </div>
       <div style="position:relative;width:100%;height:168px;"><canvas id="cMarketer"></canvas></div>
     </div>
@@ -688,7 +569,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
     </div>
   </div>
-  <!-- PAYMENT STAGE PILLS -->
+  <!-- PAYMENT STAGE PILLS (Feature 4) -->
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto;">
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Payment Completion — Stage Tracker</div>
     <div style="display:flex;align-items:center;gap:0;min-width:600px;" id="pay-stage-bar">
@@ -722,7 +603,6 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
     </div>
   </div>
-</div>
   <div id="payListPanel" style="display:none;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:600;color:#f1f5f9;" id="payListTitle">JMB List</div>
@@ -1069,7 +949,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
     </div>
   </div>
-  <!-- SETTLEMENT STAGE PILLS -->
+  <!-- SETTLEMENT STAGE PILLS (Feature 4) -->
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto;">
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Settlement by Principle — Stage Tracker</div>
     <div style="display:flex;align-items:center;gap:0;min-width:700px;" id="settle-stage-bar">
@@ -1097,13 +977,6 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 
 
 <script>
-window.onerror = function(msg, src, line, col, err) {
-  return true;
-};
-// Force clear old user data so DEFAULT_USERS always applies fresh
-try { localStorage.removeItem('sd_jmb_users_v7'); } catch(e) {}
-
-
 const AS_BASE = 'https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 const PROG_URLS = {
   hazim:   AS_BASE + '?type=progress&tab=hazim',
@@ -1193,28 +1066,28 @@ function updateProgHeader() {
 }
 
 function fetchJSONP(url) {
-  // Use fetch() instead of script injection to avoid cross-origin "Script error."
-  return new Promise(async (resolve, reject) => {
-    const controller = new AbortController();
-    const tid = setTimeout(()=>{ controller.abort(); reject(new Error('Timeout')); }, 8000);
-    try {
-      const resp = await fetch(url, { signal: controller.signal });
-      clearTimeout(tid);
-      const txt = await resp.text();
-      // Strip JSONP callback wrapper if present
-      const match = txt.match(/^[^(]+\((.+)\)\s*;?\s*$/s);
-      resolve(match ? JSON.parse(match[1]) : JSON.parse(txt));
-    } catch(e) {
-      clearTimeout(tid);
-      reject(new Error('Network blocked: ' + e.message));
-    }
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('Timeout'));
+    }, 15000);
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timeout); reject(new Error('Script error')); };
+    document.body.appendChild(script);
   });
 }
 
 async function fetchProgressData() {
-  if(progData.length === 0) {
-    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Connecting to GSheet...</div></div>';
-  }
+  document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Loading progress data...</div></div>';
   buildProgYearPills();
   buildMonthPills();
   updateProgHeader();
@@ -1228,22 +1101,16 @@ async function fetchProgressData() {
     const shahiraData = results[1].map(r => ({...r, _marketer: 'shahira'}));
     const adminData   = results[2].map(r => ({...r, _marketer: 'admin'}));
     progData = [...hazimData, ...shahiraData, ...adminData];
+    buildProgYearPills();
+    buildMonthPills();
+    const wrap = document.getElementById('monthPillsWrap');
+    if (wrap) wrap.style.display = 'block';
+    updateProgHeader();
+    updateProgStats();
+    renderProgCards();
   } catch(e) {
-    // Network blocked or failed — use locally entered data only
-    const grid = document.getElementById('jmbGrid');
-    if (progData.length === 0 && grid) {
-      grid.innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">📝</div><div style="color:var(--text2);font-weight:600;">No data yet</div><div style="font-size:12px;margin-top:6px;">Use <strong>+ Create New Entry</strong> to add JMB progress records</div></div>';
-    }
+    document.getElementById('jmbGrid').innerHTML = '<div class="prog-empty"><div class="prog-empty-icon">❌</div><div>Failed to load — ' + e.message + '</div></div>';
   }
-  // Always render with whatever data we have
-  buildProgYearPills();
-  buildMonthPills();
-  const wrap = document.getElementById('monthPillsWrap');
-  if (wrap) wrap.style.display = 'block';
-  updateProgHeader();
-  updateProgStats();
-  renderProgCards();
-  syncAllFromProgress();
 }
 
 function daysToExpiry(expiryStr) {
@@ -1256,7 +1123,7 @@ function daysToExpiry(expiryStr) {
 
 function getUrgency(row) {
   const stage = (row['Current Stage'] || '').toLowerCase();
-  if (stage.includes('policy issued') || stage.includes('completed') || stage.includes('won') || stage.includes('jmb received')) return 'won';
+  if (stage.includes('policy issued') || stage.includes('completed') || stage.includes('won')) return 'won';
   if (stage.includes('reject')) return 'rejected';
   const days = daysToExpiry(row['Expiry Date'] || '');
   if (days === null) return 'normal';
@@ -1268,7 +1135,7 @@ function getUrgency(row) {
 }
 
 function renderProgAnalysis(data) {
-  const stages = ['Prospecting','Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy','Rejected'];
+  const stages = ['Prospecting','Quoting','Comparative','Appointment','Decision','Hold Cover','Policy Issued','Rejected'];
   const stageCounts = {};
   stages.forEach(s => stageCounts[s] = 0);
   data.forEach(r => {
@@ -1278,7 +1145,7 @@ function renderProgAnalysis(data) {
     else if (stage) stageCounts['Prospecting'] = (stageCounts['Prospecting'] || 0) + 1;
   });
   const maxStage = Math.max(...Object.values(stageCounts), 1);
-  const stageColors = {'Prospecting':'#3B82F6','Quoting':'#6366F1','Comparative':'#8B5CF6','Appointment':'#F59E0B','Decision':'#EF4444','Won':'#10B981','Hold Cover':'#059669','Policy Issued':'#047857','JMB Received Policy':'#065f46','Rejected':'#94a3b8'};
+  const stageColors = {'Prospecting':'#3B82F6','Quoting':'#6366F1','Comparative':'#8B5CF6','Appointment':'#F59E0B','Decision':'#EF4444','Hold Cover':'#10B981','Policy Issued':'#059669','Rejected':'#94a3b8'};
   const pipelineDiv = document.getElementById('pipelineDiv');
   if (pipelineDiv) {
     pipelineDiv.innerHTML = stages.map(s => {
@@ -1436,17 +1303,17 @@ function renderProgCards() {
     if(stageDate){const parts=stageDate.split('/');let sd;if(parts.length===3)sd=new Date(parts[2],parts[1]-1,parts[0]);else sd=new Date(stageDate);if(!isNaN(sd)){const diff=Math.floor((new Date()-sd)/(1000*60*60*24));if(diff>=0)stageDaysText=`${diff} hari dalam stage ini`;}}
     const prins=[[r['Principle 1']||'',r['P1 Quote Status']||''],[r['Principle 2']||'',r['P2 Quote Status']||''],[r['Principle 3']||'',r['P3 Quote Status']||''],[r['Principle 4']||'',r['P4 Quote Status']||'']].filter(([p])=>p);
     const prinsHTML=prins.length>0?prins.map(([p,s])=>`<span class="prin-pill ${prinClass(p)}">${p}${quoteIcon(s)}</span>`).join(''):`<span class="prin-pill empty">Belum request quote</span>`;
-    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk==='admin'?'SBM':mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${countdownHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDaysText?`<span class="stage-days">${stageDaysText}</span>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div></div>`;
+    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${countdownHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDaysText?`<span class="stage-days">${stageDaysText}</span>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div></div>`;
   }).join('');
 }
 
-const PRINS=['STM','Etiqa','Zurich','Tokio Marine','Allianz','MPI'];
-const PCOL=['#10B981','#F59E0B','#2563EB','#38BDF8','#60A5FA','#EF4444'];
-const PCOL_BG=['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(37,99,235,.7)','rgba(56,189,248,.7)','rgba(96,165,250,.7)','rgba(239,68,68,.7)'];
+const PRINS=['Etiqa','STM','Zurich','Tokio Marine','MPI','Allianz'];
+const PCOL=['#F59E0B','#10B981','#2563EB','#38BDF8','#8B5CF6','#60A5FA'];
+const PCOL_BG=['rgba(245,158,11,.7)','rgba(16,185,129,.7)','rgba(37,99,235,.7)','rgba(56,189,248,.7)','rgba(139,92,246,.7)','rgba(96,165,250,.7)'];
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_MAP={january:0,januari:0,jan:0,feb:1,february:1,februari:1,mac:2,march:2,mar:2,april:3,apr:3,mei:4,may:4,jun:5,june:5,julai:6,jul:6,july:6,ogos:7,august:7,aug:7,sep:8,september:8,oktober:9,october:9,okt:9,oct:9,november:10,nov:10,disember:11,december:11,dis:11,dec:11};
-const MKCOL={hazim:'#3B82F6',shahira:'#10B981',sbm:'#8B5CF6',admin:'#8B5CF6',management:'#F59E0B'};
-const MKCOL_BG={hazim:'rgba(59,130,246,.7)',shahira:'rgba(16,185,129,.7)',sbm:'rgba(139,92,246,.7)',admin:'rgba(139,92,246,.7)',management:'rgba(245,158,11,.7)'};
+const MKCOL={hazim:'#3B82F6',shahira:'#10B981',admin:'#8B5CF6',management:'#F59E0B'};
+const MKCOL_BG={hazim:'rgba(59,130,246,.7)',shahira:'rgba(16,185,129,.7)',admin:'rgba(139,92,246,.7)',management:'rgba(245,158,11,.7)'};
 const BAND_VALS=[200000,175000,150000,125000,100000,75000,50000,25000,0];
 const BAND_LBL=['<25K','<50K','<75K','<100K','<125K','<150K','<175K','<200K','>200K'];
 const BAND_COL=['#EF4444','#F97316','#F59E0B','#10B981','#3B82F6','#6366F1','#8B5CF6','#EC4899','#1e3a8a'];
@@ -1455,11 +1322,12 @@ const USERS_KEY='sd_jmb_users_v7';
 const HARDCODED_SHEET_URL='https://script.google.com/macros/s/AKfycbyMedUEDYUXhDZlMYTSMXR7kVD8lLimRN7k8H_77e5DLPFUMsVp5FctFJ4uytUym2YO/exec';
 
 const DEFAULT_USERS={
-  sbm:{pass:'Admin@jmb2024!',label:'SBM',color:'#8B5CF6',role:'admin'},
-  hazim:{pass:'hazim123!',label:'Hazim',color:'#3B82F6',role:'marketer'},
-  shahira:{pass:'shahira 333@',label:'Shahira',color:'#10B981',role:'marketer'},
-  ibrahim:{pass:'ibrahim888*',label:'Ibrahim',color:'#EC4899',role:'management'},
-  natasha:{pass:'natasha901!',label:'Natasha',color:'#64748b',role:'management'},
+  admin:{pass:'Admin@Jmb2024!',label:'Admin',color:'#8B5CF6',role:'admin'},
+  hazim:{pass:'hazim123',label:'Hazim',color:'#3B82F6',role:'marketer'},
+  shahira:{pass:'shahira123',label:'Shahira',color:'#10B981',role:'marketer'},
+  yazid:{pass:'yazid123',label:'Yazid',color:'#F59E0B',role:'management'},
+  ibrahim:{pass:'ibrahim123',label:'Ibrahim',color:'#EC4899',role:'management'},
+  natasha:{pass:'natasha123',label:'Natasha',color:'#64748b',role:'management'},
 };
 
 let cu=null,cy=2026,cyLb=2026,cyTx=2026;
@@ -1468,50 +1336,15 @@ let rawData=[],chartsBuilt=false,timer=null;
 let cM,cMk,cD,cCase,cPrin,cMkP,cTgt,cLbCase;
 let filterPrin=null;
 
-function getUsers(){
-  const base={...DEFAULT_USERS};
-  try{
-    const saved=localStorage.getItem(USERS_KEY);
-    if(saved){
-      const extra=JSON.parse(saved);
-      // Only add users NOT in DEFAULT_USERS (don't override default passwords)
-      Object.entries(extra).forEach(([id,u])=>{
-        if(!DEFAULT_USERS[id]) base[id]=u;
-      });
-    }
-  }catch(e){localStorage.removeItem(USERS_KEY);}
-  return base;
-}
+function getUsers(){const base={...DEFAULT_USERS};const saved=localStorage.getItem(USERS_KEY);if(saved){try{const extra=JSON.parse(saved);Object.entries(extra).forEach(([id,u])=>{base[id]=u;});}catch(e){}}return base;}
 function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u));}
 
-function populateLoginDropdown(){
-  const sel=document.getElementById('lu');
-  if(!sel){ setTimeout(populateLoginDropdown,50); return; }
-  if(sel.options.length > 1) return; // already populated
-  sel.innerHTML='';
-  const placeholder = document.createElement('option');
-  placeholder.value=''; placeholder.textContent='-- Select user --';
-  sel.appendChild(placeholder);
-  const combined={...DEFAULT_USERS};
-  try{ const s=localStorage.getItem(USERS_KEY); if(s){ Object.assign(combined, JSON.parse(s)); } }catch(e){}
-  Object.entries(combined).forEach(([id,u])=>{
-    const opt=document.createElement('option');
-    opt.value=id;
-    opt.textContent=u.label+' ('+( u.role==='admin'?'Admin':u.role==='management'?'Management':'Marketer')+')';
-    sel.appendChild(opt);
-  });
-}
-// Call immediately + on DOM ready + on load (belt and suspenders)
-populateLoginDropdown();
-document.addEventListener('DOMContentLoaded', populateLoginDropdown);
-window.addEventListener('load', populateLoginDropdown);
-populateLoginDropdown();
-
+function populateLoginDropdown(){const users=getUsers();const sel=document.getElementById('lu');sel.innerHTML='<option value="">-- Select user --</option>';Object.entries(users).forEach(([id,u])=>{const opt=document.createElement('option');opt.value=id;opt.textContent=u.label;sel.appendChild(opt);});}
 
 function doLogin(){
   const uid=document.getElementById('lu').value,p=document.getElementById('lp').value;
   const users=getUsers();
-  if(!uid||!users[uid]||users[uid].pass!==p){document.getElementById('lerr').style.display='block';document.getElementById('lerr').textContent='⚠ Incorrect username or password.';return;}
+  if(!uid||!users[uid]||users[uid].pass!==p){document.getElementById('lerr').style.display='block';return;}
   document.getElementById('lerr').style.display='none';
   cu=uid;
   const u=users[uid];
@@ -1524,7 +1357,7 @@ function doLogin(){
   const settlementBtn=document.getElementById('tnav-settlement');
   if(setupBtn)setupBtn.style.display=u.role==='admin'?'':'none';
   if(settlementBtn)settlementBtn.style.display=(u.role==='admin'||u.role==='management')?'':'none';
-  go('dashboard');buildYearPills();// startTimer auto-disabled — click Refresh to load dataif(typeof updateNewCaseBtn==='function')updateNewCaseBtn();
+  go('dashboard');startTimer();buildYearPills();updateNewCaseBtn();
 }
 
 function logout(){
@@ -1561,36 +1394,8 @@ function parseAppsScriptJSON(txt){try{const arr=JSON.parse(txt);if(!Array.isArra
 function parseCSV(txt){const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase().replace(/[\s\/()]/g,'').replace(/[^a-z0-9]/g,''));const rows=[];for(let i=1;i<lines.length;i++){const vals=[];let cur='',inQ=false;for(const ch of lines[i]){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else cur+=ch;}vals.push(cur.trim());if(vals.length<3)continue;const row={};hdrs.forEach((h,idx)=>row[h]=vals[idx]||'');rows.push(row);}return rows;}
 function parseAuto(txt,url){if(isAppsScriptUrl(url))return parseAppsScriptJSON(txt);const trimmed=txt.trim();if(trimmed.startsWith('['))return parseAppsScriptJSON(trimmed);return parseCSV(trimmed);}
 function normalizeRow(row){const ts=row.timestamp||'';const mkRaw=(row.marketersales||row.marketer||row.marketing||'').toLowerCase().trim();const caseRaw=(row.marketingcasses||row.marketingcases||'').toLowerCase().trim();const monthRaw=(row.monthofsales||row.month||'').toLowerCase().replace(/[()0-9]/g,'').trim();const jmb=row.jmbname||row.jmb||'';const prinRaw=(row.principle||row.principal||'').trim();const premTaxRaw=row.totalpremiumwithtax||row.totalpremiumwithttax||row.totalpremium||'0';const premTax=parseFloat(String(premTaxRaw).replace(/[^0-9.]/g,''))||0;const premNoTaxRaw=row.totalpremiumwithouttax||row.totalpremiumwithoutax||'0';const premNoTax=parseFloat(String(premNoTaxRaw).replace(/[^0-9.]/g,''))||0;const payment=row.paymentoption||row.payment||'';let year=2026;if(ts){const isoMatch=ts.match(/^(\d{4})-/);const dmyMatch=ts.match(/(\d{4})/);if(isoMatch)year=parseInt(isoMatch[1]);else if(dmyMatch)year=parseInt(dmyMatch[1]);}const mkey=monthRaw.replace(/\s+/g,'').substring(0,7);let mi=-1;for(const[k,v]of Object.entries(MONTH_MAP)){if(mkey.includes(k)){mi=v;break;}}if(mi===-1)return null;const mk=mkRaw.includes('hazim')?'hazim':mkRaw.includes('shahira')?'shahira':'admin';const caseType=caseRaw.includes('renewal')||caseRaw.includes('renew')?'Renewal':'New';const prNorm=prinRaw.toLowerCase();let prin=prinRaw;if(prNorm.includes('etiqa'))prin='Etiqa';else if(prNorm.includes('stm')||prNorm.includes('standard'))prin='STM';else if(prNorm.includes('zurich'))prin='Zurich';else if(prNorm.includes('tokio')||prNorm.includes('marine'))prin='Tokio Marine';else if(prNorm.includes('mpi'))prin='MPI';else if(prNorm.includes('allianz'))prin='Allianz';return{ts,year,mi,mk,caseType,jmb,prin,premTax,premNoTax,payment};}
-async function smartFetch(url){
-  // Try fetch with timeout
-  const controller = new AbortController();
-  const tid = setTimeout(()=>controller.abort(), 8000);
-  try{
-    const resp = await fetch(url, {signal: controller.signal, mode: isAppsScriptUrl(url)?'cors':'no-cors'});
-    clearTimeout(tid);
-    if(resp.ok||resp.type==='opaque') return await resp.text();
-    throw new Error('HTTP '+resp.status);
-  }catch(e){
-    clearTimeout(tid);
-    throw e;
-  }
-}
-async function fetchNow(){
-  const url=getSavedUrl();
-  if(!url){updateNoConn();return;}
-  setSyncUI('spin','Connecting...');
-  try{
-    const txt=await smartFetch(url);
-    rawData=parseAuto(txt,url).map(normalizeRow).filter(Boolean);
-    setSyncUI('ok',new Date().toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})+' · '+rawData.length+' records');
-    document.getElementById('dsub').textContent='Live from Google Sheets · '+rawData.length+' records';
-    buildYearPills();renderDash();renderLb();renderTx();
-  }catch(e){
-    setSyncUI('err','Cannot reach GSheet — use Create New Entry to add data');
-    // Still render with whatever rawData we have (from localStorage)
-    buildYearPills();renderDash();renderLb();
-  }
-}
+async function smartFetch(url){if(isAppsScriptUrl(url)){const resp=await fetch(url);if(!resp.ok)throw new Error('HTTP '+resp.status);return await resp.text();}try{const resp=await fetch(url,{mode:'cors'});if(resp.ok)return await resp.text();}catch(e){}const proxy='https://api.allorigins.win/raw?url='+encodeURIComponent(url);const resp=await fetch(proxy);if(!resp.ok)throw new Error('HTTP '+resp.status);return await resp.text();}
+async function fetchNow(){const url=getSavedUrl();if(!url){updateNoConn();return;}setSyncUI('spin','Fetching...');try{const txt=await smartFetch(url);rawData=parseAuto(txt,url).map(normalizeRow).filter(Boolean);setSyncUI('ok',new Date().toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})+' · '+rawData.length+' records');document.getElementById('dsub').textContent='Live from Google Sheets · '+rawData.length+' records';buildYearPills();renderDash();renderLb();renderTx();}catch(e){setSyncUI('err','Failed — check link');}}
 async function testConn(){const url=document.getElementById('sheetUrl').value.trim();if(!url){showTerr('Please enter a link.');return;}try{const txt=await smartFetch(url);const norm=parseAuto(txt,url).map(normalizeRow).filter(Boolean);showTok('✓ Success! Found '+norm.length+' records.');}catch(e){showTerr('✗ Failed. Check the link.');}}
 async function saveConn(){const url=document.getElementById('sheetUrl').value.trim();if(!url){showTerr('Enter a link first.');return;}saveUrl(url);await fetchNow();renderSetup();go('dashboard');}
 function showTok(m){const el=document.getElementById('tok');el.textContent=m;el.style.display='block';document.getElementById('terr').style.display='none';}
@@ -1598,21 +1403,43 @@ function showTerr(m){const el=document.getElementById('terr');el.textContent=m;e
 function renderSetup(){const localUrl=localStorage.getItem(SHEET_KEY)||'';const effectiveUrl=getSavedUrl();document.getElementById('connCard').style.display=effectiveUrl?'block':'none';if(effectiveUrl)document.getElementById('curlink').textContent=effectiveUrl;document.getElementById('sheetUrl').value=localUrl||HARDCODED_SHEET_URL;}
 function startTimer(){stopTimer();fetchNow();timer=setInterval(fetchNow,5*60*1000);}
 function stopTimer(){if(timer){clearInterval(timer);timer=null;}}
-function updateNoConn(){
+function updateNoConn(){const users=getUsers();const show=!getSavedUrl()&&rawData.length===0;document.getElementById('noConn').style.display=show?'block':'none';document.getElementById('setupHint').textContent=cu&&users[cu]?.role==='admin'?'Go to Setup to connect.':'Please contact Admin.';}
+
+const fd=y=>rawData.filter(r=>r.year===y);
+const sumPrem=rows=>rows.reduce((s,r)=>s+r.premTax,0);
+const fmt=v=>v>=1000000?'RM '+(v/1000000).toFixed(2)+'M':v>=1000?'RM '+(v/1000).toFixed(1)+'K':v?'RM '+v.toLocaleString():'-';
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const getLatestMi=y=>{let l=-1;fd(y).forEach(r=>{if(r.mi>l)l=r.mi;});return l;}
+
+function buildYearPills(){const currentYear=new Date().getFullYear();const years=[currentYear-2,currentYear-1,currentYear];['dash','lb','tx'].forEach(scope=>{const container=document.getElementById('ypills-'+scope);if(!container)return;const activeYear=scope==='dash'?cy:scope==='lb'?cyLb:cyTx;container.innerHTML=years.map(yr=>`<button class="ypill ${yr===activeYear?'active':''}" onclick="setYear(${yr},this,'${scope}')">${yr}</button>`).join('');});}
+function setYear(y,btn,scope){if(scope==='dash')cy=y;else if(scope==='lb')cyLb=y;else cyTx=y;const container=document.getElementById('ypills-'+scope);if(container)container.querySelectorAll('.ypill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(scope==='dash')renderDash();if(scope==='lb')renderLb();if(scope==='tx')renderTx();}
+
+function showKpiDetail(type){const data=fd(cy),mks=['hazim','shahira'],users=getUsers();const tt=document.getElementById('tooltip'),title=document.getElementById('tt-title'),body=document.getElementById('tt-body');if(type==='total'){title.textContent='Total Premium Breakdown';body.innerHTML=mks.map(mk=>`<div class="tt-row"><span>${users[mk]?.label||mk}</span><span>${fmt(sumPrem(data.filter(r=>r.mk===mk)))}</span></div>`).join('')+'<div class="tt-div"></div><div class="tt-row"><span>Grand Total</span><span>'+fmt(sumPrem(data))+'</span></div>';}else if(type==='cases'){title.textContent='Cases Breakdown';body.innerHTML=mks.map(mk=>`<div class="tt-row"><span>${users[mk]?.label||mk}</span><span>${data.filter(r=>r.mk===mk).length} cases</span></div>`).join('');}else if(type==='top'){title.textContent='Marketer Performance';const tot=sumPrem(data)||1;body.innerHTML=mks.map(mk=>{const v=sumPrem(data.filter(r=>r.mk===mk));return`<div class="tt-row"><span>${users[mk]?.label||mk}</span><span>${fmt(v)} (${pct(v,tot)}%)</span></div>`;}).join('');}else if(type==='prin'){title.textContent='Principle Ranking';const tot=sumPrem(data)||1;const sorted=PRINS.map(p=>({p,t:sumPrem(data.filter(r=>r.prin===p))})).sort((a,b)=>b.t-a.t);body.innerHTML=sorted.map(x=>`<div class="tt-row"><span>${x.p}</span><span>${fmt(x.t)} (${pct(x.t,tot)}%)</span></div>`).join('');}else if(type==='case-type'){title.textContent='Case Type Breakdown';const ren=data.filter(r=>r.caseType==='Renewal').length,nw=data.filter(r=>r.caseType==='New').length;body.innerHTML=`<div class="tt-row"><span>Renewal</span><span>${ren} (${pct(ren,data.length)}%)</span></div><div class="tt-row"><span>New</span><span>${nw} (${pct(nw,data.length)}%)</span></div>`;}tt.style.display='block';tt.style.left='50%';tt.style.top='180px';tt.style.transform='translateX(-50%)';setTimeout(()=>document.addEventListener('click',()=>{tt.style.display='none';},{once:true}),100);}
+function showMonthDetail(mi){const data=fd(cy).filter(r=>r.mi===mi),users=getUsers();const tt=document.getElementById('tooltip');document.getElementById('tt-title').textContent=MONTHS[mi]+' '+cy;document.getElementById('tt-body').innerHTML=['hazim','shahira'].map(mk=>{const v=sumPrem(data.filter(r=>r.mk===mk));const p=pct(v,MONTHLY_TARGET);return`<div class="tt-row"><span>${users[mk]?.label||mk}</span><span>${fmt(v)} (${p}%)</span></div>`;}).join('')+'<div class="tt-div"></div><div class="tt-row"><span>Total</span><span>'+fmt(sumPrem(data))+' · '+data.length+' cases</span></div>';tt.style.display='block';tt.style.left='50%';tt.style.top='200px';tt.style.transform='translateX(-50%)';setTimeout(()=>document.addEventListener('click',()=>{tt.style.display='none';},{once:true}),100);}
+function showPrinDetail(prin){const data=fd(cy).filter(r=>r.prin===prin),users=getUsers();const tt=document.getElementById('tooltip');document.getElementById('tt-title').textContent=prin+' Breakdown';document.getElementById('tt-body').innerHTML=['hazim','shahira'].map(mk=>{const v=sumPrem(data.filter(r=>r.mk===mk));return`<div class="tt-row"><span>${users[mk]?.label||mk}</span><span>${fmt(v)} · ${data.filter(r=>r.mk===mk).length} cases</span></div>`;}).join('')+'<div class="tt-div"></div><div class="tt-row"><span>Total</span><span>'+fmt(sumPrem(data))+'</span></div>';tt.style.display='block';tt.style.left='50%';tt.style.top='200px';tt.style.transform='translateX(-50%)';setTimeout(()=>document.addEventListener('click',()=>{tt.style.display='none';},{once:true}),100);}
+
+function renderDash(){updateNoConn();const data=fd(cy),users=getUsers();const total=sumPrem(data);const ren=data.filter(r=>r.caseType==='Renewal').length,nw=data.filter(r=>r.caseType==='New').length;const mks=['hazim','shahira'];const topMk=mks.map(mk=>({mk,t:sumPrem(data.filter(r=>r.mk===mk))})).sort((a,b)=>b.t-a.t)[0]||{mk:'',t:0};const topP=PRINS.map(p=>({p,t:sumPrem(data.filter(r=>r.prin===p))})).sort((a,b)=>b.t-a.t)[0]||{p:'-',t:0};document.getElementById('k1').textContent=total?fmt(total):'No data';document.getElementById('k2').textContent=data.length?data.length+' cases':'No data';document.getElementById('k2s').textContent=data.length?'Renewal: '+ren+' · New: '+nw:'';document.getElementById('k3').textContent=topMk.t?users[topMk.mk]?.label||topMk.mk:'No data';document.getElementById('k3s').textContent=topMk.t?fmt(topMk.t)+' premium':'';document.getElementById('k4').textContent=topP.t?topP.p:'No data';document.getElementById('k4s').textContent=topP.t?fmt(topP.t)+' premium':'';document.getElementById('k5').textContent=data.length?ren+' / '+nw:'-';document.getElementById('k5s').textContent=data.length?pct(ren,data.length)+'% renewal':'';const latestMi=getLatestMi(cy);mks.forEach(mk=>{const v=latestMi>=0?sumPrem(data.filter(r=>r.mk===mk&&r.mi===latestMi)):0;const p=Math.round(v/MONTHLY_TARGET*100);const hit=v>=MONTHLY_TARGET;const col=hit?'#10B981':v>MONTHLY_TARGET*.7?MKCOL[mk]:'#EF4444';document.getElementById('tgt-'+mk).innerHTML=`<div class="kt-header"><div><div class="klabel">${users[mk]?.label||mk} — ${latestMi>=0?MONTHS[latestMi]+' '+cy:'No data'}</div><div class="kt-name">Monthly Target</div></div><div class="kt-pct" style="color:${col}">${hit?'🎯 ':''}${p}%</div></div><div class="kt-bar-wrap"><div class="kt-bar" style="width:${Math.min(p,100)}%;background:${col};box-shadow:0 0 8px ${col}44;"></div></div><div class="kt-sub"><span style="color:${col};font-weight:600;">${fmt(v)}</span><span>Target: RM 250K</span></div>`;});buildBands(data);buildDonutLeg();buildPrinLeg();if(!chartsBuilt){buildCharts();chartsBuilt=true;}else{refreshCharts();}}
+
+function setMkFilter(mk){mkFilter=mk;['all','hazim','shahira'].forEach(id=>{const b=document.getElementById('fmk-'+id);if(b){b.className='fp';if(id===mk)b.classList.add('a-'+id);}});if(cMk){cMk.data.datasets=getMkDatasets();cMk.update();}}
+function getMkDatasets(){const mks=mkFilter==='all'?['hazim','shahira']:[mkFilter];const users=getUsers();return mks.map(mk=>({label:users[mk]?.label||mk,data:MONTHS.map((_,i)=>Math.round(sumPrem(fd(cy).filter(r=>r.mk===mk&&r.mi===i))/1000)),backgroundColor:MKCOL_BG[mk]||'rgba(59,130,246,.7)',borderColor:MKCOL[mk],borderWidth:1,borderRadius:5,borderSkipped:false}));}
+const gc='rgba(255,255,255,.05)',tc='#64748b',tf={size:11};
+
+function buildCharts(){
+  cM=new Chart(document.getElementById('cMonthly'),{type:'bar',data:{labels:MONTHS,datasets:[{label:'Premium',data:MONTHS.map((_,i)=>Math.round(sumPrem(fd(cy).filter(r=>r.mi===i))/1000)),backgroundColor:MONTHS.map((_,i)=>{const v=sumPrem(fd(cy).filter(r=>r.mi===i));return v>=MONTHLY_TARGET*2?'rgba(16,185,129,.8)':v>=MONTHLY_TARGET?'rgba(59,130,246,.8)':v>0?'rgba(245,158,11,.8)':'rgba(100,116,139,.3)';}),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'RM '+ctx.parsed.y+'K'}}},onClick:(e,els)=>{if(els.length)showMonthDetail(els[0].index);},scales:{x:{ticks:{color:tc,font:tf,autoSkip:false,maxRotation:0},grid:{color:gc}},y:{ticks:{color:tc,font:tf,callback:v=>'RM'+v+'K'},grid:{color:gc}}}}});
+  cMk=new Chart(document.getElementById('cMarketer'),{type:'bar',data:{labels:MONTHS,datasets:getMkDatasets()},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}}},onClick:(e,els)=>{if(els.length)showMonthDetail(els[0].index);},scales:{x:{ticks:{color:tc,font:tf,autoSkip:false,maxRotation:0},grid:{color:gc}},y:{ticks:{color:tc,font:tf,callback:v=>v+'K'},grid:{color:gc}}}}});
+  const pt=PRINS.map(p=>sumPrem(fd(cy).filter(r=>r.prin===p)));const ps=pt.reduce((a,b)=>a+b,0);
+  cD=new Chart(document.getElementById('cDonut'),{type:'doughnut',data:{labels:PRINS,datasets:[{data:ps?pt.map(v=>Math.round(v/ps*100)):Array(6).fill(17),backgroundColor:PCOL,borderWidth:2,borderColor:'#1e2433',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',onClick:(e,els)=>{if(els.length){filterByPrin(PRINS[els[0].index]);}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}%`}}}}});
+  const dataY=fd(cy);
+  cCase=new Chart(document.getElementById('cCase'),{type:'doughnut',data:{labels:['Renewal','New'],datasets:[{data:[dataY.filter(r=>r.caseType==='Renewal').length,dataY.filter(r=>r.caseType==='New').length],backgroundColor:['#3B82F6','#10B981'],borderWidth:2,borderColor:'#1e2433',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed} cases (${pct(ctx.parsed,dataY.length)}%)`}}}}});
+  const dashes=[[],[6,3],[3,3],[6,3,2,3],[4,2],[8,3,2,3]];
+  cPrin=new Chart(document.getElementById('cPrin'),{type:'line',data:{labels:MONTHS,datasets:PRINS.map((p,i)=>({label:p,data:MONTHS.map((_,mi)=>Math.round(sumPrem(fd(cy).filter(r=>r.prin===p&&r.mi===mi))/1000)),borderColor:PCOL[i],backgroundColor:PCOL[i]+'22',borderDash:dashes[i],tension:0.4,fill:false,borderWidth:2,pointRadius:3,pointBackgroundColor:PCOL[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: RM${ctx.parsed.y}K`}}},scales:{x:{ticks:{color:tc,font:tf,autoSkip:false,maxRotation:0},grid:{color:gc}},y:{ticks:{color:tc,font:tf,callback:v=>v+'K'},grid:{color:gc}}}}});
   const users=getUsers();
-  const noData=rawData.length===0;
-  const nc=document.getElementById('noConn');
-  const hint=document.getElementById('setupHint');
-  if(nc)nc.style.display=noData?'block':'none';
-  if(hint){
-    const role=cu&&users[cu]?users[cu].role:'';
-    hint.innerHTML=role==='admin'
-      ?'Connect GSheet in <b>Setup</b> or use <b>+ Create New Entry</b>.'
-      :'Use <b>+ Create New Entry</b> to add records.';
-  }
+  cMkP=new Chart(document.getElementById('cMkPrin'),{type:'bar',data:{labels:PRINS,datasets:['hazim','shahira'].map(mk=>({label:users[mk]?.label||mk,data:PRINS.map(p=>Math.round(sumPrem(fd(cy).filter(r=>r.mk===mk&&r.prin===p))/1000)),backgroundColor:MKCOL_BG[mk],borderColor:MKCOL[mk],borderWidth:1,borderRadius:4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}}},onClick:(e,els)=>{if(els.length)showPrinDetail(PRINS[els[0].index]);},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf,callback:v=>'RM'+v+'K'},grid:{color:gc}}}}});
+  const tgtDatasets=['hazim','shahira'].map(mk=>({label:(users[mk]?.label||mk)+' (Target RM250K)',data:MONTHS.map((_,i)=>Math.min(Math.round(sumPrem(fd(cy).filter(r=>r.mk===mk&&r.mi===i))/1000),250)),actualData:MONTHS.map((_,i)=>sumPrem(fd(cy).filter(r=>r.mk===mk&&r.mi===i))),backgroundColor:MONTHS.map((_,i)=>{const v=sumPrem(fd(cy).filter(r=>r.mk===mk&&r.mi===i));return v>=MONTHLY_TARGET?MKCOL[mk]+'cc':v>0?MKCOL[mk]+'55':'rgba(100,116,139,.2)';}),borderRadius:4,borderSkipped:false}));
+  cTgt=new Chart(document.getElementById('cTarget'),{type:'bar',data:{labels:MONTHS,datasets:tgtDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}},tooltip:{callbacks:{label:ctx=>{const actual=ctx.dataset.actualData[ctx.dataIndex];return ` ${ctx.dataset.label.split(' (')[0]}: ${fmt(actual)} (${pct(actual,MONTHLY_TARGET)}%)`;}}},},onClick:(e,els)=>{if(els.length)showMonthDetail(els[0].index);},scales:{x:{ticks:{color:tc,font:tf,autoSkip:false,maxRotation:0},grid:{color:gc}},y:{max:250,ticks:{color:tc,font:tf,callback:v=>'RM'+v+'K'},grid:{color:gc}}}}});
 }
 
-function refreshCharts(){if(!cM)return;const dataY=fd(cy);cM.data.datasets[0].data=MONTHS.map((_,i)=>Math.round(sumPrem(dataY.filter(r=>r.mi===i))/1000));cM.data.datasets[0].backgroundColor=MONTHS.map((_,i)=>{const v=sumPrem(dataY.filter(r=>r.mi===i));return v>=MONTHLY_TARGET*2?'rgba(16,185,129,.8)':v>=MONTHLY_TARGET?'rgba(59,130,246,.8)':v>0?'rgba(245,158,11,.8)':'rgba(100,116,139,.3)';});cM.update();cMk.data.datasets=getMkDatasets();cMk.update();const pt=PRINS.map(p=>sumPrem(dataY.filter(r=>r.prin===p)));const ps=pt.reduce((a,b)=>a+b,0);cD.data.datasets[0].data=ps?pt.map(v=>Math.round(v/ps*100)):Array(6).fill(17);cD.update();cCase.data.datasets[0].data=[dataY.filter(r=>r.caseType==='Renewal').length,dataY.filter(r=>r.caseType==='New').length];cCase.update();PRINS.forEach((p,i)=>{cPrin.data.datasets[i].data=MONTHS.map((_,mi)=>Math.round(sumPrem(dataY.filter(r=>r.prin===p&&r.mi===mi))/1000));});cPrin.update();cMkP.data.datasets.forEach((ds,i)=>{const mk=['hazim','shahira'][i];ds.data=PRINS.map(p=>Math.round(sumPrem(dataY.filter(r=>r.mk===mk&&r.prin===p))/1000));});cMkP.update();const tgtMks=['hazim','shahira','admin'];cTgt.data.datasets.forEach((ds,i)=>{const mk=tgtMks[i]||'admin';ds.data=MONTHS.map((_,mi)=>Math.min(Math.round(sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi))/1000),250));ds.actualData=MONTHS.map((_,mi)=>sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi)));ds.backgroundColor=MONTHS.map((_,mi)=>{const v=sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi));return v>=MONTHLY_TARGET?MKCOL[mk]+'cc':v>0?MKCOL[mk]+'55':'rgba(100,116,139,.2)';});});cTgt.update();}
+function refreshCharts(){if(!cM)return;const dataY=fd(cy);cM.data.datasets[0].data=MONTHS.map((_,i)=>Math.round(sumPrem(dataY.filter(r=>r.mi===i))/1000));cM.data.datasets[0].backgroundColor=MONTHS.map((_,i)=>{const v=sumPrem(dataY.filter(r=>r.mi===i));return v>=MONTHLY_TARGET*2?'rgba(16,185,129,.8)':v>=MONTHLY_TARGET?'rgba(59,130,246,.8)':v>0?'rgba(245,158,11,.8)':'rgba(100,116,139,.3)';});cM.update();cMk.data.datasets=getMkDatasets();cMk.update();const pt=PRINS.map(p=>sumPrem(dataY.filter(r=>r.prin===p)));const ps=pt.reduce((a,b)=>a+b,0);cD.data.datasets[0].data=ps?pt.map(v=>Math.round(v/ps*100)):Array(6).fill(17);cD.update();cCase.data.datasets[0].data=[dataY.filter(r=>r.caseType==='Renewal').length,dataY.filter(r=>r.caseType==='New').length];cCase.update();PRINS.forEach((p,i)=>{cPrin.data.datasets[i].data=MONTHS.map((_,mi)=>Math.round(sumPrem(dataY.filter(r=>r.prin===p&&r.mi===mi))/1000));});cPrin.update();cMkP.data.datasets.forEach((ds,i)=>{const mk=['hazim','shahira'][i];ds.data=PRINS.map(p=>Math.round(sumPrem(dataY.filter(r=>r.mk===mk&&r.prin===p))/1000));});cMkP.update();cTgt.data.datasets.forEach((ds,i)=>{const mk=['hazim','shahira'][i];ds.data=MONTHS.map((_,mi)=>Math.min(Math.round(sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi))/1000),250));ds.actualData=MONTHS.map((_,mi)=>sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi)));ds.backgroundColor=MONTHS.map((_,mi)=>{const v=sumPrem(dataY.filter(r=>r.mk===mk&&r.mi===mi));return v>=MONTHLY_TARGET?MKCOL[mk]+'cc':v>0?MKCOL[mk]+'55':'rgba(100,116,139,.2)';});});cTgt.update();}
 
 function filterByPrin(prin){filterPrin=filterPrin===prin?null:prin;const dataY=filterPrin?fd(cy).filter(r=>r.prin===filterPrin):fd(cy);if(cM){cM.data.datasets[0].data=MONTHS.map((_,i)=>Math.round(sumPrem(dataY.filter(r=>r.mi===i))/1000));const col=filterPrin?PCOL[PRINS.indexOf(filterPrin)]:null;cM.data.datasets[0].backgroundColor=MONTHS.map((_,i)=>{const v=sumPrem(dataY.filter(r=>r.mi===i));if(col)return col+'cc';return v>=MONTHLY_TARGET*2?'rgba(16,185,129,.8)':v>=MONTHLY_TARGET?'rgba(59,130,246,.8)':v>0?'rgba(245,158,11,.8)':'rgba(100,116,139,.3)';});cM.update();}}
 
@@ -1633,11 +1460,12 @@ let payYear=new Date().getFullYear();
 
 function buildPayYearPills(){const currentYear=new Date().getFullYear();const years=[currentYear-2,currentYear-1,currentYear];const container=document.getElementById('ypills-pay');if(!container)return;container.innerHTML=years.map(yr=>`<button class="ypill ${yr===payYear?'active':''}" onclick="setPayYear(${yr},this)">${yr}</button>`).join('');}
 function setPayYear(yr,btn){payYear=yr;document.getElementById('ypills-pay').querySelectorAll('.ypill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPaymentTable();}
-function setPayPlan(plan,el){payFilterPlan=plan;const planColors={'4x':'#3B82F6','3x':'#8B5CF6','2x':'#F59E0B','Full':'#10B981'};['4x','3x','2x','Full'].forEach(p=>{const card=document.getElementById('payplan-'+p);if(!card)return;card.classList.remove('ppactive');card.style.background='var(--card)';card.style.borderColor='var(--border)';});if(plan!=='all'&&el){el.classList.add('ppactive');el.style.background=planColors[plan]?planColors[plan]+'22':'var(--card2)';el.style.borderColor=planColors[plan]||'var(--accent)';}renderPayStagePills();renderPaymentTable();}
+function setPayPlan(plan,el){payFilterPlan=plan;const planColors={'4x':'#3B82F6','3x':'#8B5CF6','2x':'#F59E0B','Full':'#10B981'};['4x','3x','2x','Full'].forEach(p=>{const card=document.getElementById('payplan-'+p);if(!card)return;card.classList.remove('ppactive');card.style.background='var(--card)';card.style.borderColor='var(--border)';});if(plan!=='all'){el.classList.add('ppactive');el.style.background=planColors[plan]?planColors[plan]+'22':'var(--card2)';el.style.borderColor=planColors[plan]||'var(--accent)';}renderPaymentTable();}
 function setPayFilter(val,type){if(type==='mk'){payFilterMk=val;['all','hazim','shahira','admin'].forEach(id=>{const b=document.getElementById('pf-mk-'+id);if(b){b.className='fp';if(id===val)b.classList.add('a-all');}});}renderPaymentTable();}
 
+const PAYMENT_DUMMY=[{'JMB Name':'1 Desa Residence','Marketer':'Hazim','Premium Total (RM)':20000,'Payment Plan':'4x','4x Pay 1 ✓':true,'4x Pay 2 ✓':true,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'1 Razak Mansion','Marketer':'Hazim','Premium Total (RM)':15000,'Payment Plan':'3x','3x Pay 1 ✓':true,'3x Pay 2 ✓':false,'3x Pay 3 ✓':false},{'JMB Name':'162 Residency','Marketer':'Hazim','Premium Total (RM)':12000,'Payment Plan':'4x','4x Pay 1 ✓':true,'4x Pay 2 ✓':true,'4x Pay 3 ✓':true,'4x Pay 4 ✓':true},{'JMB Name':'3 Kia Peng KLCC','Marketer':'Shahira','Premium Total (RM)':45000,'Payment Plan':'2x','2x Pay 1 ✓':true,'2x Pay 2 ✓':false},{'JMB Name':'28 Boulevard','Marketer':'Shahira','Premium Total (RM)':8000,'Payment Plan':'Full','Full Pay ✓':false},{'JMB Name':'6 Capsquare','Marketer':'Hazim','Premium Total (RM)':18000,'Payment Plan':'4x','4x Pay 1 ✓':true,'4x Pay 2 ✓':true,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'7 Tree Seven','Marketer':'Admin','Premium Total (RM)':25000,'Payment Plan':'3x','3x Pay 1 ✓':true,'3x Pay 2 ✓':true,'3x Pay 3 ✓':true},{'JMB Name':'Akasia Apartment','Marketer':'Admin','Premium Total (RM)':9000,'Payment Plan':'Full','Full Pay ✓':true},{'JMB Name':'Alam Puri','Marketer':'Shahira','Premium Total (RM)':32000,'Payment Plan':'4x','4x Pay 1 ✓':true,'4x Pay 2 ✓':false,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'Aman Heights','Marketer':'Hazim','Premium Total (RM)':11000,'Payment Plan':'2x','2x Pay 1 ✓':true,'2x Pay 2 ✓':true},{'JMB Name':'Amanja semi D','Marketer':'Admin','Premium Total (RM)':55000,'Payment Plan':'4x','4x Pay 1 ✓':false,'4x Pay 2 ✓':false,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'Alpha Villa','Marketer':'Shahira','Premium Total (RM)':14000,'Payment Plan':'3x','3x Pay 1 ✓':true,'3x Pay 2 ✓':true,'3x Pay 3 ✓':false}];
 
-async function fetchPaymentData(){const loadMsg=document.getElementById('payLoadingMsg');const table=document.getElementById('paymentTable');if(loadMsg){loadMsg.style.display='block';loadMsg.textContent='⏳ Loading payment data...';}if(table)table.style.display='none';buildPayYearPills();try{const data=await fetchJSONP(AS_BASE+'?type=payment');if(data&&data.length>0){paymentData=data;}if(loadMsg)loadMsg.style.display='none';if(table)table.style.display='';renderPaymentTable();renderPayStagePills();}catch(e){// no fallback dataif(loadMsg)loadMsg.style.display='none';if(table)table.style.display='';renderPaymentTable();renderPayStagePills();}}
+async function fetchPaymentData(){const loadMsg=document.getElementById('payLoadingMsg');const table=document.getElementById('paymentTable');if(loadMsg){loadMsg.style.display='block';loadMsg.textContent='⏳ Loading payment data...';}if(table)table.style.display='none';buildPayYearPills();try{const data=await fetchJSONP(AS_BASE+'?type=payment');paymentData=(data&&data.length>0)?data:PAYMENT_DUMMY;if(loadMsg)loadMsg.style.display='none';if(table)table.style.display='';renderPaymentTable();}catch(e){paymentData=PAYMENT_DUMMY;if(loadMsg)loadMsg.style.display='none';if(table)table.style.display='';renderPaymentTable();}}
 
 function showPayList(type){const filtered=paymentData.filter(r=>{if(!r['JMB Name']||!r['JMB Name'].toString().trim())return false;const status=getPayStatus(r,r['Payment Plan']);if(type==='completed')return status.completed;if(type==='incomplete')return!status.completed;return true;});const titles={completed:'Completed',incomplete:'Incomplete',all:'All'};document.getElementById('payListTitle').textContent=`${titles[type]||type} — ${filtered.length} JMB`;document.getElementById('payListBody').innerHTML=filtered.length?filtered.map((r,i)=>{const mk=(r['Marketer']||'').toLowerCase();const mkLbl=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBdg=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,r['Payment Plan']);const isCompleted=status.completed;return`<tr><td style="color:var(--text3);">${i+1}</td><td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBdg}">${mkLbl}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${fmt(prem)}</td><td>${renderPayCheckboxes(status.paid,status.total)}</td><td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td></tr>`;}).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No data</td></tr>';document.getElementById('payListPanel').style.display='block';document.getElementById('payListPanel').scrollIntoView({behavior:'smooth',block:'nearest'});}
 
@@ -1645,8 +1473,7 @@ function getPayStatus(row,plan){const p=(plan||'').toLowerCase().trim();let tota
 
 function renderPayCheckboxes(paid,total){if(total===0)return'-';const allPaid=paid>=total;let html='<div style="display:flex;gap:3px;">';for(let i=0;i<total;i++){const checked=allPaid||i<paid;html+=`<div style="width:16px;height:16px;border-radius:3px;border:1.5px solid ${checked?'#10B981':'var(--border)'};background:${checked?'#10B981':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${checked?'<span style="color:#fff;font-size:9px;font-weight:700;">✓</span>':''}</div>`;}html+=`<span style="font-size:10px;color:var(--text3);margin-left:4px;">${paid}/${total}</span></div>`;return html;}
 
-function renderPaymentTable(){const allData=paymentData.filter(r=>r['JMB Name']&&r['JMB Name'].toString().trim());const plans=['4x','3x','2x','Full'];plans.forEach(p=>{const planRows=allData.filter(r=>(r['Payment Plan']||'').trim()===p);const total=planRows.length;const pending=planRows.filter(r=>!getPayStatus(r,p).completed).length;const el=document.getElementById('ppc-'+p);if(el)el.textContent=total;const pendEl=document.getElementById('ppend-'+p);if(pendEl){pendEl.textContent=`${pending}/${total} pending`;pendEl.style.color=pending>0?'#EF4444':'#10B981';}});
-let filtered=allData.filter(r=>{const mk=(r['Marketer']||'').toLowerCase();const plan=(r['Payment Plan']||'').trim();const status=getPayStatus(r,plan);if(payFilterMk!=='all'){if(payFilterMk==='admin'&&!mk.includes('admin'))return false;else if(payFilterMk!=='admin'&&!mk.includes(payFilterMk))return false;}if(payFilterPlan!=='all'&&plan!==payFilterPlan)return false;if(payFilterStatus==='completed'&&!status.completed)return false;if(payFilterStatus==='incomplete'&&status.completed)return false;return true;});const total=filtered.length;const completed=filtered.filter(r=>getPayStatus(r,r['Payment Plan']).completed).length;const incomplete=total-completed;const totalPrem=filtered.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>{const v=parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;return s+v;},0);document.getElementById('pay-total').textContent=total;document.getElementById('pay-completed').textContent=completed;document.getElementById('pay-incomplete').textContent=incomplete;document.getElementById('pay-premium').textContent=fmt(totalPrem);const completedPrem=filtered.filter(r=>getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const incompletePrem=filtered.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const crmEl=document.getElementById('pay-completed-rm');const irmEl=document.getElementById('pay-incomplete-rm');if(crmEl)crmEl.textContent=fmt(completedPrem);if(irmEl)irmEl.textContent=fmt(incompletePrem);const tbody=document.getElementById('paymentTableBody');const thead=document.getElementById('paymentTableHead');if(!tbody||!thead)return;thead.innerHTML=`<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th></tr>`;if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';return;}tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;const statusHtml=status.total>0?`<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span>`:'<span style="color:var(--text3);font-size:11px;">-</span>';return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td>${statusHtml}</td></tr>`;}).join('');}
+function renderPaymentTable(){const allData=paymentData.filter(r=>r['JMB Name']&&r['JMB Name'].toString().trim());const plans=['4x','3x','2x','Full'];plans.forEach(p=>{const planRows=allData.filter(r=>(r['Payment Plan']||'').trim()===p);const total=planRows.length;const pending=planRows.filter(r=>!getPayStatus(r,p).completed).length;const el=document.getElementById('ppc-'+p);if(el)el.textContent=total;const pendEl=document.getElementById('ppend-'+p);if(pendEl){pendEl.textContent=`${pending}/${total} pending`;pendEl.style.color=pending>0?'#EF4444':'#10B981';}});let filtered=allData.filter(r=>{const mk=(r['Marketer']||'').toLowerCase();const plan=(r['Payment Plan']||'').trim();const status=getPayStatus(r,plan);if(payFilterMk!=='all'){if(payFilterMk==='admin'&&!mk.includes('admin')&&!mk.includes('sbm'))return false;else if(payFilterMk!=='admin'&&!mk.includes(payFilterMk))return false;}if(payFilterPlan!=='all'&&plan!==payFilterPlan)return false;if(payFilterStatus==='completed'&&!status.completed)return false;if(payFilterStatus==='incomplete'&&status.completed)return false;return true;});const total=filtered.length;const completed=filtered.filter(r=>getPayStatus(r,r['Payment Plan']).completed).length;const incomplete=total-completed;const totalPrem=filtered.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>{const v=parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;return s+v;},0);document.getElementById('pay-total').textContent=total;document.getElementById('pay-completed').textContent=completed;document.getElementById('pay-incomplete').textContent=incomplete;document.getElementById('pay-premium').textContent=fmt(totalPrem);const completedPrem=filtered.filter(r=>getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const incompletePrem=filtered.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const crmEl=document.getElementById('pay-completed-rm');const irmEl=document.getElementById('pay-incomplete-rm');if(crmEl)crmEl.textContent=fmt(completedPrem);if(irmEl)irmEl.textContent=fmt(incompletePrem);const tbody=document.getElementById('paymentTableBody');const thead=document.getElementById('paymentTableHead');if(!tbody||!thead)return;thead.innerHTML=`<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th></tr>`;if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3);">No records found</td></tr>';return;}tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||r['Premium Nett (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;const statusHtml=status.total>0?`<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span>`:'<span style="color:var(--text3);font-size:11px;">-</span>';return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td>${statusHtml}</td></tr>`;}).join('');}
 
 let settleYear=new Date().getFullYear();
 const PRIN_CONFIG={'STM':{color:'#10B981',bg:'rgba(16,185,129,.15)',border:'#10B981'},'Zurich':{color:'#2563EB',bg:'rgba(37,99,235,.15)',border:'#2563EB'},'Tokio Marine':{color:'#38BDF8',bg:'rgba(56,189,248,.15)',border:'#38BDF8'},'Allianz':{color:'#60A5FA',bg:'rgba(96,165,250,.15)',border:'#60A5FA'},'MPI':{color:'#EF4444',bg:'rgba(239,68,68,.15)',border:'#EF4444'},'Etiqa':{color:'#F59E0B',bg:'rgba(245,158,11,.15)',border:'#F59E0B'}};
@@ -1656,7 +1483,7 @@ function setSettleYear(yr,btn){settleYear=yr;document.getElementById('ypills-set
 
 let settleData=[];
 
-function renderSettlement(){buildSettleYearPills();const dummy=[];settleData=paymentData.length>0?paymentData:dummy;const isDummy=paymentData.length===0;const existing=document.getElementById('settleDummyNotice');if(existing)existing.remove();if(isDummy){const notice=document.createElement('div');notice.id='settleDummyNotice';notice.style.cssText='background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#fbbf24;margin-bottom:12px;';notice.textContent='⚠ Showing sample data — go to JMB Payment tab and Refresh for live data';const ph=document.querySelector('#screen-settlement .ph');if(ph)ph.insertAdjacentElement('afterend',notice);}_renderSettlementUI(settleData);}
+function renderSettlement(){buildSettleYearPills();const dummy=[{'JMB Name':'1 Desa Residence','Marketer':'Hazim','Premium Total (RM)':20000,'Payment Plan':'4x','Principle':'STM','4x Pay 1 ✓':true,'4x Pay 2 ✓':true,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'162 Residency','Marketer':'Hazim','Premium Total (RM)':12000,'Payment Plan':'4x','Principle':'Etiqa','4x Pay 1 ✓':true,'4x Pay 2 ✓':true,'4x Pay 3 ✓':true,'4x Pay 4 ✓':true},{'JMB Name':'3 Kia Peng KLCC','Marketer':'Shahira','Premium Total (RM)':45000,'Payment Plan':'2x','Principle':'Allianz','2x Pay 1 ✓':true,'2x Pay 2 ✓':false},{'JMB Name':'28 Boulevard','Marketer':'Shahira','Premium Total (RM)':8000,'Payment Plan':'Full','Principle':'MPI','Full Pay ✓':false},{'JMB Name':'7 Tree Seven','Marketer':'Admin','Premium Total (RM)':25000,'Payment Plan':'3x','Principle':'STM','3x Pay 1 ✓':true,'3x Pay 2 ✓':true,'3x Pay 3 ✓':true},{'JMB Name':'Akasia Apartment','Marketer':'Admin','Premium Total (RM)':9000,'Payment Plan':'Full','Principle':'Zurich','Full Pay ✓':true},{'JMB Name':'Alam Puri','Marketer':'Shahira','Premium Total (RM)':32000,'Payment Plan':'4x','Principle':'Allianz','4x Pay 1 ✓':true,'4x Pay 2 ✓':false,'4x Pay 3 ✓':false,'4x Pay 4 ✓':false},{'JMB Name':'Aman Heights','Marketer':'Hazim','Premium Total (RM)':11000,'Payment Plan':'2x','Principle':'Etiqa','2x Pay 1 ✓':true,'2x Pay 2 ✓':true}];settleData=paymentData.length>0?paymentData:dummy;const isDummy=paymentData.length===0;const existing=document.getElementById('settleDummyNotice');if(existing)existing.remove();if(isDummy){const notice=document.createElement('div');notice.id='settleDummyNotice';notice.style.cssText='background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#fbbf24;margin-bottom:12px;';notice.textContent='⚠ Showing sample data — go to JMB Payment tab and Refresh for live data';const ph=document.querySelector('#screen-settlement .ph');if(ph)ph.insertAdjacentElement('afterend',notice);}_renderSettlementUI(settleData);}
 
 function _renderSettlementUI(data){if(!data)data=paymentData;data=data.filter(r=>r['JMB Name']&&r['JMB Name'].toString().trim());const total=data.length;const completed=data.filter(r=>getPayStatus(r,r['Payment Plan']).completed).length;const incomplete=total-completed;const totalPrem=data.reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const completedPrem=data.filter(r=>getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const incompletePrem=totalPrem-completedPrem;document.getElementById('settle-total').textContent=total;document.getElementById('settle-total-prem').textContent=fmt(totalPrem);document.getElementById('settle-completed').textContent=completed;document.getElementById('settle-completed-pct').textContent=fmt(completedPrem);document.getElementById('settle-incomplete').textContent=incomplete;document.getElementById('settle-incomplete-pct').textContent=fmt(incompletePrem);const grid=document.getElementById('settlePrinGrid');if(!grid)return;const prins=Object.keys(PRIN_CONFIG);grid.innerHTML=prins.map(prin=>{const cfg=PRIN_CONFIG[prin];const keyword=prin.toLowerCase().split(' ')[0];const prinRows=data.filter(r=>{const p=(r['Principle']||r['Principle 1']||'').toLowerCase();return p.includes(keyword);});const prinTotal=prinRows.length;const prinPending=prinRows.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).length;const prinPrem=prinRows.reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);const pendingPrem=prinRows.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).reduce((s,r)=>s+(parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0),0);return`<div onclick="showSettleList('${prin}')" style="background:${cfg.bg};border:1px solid ${cfg.border};border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><div style="font-size:12px;font-weight:700;color:${cfg.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">${prin}</div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;"><div style="font-size:32px;font-weight:700;color:${cfg.color};line-height:1;">${prinPending}</div><div style="font-size:14px;color:var(--text3);">/ ${prinTotal}</div></div><div style="font-size:11px;color:var(--text3);margin-bottom:8px;">pending / total</div><div style="height:1px;background:${cfg.border};opacity:.3;margin-bottom:8px;"></div><div style="font-size:12px;font-weight:600;color:${cfg.color};">${fmt(prinPrem)}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${fmt(pendingPrem)} pending</div><div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:${cfg.color};"></div></div>`;}).join('');}
 
@@ -1664,79 +1491,7 @@ function showSettleList(type){let data=[];let title='';if(type==='all'){data=[..
 
 function showSidebar(show){const mw=document.getElementById('mainWrap');if(mw)mw.classList.remove('with-sidebar');}
 
-
-// ═══════════════════════════════════════════════════════════════
-// DERIVE DATA FROM PROGRESS (progress is source of truth)
-// ═══════════════════════════════════════════════════════════════
-
-function derivePaymentFromProgress() {
-  // Build payment records from progress data for JMBs that are Won/Policy Issued/JMB Received Policy
-  const doneStages = ['won','policy issued','jmb received policy','hold cover'];
-  const derived = [];
-  progData.forEach(r => {
-    const stage = (r['Current Stage'] || '').toLowerCase();
-    const isDone = doneStages.some(s => stage.includes(s));
-    if (!isDone) return;
-    // Get principle from progress
-    const prin = r['Principle 1'] || r['Principle 2'] || '';
-    const mk = r._marketer || 'admin';
-    const mkLabel = mk === 'hazim' ? 'Hazim' : mk === 'shahira' ? 'Shahira' : 'Admin';
-    // Check if already in paymentData
-    const exists = paymentData.find(p => p['JMB Name'] === r['JMB Name']);
-    if (!exists) {
-      derived.push({
-        'JMB Name': r['JMB Name'],
-        'Marketer': mkLabel,
-        'Principle': prin,
-        'Premium Total (RM)': 0,
-        'Payment Plan': '4x',
-        '4x Pay 1 ✓': false,
-        '4x Pay 2 ✓': false,
-        '4x Pay 3 ✓': false,
-        '4x Pay 4 ✓': false,
-        _marketer: mk,
-        _fromProgress: true,
-      });
-    }
-  });
-  return [...paymentData, ...derived];
-}
-
-function deriveRawDataFromProgress() {
-  // Build sales rawData from progData for Won/Policy Issued JMBs
-  const doneStages = ['won','policy issued','jmb received policy'];
-  const derived = [];
-  progData.forEach(r => {
-    const stage = (r['Current Stage'] || '').toLowerCase();
-    const isDone = doneStages.some(s => stage.includes(s));
-    if (!isDone) return;
-    const exists = rawData.find(d => d.jmb === r['JMB Name']);
-    if (!exists) {
-      const mk = r._marketer || 'admin';
-      const expDate = r['Expiry Date'] ? new Date(r['Expiry Date']) : new Date();
-      const year = expDate.getFullYear();
-      const mi = expDate.getMonth();
-      derived.push({
-        ts: r['Stage Date'] || new Date().toISOString(),
-        year, mi, mk,
-        caseType: 'Renewal',
-        jmb: r['JMB Name'],
-        prin: r['Principle 1'] || '',
-        premTax: 0,
-        premNoTax: 0,
-        payment: '4x',
-        _fromProgress: true,
-      });
-    }
-  });
-  return [...rawData, ...derived];
-}
-
-// Sync all navs from progress data
-function syncAllFromProgress() {
-  // Data entry via Create New Entry only - no auto-derive
-}
-
+populateLoginDropdown();
 
 function go(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1747,28 +1502,14 @@ function go(name){
   if(active)active.classList.add('active');
   if(name==='dashboard')renderDash();
   if(name==='leaderboard')renderLb();
-  if(name==='transactions'){buildPayYearPills();renderPaymentTable();setTimeout(function(){if(typeof renderPayStagePills==='function')renderPayStagePills();},50);}
-  if(name==='progress'){fetchProgressData();setTimeout(function(){if(typeof renderProgStagePills==='function')renderProgStagePills();},700);}
-  if(name==='ciamend'){buildCIYearPills();renderCIAll();setTimeout(function(){var b=document.getElementById('ci-stage-bar');if(b&&typeof renderCIStagePills==='function'){b.innerHTML='';renderCIStagePills();}},50);}
-  if(name==='settlement'){renderSettlement();setTimeout(function(){if(typeof renderSettleStagePills==='function')renderSettleStagePills();},50);}
+  if(name==='transactions'){buildPayYearPills();renderPaymentTable();setTimeout(renderPayStagePills,50);}
+  if(name==='progress'){fetchProgressData();setTimeout(renderProgStagePills,600);}
+  if(name==='ciamend'){buildCIYearPills();renderCIAll();setTimeout(function(){var b=document.getElementById('ci-stage-bar');if(b){b.innerHTML='';renderCIStagePills();}},50);}
+  if(name==='settlement'){renderSettlement();setTimeout(renderSettleStagePills,50);}
   if(name==='setup'){renderSetup();renderUserList();}
   if(typeof updateNewCaseBtn==='function')updateNewCaseBtn();
 }
 
-
-
-
-
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-window.addEventListener('load', function() {
-  // loadLocalCases and updateNewCaseBtn defined in block 3 - call safely
-  if (typeof loadLocalCases === 'function') loadLocalCases();
-  if (typeof updateNewCaseBtn === 'function') updateNewCaseBtn();
-  // Set default month in create form
-  var mo = document.getElementById('gcm-s-month');
-  if (mo) mo.value = String(new Date().getMonth());
-});
 </script>
 
 <script>
@@ -1778,7 +1519,21 @@ const CI_KEY = 'sd_ci_cases_v1';
 function getCICases() {
   const saved = localStorage.getItem(CI_KEY);
   if (saved) try { return JSON.parse(saved); } catch(e) {}
-  return [];
+  return [
+    {id:'CI-001',jmb:'JMB Seri Mewah', lastActivity:'2026-05-25',stage:'Principle Amend',         status:'Overdue',    staff:'Hazim',  daysStaff:5,daysPrin:6,year:2026},
+    {id:'CI-002',jmb:'JMB Harmoni',    lastActivity:'2026-03-03',stage:'Principle Amend',         status:'In Progress',staff:'Shahira',daysStaff:1,daysPrin:3,year:2026},
+    {id:'CI-003',jmb:'JMB Perdana',    lastActivity:'2026-06-05',stage:'JMB/Client Email',        status:'New',        staff:'Hazim',  daysStaff:0,daysPrin:1,year:2026},
+    {id:'CI-004',jmb:'JMB Sentosa',    lastActivity:'2026-06-01',stage:'Staff Receive & Validate',status:'Validation', staff:'Shahira',daysStaff:2,daysPrin:0,year:2026},
+    {id:'CI-005',jmb:'JMB Damai',      lastActivity:'2026-05-20',stage:'Staff Email to Principle',status:'Overdue',    staff:'Hazim',  daysStaff:3,daysPrin:0,year:2026},
+    {id:'CI-006',jmb:'JMB Wangsa',     lastActivity:'2026-04-15',stage:'Closed',                 status:'Closed',     staff:'Admin',  daysStaff:0,daysPrin:0,year:2026},
+    {id:'CI-007',jmb:'JMB Bayu',       lastActivity:'2026-05-28',stage:'Staff Read & Process',   status:'In Progress',staff:'Shahira',daysStaff:2,daysPrin:0,year:2026},
+    {id:'CI-008',jmb:'JMB Cempaka',    lastActivity:'2026-06-01',stage:'Staff Email back to JMB',status:'Validation', staff:'Hazim',  daysStaff:1,daysPrin:2,year:2026},
+    {id:'CI-009',jmb:'JMB Mutiara',    lastActivity:'2026-05-10',stage:'Principle Amend',         status:'Overdue',    staff:'Admin',  daysStaff:4,daysPrin:8,year:2026},
+    {id:'CI-010',jmb:'JMB Kenanga',    lastActivity:'2026-06-03',stage:'JMB/Client Email',        status:'New',        staff:'Shahira',daysStaff:0,daysPrin:0,year:2026},
+    {id:'CI-011',jmb:'JMB Anggerik',   lastActivity:'2026-04-20',stage:'Closed',                 status:'Closed',     staff:'Hazim',  daysStaff:0,daysPrin:0,year:2026},
+    {id:'CI-012',jmb:'JMB Teratai',    lastActivity:'2026-05-30',stage:'Staff Email to Principle',status:'In Progress',staff:'Shahira',daysStaff:1,daysPrin:0,year:2026},
+    {id:'CI-013',jmb:'JMB Seroja',     lastActivity:'2026-05-18',stage:'Principle Amend',         status:'Overdue',    staff:'Admin',  daysStaff:3,daysPrin:5,year:2026},
+  ];
 }
 
 function saveCICases(data){localStorage.setItem(CI_KEY,JSON.stringify(data));}
@@ -1970,540 +1725,102 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
 <div class="ci-tooltip" id="ciTooltip"></div>
 
 
-<!-- GLOBAL CREATE NEW ENTRY MODAL -->
+<!-- ═══════════════════════════════════════════════════════════
+     GLOBAL CREATE NEW CASE MODAL
+═══════════════════════════════════════════════════════════ -->
 <div class="modal" id="globalCreateModal">
-  <div class="modal-card" style="max-width:560px;max-height:92vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h3 id="gcm-title" style="margin:0;font-size:16px;">Create New Entry</h3>
-      <button onclick="closeGlobalCreate()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:20px;">✕</button>
+  <div class="modal-card" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
+      <h3 id="gcm-title" style="margin:0;">Create New Case</h3>
+      <button onclick="closeGlobalCreate()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;">✕</button>
     </div>
-    <div style="display:flex;gap:3px;background:var(--card2);border-radius:9px;padding:3px;border:1px solid var(--border);margin-bottom:1rem;overflow-x:auto;">
-      <button class="nav-btn active" id="gcm-tab-sales" onclick="switchGCMTab('sales')" style="white-space:nowrap;">📊 Sales</button>
-      <button class="nav-btn" id="gcm-tab-progress" onclick="switchGCMTab('progress')" style="white-space:nowrap;">🎯 Progress</button>
-      <button class="nav-btn" id="gcm-tab-ci" onclick="switchGCMTab('ci')" style="white-space:nowrap;">📝 CI Amendment</button>
-      <button class="nav-btn" id="gcm-tab-payment" onclick="switchGCMTab('payment')" style="white-space:nowrap;">💳 Payment</button>
+    <!-- TAB SELECTOR -->
+    <div style="display:flex;gap:4px;background:var(--card2);border-radius:9px;padding:3px;border:1px solid var(--border);margin-bottom:1.2rem;">
+      <button class="nav-btn active" id="gcm-tab-sales" onclick="switchGCMTab('sales')">📊 Sales</button>
+      <button class="nav-btn" id="gcm-tab-progress" onclick="switchGCMTab('progress')">🎯 Progress</button>
+      <button class="nav-btn" id="gcm-tab-ci" onclick="switchGCMTab('ci')">📝 CI Amendment</button>
+      <button class="nav-btn" id="gcm-tab-payment" onclick="switchGCMTab('payment')">💳 Payment</button>
     </div>
 
-    <!-- ── SALES FORM ── -->
+    <!-- SALES FORM -->
     <div id="gcm-form-sales">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field">
-          <label>JMB Name</label>
-          <select id="gcm-s-jmb" style="width:100%;"><option value="">-- Select JMB --</option></select>
-        </div>
-        <div class="field">
-          <label>Marketer</label>
-          <select id="gcm-s-mk" disabled style="width:100%;opacity:.7;">
-            <option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="sbm">SBM</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Month of Sales</label>
-          <select id="gcm-s-month" style="width:100%;">
-            <option value="0">January</option><option value="1">February</option><option value="2">March</option>
-            <option value="3">April</option><option value="4">May</option><option value="5">June</option>
-            <option value="6">July</option><option value="7">August</option><option value="8">September</option>
-            <option value="9">October</option><option value="10">November</option><option value="11">December</option>
-          </select>
-        </div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-s-year" value="2026" min="2020" max="2035" style="width:100%;"></div>
-        <div class="field"><label>Case Type</label><select id="gcm-s-casetype" style="width:100%;"><option value="Renewal">Renewal</option><option value="New">New</option></select></div>
-        <div class="field"><label>Principle</label><select id="gcm-s-prin" style="width:100%;"><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>Premium (with tax) RM</label><input type="number" id="gcm-s-prem" placeholder="0.00" min="0" step="0.01" style="width:100%;"></div>
-        <div class="field"><label>Premium (without tax) RM</label><input type="number" id="gcm-s-premnotax" placeholder="0.00" min="0" step="0.01" style="width:100%;"></div>
+        <div class="field"><label>JMB Name</label><input type="text" id="gcm-s-jmb" placeholder="JMB Name"></div>
+        <div class="field"><label>Marketer</label><select id="gcm-s-mk"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option></select></div>
+        <div class="field"><label>Month of Sales</label><select id="gcm-s-month"><option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option></select></div>
+        <div class="field"><label>Year</label><input type="number" id="gcm-s-year" value="2026" min="2020" max="2035"></div>
+        <div class="field"><label>Case Type</label><select id="gcm-s-casetype"><option value="Renewal">Renewal</option><option value="New">New</option></select></div>
+        <div class="field"><label>Principle</label><select id="gcm-s-prin"><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+        <div class="field"><label>Premium (with tax) RM</label><input type="number" id="gcm-s-prem" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="field"><label>Premium (without tax) RM</label><input type="number" id="gcm-s-premnotax" placeholder="0.00" min="0" step="0.01"></div>
       </div>
-      <div class="field"><label>Payment Option</label><select id="gcm-s-pay" style="width:100%;"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
+      <div class="field"><label>Payment Option</label><select id="gcm-s-pay"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
     </div>
 
-    <!-- ── PROGRESS FORM ── -->
+    <!-- PROGRESS FORM -->
     <div id="gcm-form-progress" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field">
-          <label>JMB Name</label>
-          <select id="gcm-p-jmb" style="width:100%;"><option value="">-- Select JMB --</option></select>
-        </div>
-        <div class="field"><label>Marketer (PIC)</label><select id="gcm-p-mk" style="width:100%;"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="sbm">SBM</option></select></div>
-        <div class="field">
-          <label>Current Stage</label>
-          <select id="gcm-p-stage" style="width:100%;">
-            <option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option>
-            <option>Decision</option><option>Won</option><option>Hold Cover</option><option>Policy Issued</option>
-            <option>JMB Received Policy</option><option>Rejected</option>
-          </select>
-        </div>
-        <div class="field"><label>Stage Date</label><input type="date" id="gcm-p-stagedate" style="width:100%;"></div>
-        <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry" style="width:100%;"></div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-p-year" value="2026" min="2020" max="2035" style="width:100%;"></div>
-        <div class="field"><label>Principle 1</label><select id="gcm-p-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-        <div class="field"><label>Principle 2</label><select id="gcm-p-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-        <div class="field"><label>Principle 3</label><select id="gcm-p-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P3 Quote Status</label><select id="gcm-p-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-        <div class="field"><label>Principle 4</label><select id="gcm-p-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P4 Quote Status</label><select id="gcm-p-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-      </div>
-      <div id="gcm-p-reject-box" style="display:none;margin-top:4px;">
-        <div class="field"><label>🚫 Justification for Rejection</label><textarea id="gcm-p-justify" rows="3" placeholder="Sebab ditolak oleh JMB / Principle..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea></div>
+        <div class="field"><label>JMB Name</label><input type="text" id="gcm-p-jmb" placeholder="JMB Name"></div>
+        <div class="field"><label>Marketer</label><select id="gcm-p-mk"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option></select></div>
+        <div class="field"><label>Current Stage</label><select id="gcm-p-stage"><option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option><option>Decision</option><option>Hold Cover</option><option>Policy Issued</option><option>Rejected</option></select></div>
+        <div class="field"><label>Stage Date</label><input type="date" id="gcm-p-stagedate"></div>
+        <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry"></div>
+        <div class="field"><label>Year</label><input type="number" id="gcm-p-year" value="2026" min="2020" max="2035"></div>
+        <div class="field"><label>Principle 1</label><select id="gcm-p-prin1"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+        <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+        <div class="field"><label>Principle 2</label><select id="gcm-p-prin2"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+        <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
       </div>
     </div>
 
-    <!-- ── CI AMENDMENT FORM ── -->
+    <!-- CI AMENDMENT FORM -->
     <div id="gcm-form-ci" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>Case ID <span style="color:var(--text3);font-size:11px;">(auto)</span></label><input type="text" id="gcm-ci-id" readonly style="font-family:monospace;width:100%;opacity:.7;"></div>
-        <div class="field"><label>JMB Name</label><select id="gcm-ci-jmb" style="width:100%;"><option value="">-- Select JMB --</option></select></div>
-        <div class="field">
-          <label>Current Stage</label>
-          <select id="gcm-ci-stage" onchange="gcmCIAutoDate()" style="width:100%;">
-            <option>JMB/Client Email</option><option>Staff Read &amp; Process</option>
-            <option>Staff Email to Principle</option><option>Principle Amend</option>
-            <option>Staff Receive &amp; Validate</option><option>Staff Email back to JMB</option><option>Closed</option>
-          </select>
-        </div>
-        <div class="field"><label>Status</label><select id="gcm-ci-status" style="width:100%;"><option value="New">New</option><option value="In Progress">In Progress</option><option value="Overdue">Overdue</option><option value="Validation">Validation</option><option value="Closed">Closed</option></select></div>
-        <div class="field"><label>Assigned Staff</label><select id="gcm-ci-staff" style="width:100%;"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="Admin">Admin</option></select></div>
-        <div class="field"><label>Last Activity <span style="color:var(--text3);font-size:11px;">(auto on stage change)</span></label><input type="date" id="gcm-ci-date" style="width:100%;"></div>
-        <div class="field"><label>Days at Staff</label><input type="number" id="gcm-ci-dstaff" placeholder="0" min="0" style="width:100%;"></div>
-        <div class="field"><label>Days at Principle</label><input type="number" id="gcm-ci-dprin" placeholder="0" min="0" style="width:100%;"></div>
+        <div class="field"><label>Case ID</label><input type="text" id="gcm-ci-id" placeholder="e.g. CI-014" style="font-family:monospace;"></div>
+        <div class="field"><label>JMB Name</label><input type="text" id="gcm-ci-jmb" placeholder="JMB Name"></div>
+        <div class="field"><label>Current Stage</label><select id="gcm-ci-stage"><option>JMB/Client Email</option><option>Staff Read &amp; Process</option><option>Staff Email to Principle</option><option>Principle Amend</option><option>Staff Receive &amp; Validate</option><option>Staff Email back to JMB</option><option>Closed</option></select></div>
+        <div class="field"><label>Status</label><select id="gcm-ci-status"><option value="New">New</option><option value="In Progress">In Progress</option><option value="Overdue">Overdue</option><option value="Validation">Validation</option><option value="Closed">Closed</option></select></div>
+        <div class="field"><label>Assigned Staff</label><select id="gcm-ci-staff"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="Admin">Admin</option></select></div>
+        <div class="field"><label>Last Activity Date</label><input type="date" id="gcm-ci-date"></div>
+        <div class="field"><label>Days at Staff</label><input type="number" id="gcm-ci-dstaff" placeholder="0" min="0"></div>
+        <div class="field"><label>Days at Principle</label><input type="number" id="gcm-ci-dprin" placeholder="0" min="0"></div>
       </div>
     </div>
 
-    <!-- ── PAYMENT FORM ── -->
+    <!-- PAYMENT FORM -->
     <div id="gcm-form-payment" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>JMB Name</label><select id="gcm-py-jmb" onchange="gcmPayAutoFill()" style="width:100%;"><option value="">-- Select JMB --</option></select></div>
-        <div class="field"><label>Marketer</label><select id="gcm-py-mk" style="width:100%;"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="sbm">SBM</option></select></div>
-        <div class="field"><label>Principle <span style="color:var(--text3);font-size:11px;">(auto)</span></label><input type="text" id="gcm-py-prin" placeholder="Auto dari Sales data" readonly style="width:100%;opacity:.8;"></div>
-        <div class="field"><label>Premium Total (RM)</label><input type="number" id="gcm-py-prem" placeholder="0.00" min="0" step="0.01" style="width:100%;"></div>
-        <div class="field"><label>Payment Plan <span style="color:var(--text3);font-size:11px;">(auto)</span></label><select id="gcm-py-plan" onchange="updateGCMPayChecks()" style="width:100%;"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-py-year" value="2026" min="2020" max="2035" style="width:100%;"></div>
+        <div class="field"><label>JMB Name</label><input type="text" id="gcm-py-jmb" placeholder="JMB Name"></div>
+        <div class="field"><label>Marketer</label><select id="gcm-py-mk"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="Admin">SBM</option></select></div>
+        <div class="field"><label>Principle</label><select id="gcm-py-prin"><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+        <div class="field"><label>Premium Total (RM)</label><input type="number" id="gcm-py-prem" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="field"><label>Payment Plan</label><select id="gcm-py-plan" onchange="updateGCMPayChecks()"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
+        <div class="field"><label>Year</label><input type="number" id="gcm-py-year" value="2026" min="2020" max="2035"></div>
       </div>
       <div id="gcm-py-checks" style="margin-top:4px;"></div>
     </div>
 
+    <!-- SYNC STATUS -->
     <div id="gcm-sync-status" style="display:none;margin-top:10px;padding:8px 12px;border-radius:7px;font-size:12px;"></div>
+
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeGlobalCreate()">Cancel</button>
-      <button class="btn btn-primary" id="gcm-save-btn" onclick="saveGlobalCase()">💾 Save Entry</button>
+      <button class="btn btn-primary" id="gcm-save-btn" onclick="saveGlobalCase()">💾 Save Case</button>
     </div>
   </div>
 </div>
 
+
 <script>
-// Safety guards — ensure block 1 vars are accessible
-if (typeof cu === 'undefined') { var cu = null; }
-if (typeof rawData === 'undefined') { var rawData = []; }
-if (typeof progData === 'undefined') { var progData = []; }
-if (typeof paymentData === 'undefined') { var paymentData = []; }
-
 // ═══════════════════════════════════════════════════════════════════════════
-// FEATURE 1 — GLOBAL CREATE NEW ENTRY
+// FEATURE 1 — GLOBAL CREATE NEW CASE (localStorage + GSheet sync)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const GCM_SALES_KEY = 'sd_gcm_sales_v1';
-const GCM_PROG_KEY  = 'sd_gcm_prog_v1';
-const GCM_PAY_KEY   = 'sd_gcm_pay_v1';
+const GCM_SALES_KEY    = 'sd_gcm_sales_v1';
+const GCM_PROG_KEY     = 'sd_gcm_prog_v1';
+const GCM_PAY_KEY      = 'sd_gcm_pay_v1';
+
 let gcmCurrentTab = 'sales';
-
-// ── Helper: get all unique JMB names from a source ──
-function getJMBList(source) {
-  const names = new Set();
-  if (source === 'progress' || source === 'all') {
-    progData.forEach(r => { if (r['JMB Name']) names.add(r['JMB Name']); });
-    const saved = JSON.parse(localStorage.getItem(GCM_PROG_KEY)||'[]');
-    saved.forEach(r => { if (r['JMB Name']) names.add(r['JMB Name']); });
-  }
-  if (source === 'sales' || source === 'all') {
-    rawData.forEach(r => { if (r.jmb) names.add(r.jmb); });
-    const saved = JSON.parse(localStorage.getItem(GCM_SALES_KEY)||'[]');
-    saved.forEach(r => { if (r.jmb) names.add(r.jmb); });
-  }
-  if (source === 'ci') {
-    getCICases().forEach(r => { if (r.jmb) names.add(r.jmb); });
-  }
-  return [...names].sort();
-}
-
-function populateJMBSelect(selId, source) {
-  const sel = document.getElementById(selId);
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">-- Select JMB --</option>';
-  getJMBList(source).forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name; opt.textContent = name;
-    if (name === cur) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-// ── Auto-fill marketer based on who is logged in ──
-function gcmSetMarketer() {
-  const users = getUsers();
-  const u = users[cu];
-  if (!u) return;
-  const role = u.role;
-  // Sales marketer: fix to login user unless admin/management
-  const mkSel = document.getElementById('gcm-s-mk');
-  if (mkSel) {
-    if (role === 'marketer') {
-      mkSel.value = cu;
-      mkSel.disabled = true;
-    } else {
-      mkSel.disabled = false; // admin/management can pick
-    }
-  }
-  // Progress PIC: same logic
-  const mkPSel = document.getElementById('gcm-p-mk');
-  if (mkPSel) {
-    if (role === 'marketer') {
-      mkPSel.value = cu;
-      mkPSel.disabled = true;
-    } else {
-      mkPSel.disabled = false;
-    }
-  }
-  // CI staff: fix to login user label unless admin
-  const staffSel = document.getElementById('gcm-ci-staff');
-  if (staffSel) {
-    const label = u.label || cu;
-    if (role === 'marketer') {
-      staffSel.value = label;
-      staffSel.disabled = true;
-    } else {
-      staffSel.disabled = false;
-    }
-  }
-}
-
-// ── CI: auto-set Last Activity date when stage changes ──
-function gcmCIAutoDate() {
-  const dateEl = document.getElementById('gcm-ci-date');
-  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-}
-
-// ── Payment: auto-fill Principle & Plan from Sales data for selected JMB ──
-function gcmPayAutoFill() {
-  const jmb = document.getElementById('gcm-py-jmb')?.value;
-  if (!jmb) return;
-  // Search rawData + localStorage sales for this JMB
-  const allSales = [...rawData, ...JSON.parse(localStorage.getItem(GCM_SALES_KEY)||'[]')];
-  const match = allSales.find(r => (r.jmb || r['JMB Name'] || '') === jmb);
-  if (match) {
-    const prinEl = document.getElementById('gcm-py-prin');
-    const planEl = document.getElementById('gcm-py-plan');
-    const premEl = document.getElementById('gcm-py-prem');
-    const mkEl   = document.getElementById('gcm-py-mk');
-    if (prinEl) prinEl.value = match.prin || match.Principle || '';
-    if (planEl) { planEl.value = match.payment || match['Payment Plan'] || '4x'; updateGCMPayChecks(); }
-    if (premEl && !premEl.value) premEl.value = match.premTax || match['Premium Total (RM)'] || '';
-    if (mkEl) {
-      const mkRaw = match.mk || match.Marketer || '';
-      const mkMap = { hazim: 'Hazim', shahira: 'Shahira', admin: 'Admin' };
-      mkEl.value = mkMap[mkRaw] || mkRaw;
-    }
-  }
-  // Auto-tick latest payment received from paymentData
-  updateGCMPayChecks();
-  setTimeout(() => {
-    const existingPay = paymentData.find(r => (r['JMB Name']||'') === jmb);
-    if (existingPay) {
-      const plan = document.getElementById('gcm-py-plan')?.value || '4x';
-      const planKeys = { '4x':['4x Pay 1 ✓','4x Pay 2 ✓','4x Pay 3 ✓','4x Pay 4 ✓'], '3x':['3x Pay 1 ✓','3x Pay 2 ✓','3x Pay 3 ✓'], '2x':['2x Pay 1 ✓','2x Pay 2 ✓'], 'Full':['Full Pay ✓'] };
-      const keys = planKeys[plan] || [];
-      const isTrue = v => v===true||v==='TRUE'||v==='true'||v===1||v==='1';
-      let lastPaid = -1;
-      keys.forEach((k,i) => { if (isTrue(existingPay[k])) lastPaid = i; });
-      // Only allow checking the NEXT unpaid one
-      keys.forEach((k,i) => {
-        const chk = document.getElementById('gcm-py-chk-'+i);
-        if (!chk) return;
-        if (i <= lastPaid) { chk.checked = true; chk.disabled = true; }
-        else if (i === lastPaid + 1) { chk.checked = false; chk.disabled = false; } // next payment
-        else { chk.checked = false; chk.disabled = true; } // future — lock
-      });
-    }
-  }, 50);
-}
-
-
-
-
-
-
-
-function gcmCheckReject() {
-  const stage = document.getElementById('gcm-p-stage')?.value || '';
-  const box = document.getElementById('gcm-p-reject-box');
-  if (box) box.style.display = stage === 'Rejected' ? '' : 'none';
-}
-
-document.addEventListener('change', function(e) {
-  if (e.target.id === 'gcm-p-stage') gcmCheckReject();
-});
-
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURE 2 — CI STAGE PILLS: colour by status (grey→yellow→green/red)
-// ═══════════════════════════════════════════════════════════════════════════
-
-
-function ciStagePillColour(stageCases, stageName) {
-  const total = stageCases.length;
-  if (total === 0) return { bg:'rgba(100,116,139,.1)', border:'var(--border)', color:'var(--text3)', indicator:'' };
-  if (stageName === 'Closed') {
-    return { bg:'rgba(16,185,129,.2)', border:'#10B981', color:'#34d399', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}</div>` };
-  }
-  const pending = stageCases.filter(r => r.status !== 'Closed');
-  const overdue7 = pending.filter(r => daysOverdue(r) > 7);
-  const allDone = pending.length === 0;
-  if (allDone) {
-    // All in this stage are closed/done → green
-    return { bg:'rgba(16,185,129,.2)', border:'#10B981', color:'#34d399', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}</div>` };
-  } else if (overdue7.length > 0) {
-    // Has cases >7 days pending → red
-    return { bg:'rgba(239,68,68,.2)', border:'#EF4444', color:'#fc8181', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">🔴 ${overdue7.length}</div>` };
-  } else {
-    // Has pending but < 7 days → yellow
-    return { bg:'rgba(245,158,11,.2)', border:'#F59E0B', color:'#fbbf24', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">🟡 ${pending.length}</div>` };
-  }
-}
-
-function renderCIStagePills() {
-  const bar = document.getElementById('ci-stage-bar');
-  if (!bar) return;
-  const cases = getCICases().filter(r => r.year === ciYear);
-  CI_STAGE_ORDER.forEach((s, idx) => {
-    const stageCases = cases.filter(r => r.stage === s.stage);
-    const isActive = ciStageFilter === s.stage;
-    const col = ciStagePillColour(stageCases, s.stage);
-    const isLast = idx === CI_STAGE_ORDER.length - 1;
-    const labelLines = s.label.split('\n').map(l => `<div>${l}</div>`).join('');
-    const pill = document.createElement('div');
-    pill.className = 'ci-stage-pill' + (isActive ? ' ci-active' : '');
-    pill.id = 'cist-' + s.key;
-    pill.style.cssText = `background:${col.bg};border:1px solid ${col.border};color:${col.color};${isActive?'box-shadow:0 0 14px rgba(59,130,246,.5);filter:brightness(1.2);':''}`;
-    pill.innerHTML = labelLines + col.indicator;
-    pill.onclick = () => setCIStage(s.stage);
-    bar.appendChild(pill);
-    if (!isLast) { const a=document.createElement('div');a.className='ci-arrow';a.textContent='→';bar.appendChild(a); }
-  });
-  const filterBtn = document.createElement('button');
-  filterBtn.className='btn btn-outline';filterBtn.style.cssText='margin-left:auto;white-space:nowrap;flex-shrink:0;';
-  filterBtn.textContent='⚙ Filters';
-  filterBtn.onclick=()=>{ const p=document.getElementById('ciFiltersPanel');p.style.display=p.style.display==='none'?'block':'none'; };
-  bar.appendChild(filterBtn);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURE 3 — PROGRESS STAGE PILLS (full stages, colour by age)
-// ═══════════════════════════════════════════════════════════════════════════
-
-const PROG_STAGE_ORDER = [
-  { key:'prospecting',   label:'Prospecting',        stage:'Prospecting',          color:'#3B82F6' },
-  { key:'quoting',       label:'Quoting',             stage:'Quoting',              color:'#6366F1' },
-  { key:'comparative',   label:'Comparative',         stage:'Comparative',          color:'#8B5CF6' },
-  { key:'appointment',   label:'Appointment',         stage:'Appointment',          color:'#F59E0B' },
-  { key:'decision',      label:'Decision',            stage:'Decision',             color:'#EF4444' },
-  { key:'won',           label:'Won',                 stage:'Won',                  color:'#10B981' },
-  { key:'holdcover',     label:'Hold Cover',          stage:'Hold Cover',           color:'#059669' },
-  { key:'policyissued',  label:'Policy Issued',       stage:'Policy Issued',        color:'#047857' },
-  { key:'jmbrec',        label:'JMB Received\nPolicy', stage:'JMB Received Policy', color:'#065f46' },
-  { key:'rejected',      label:'Rejected',            stage:'Rejected',             color:'#94a3b8' },
-];
-
-function progStagePillColour(stageCases, s) {
-  const total = stageCases.length;
-  if (total === 0) return { bg:'rgba(100,116,139,.08)', border:'var(--border)', color:'var(--text3)', indicator:'<div style="font-size:9px;margin-top:3px;color:var(--text3);">—</div>' };
-  const finalStages = ['Won','Policy Issued','JMB Received Policy','Rejected'];
-  if (finalStages.includes(s.stage)) {
-    const col = s.stage==='Rejected'?'#94a3b8':'#10B981';
-    return { bg:`${col}22`, border:col, color:col, indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}</div>` };
-  }
-  // Check avg days in stage
-  const today = new Date(); today.setHours(0,0,0,0);
-  const overdue = stageCases.filter(r => {
-    const sd = r['Stage Date'] ? new Date(r['Stage Date']) : null;
-    if (!sd || isNaN(sd)) return false;
-    return Math.floor((today - sd) / 86400000) > 7;
-  });
-  const inProgress = stageCases.filter(r => {
-    const sd = r['Stage Date'] ? new Date(r['Stage Date']) : null;
-    if (!sd || isNaN(sd)) return false;
-    return Math.floor((today - sd) / 86400000) > 0;
-  });
-  if (overdue.length > 0) {
-    return { bg:'rgba(239,68,68,.2)', border:'#EF4444', color:'#fc8181', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">🔴 ${overdue.length}</div>` };
-  } else if (inProgress.length > 0) {
-    return { bg:'rgba(245,158,11,.2)', border:'#F59E0B', color:'#fbbf24', indicator:`<div style="font-size:9px;font-weight:700;margin-top:3px;">🟡 ${total}</div>` };
-  } else {
-    return { bg:`${s.color}22`, border:s.color, color:s.color, indicator:`<div style="font-size:9px;margin-top:3px;">${total}</div>` };
-  }
-}
-
-function renderProgStagePills() {
-  const bar = document.getElementById('prog-stage-bar');
-  if (!bar) return;
-  bar.innerHTML = '';
-  const data = getFilteredProgData();
-
-  // ── ROW 1: Main flow ──
-  // Prospecting → Quote → Comparative → Appointment → Decision → Won → Hold Cover → Policy Issued → JMB Received Policy
-  const mainFlow = [
-    { stage:'Prospecting',       color:'#3B82F6' },
-    { stage:'Quoting',           color:'#6366F1' },
-    { stage:'Comparative',       color:'#8B5CF6' },
-    { stage:'Appointment',       color:'#F59E0B' },
-    { stage:'Decision',          color:'#EF4444' },
-    { stage:'Won',               color:'#10B981' },
-    { stage:'Hold Cover',        color:'#059669' },
-    { stage:'Policy Issued',     color:'#047857' },
-    { stage:'JMB Received Policy', color:'#065f46' },
-  ];
-
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;width:100%;';
-
-  const row1 = document.createElement('div');
-  row1.style.cssText = 'display:flex;align-items:stretch;gap:0;';
-
-  mainFlow.forEach((s, idx) => {
-    const stageCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes(s.stage.toLowerCase()));
-    const col = progStagePillColour(stageCases, s);
-    const pill = document.createElement('div');
-    pill.className = 'ci-stage-pill';
-    pill.style.cssText = `background:${col.bg};border:1px solid ${col.border};color:${col.color};cursor:default;min-width:72px;font-size:9.5px;flex:1;`;
-    pill.innerHTML = `<div style="font-weight:600;">${s.stage}</div>${col.indicator}`;
-    row1.appendChild(pill);
-    if (idx < mainFlow.length-1) {
-      const a = document.createElement('div');
-      a.className = 'ci-arrow';
-      a.style.cssText = 'font-size:12px;align-self:center;';
-      a.textContent = '→';
-      row1.appendChild(a);
-    }
-  });
-  wrap.appendChild(row1);
-
-  // ── ROW 2: Branch from Decision → Reject ──
-  const row2 = document.createElement('div');
-  row2.style.cssText = 'display:flex;align-items:center;gap:0;padding-left:calc(4 * (72px + 20px));'; // align under Decision
-
-  // "From Decision ↓" label
-  const branchArrow = document.createElement('div');
-  branchArrow.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;margin-right:6px;font-weight:500;';
-  branchArrow.textContent = 'Decision ↘ Reject:';
-  row2.appendChild(branchArrow);
-
-  // Reject pill
-  const rejCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes('reject'));
-  const rejCol = progStagePillColour(rejCases, {stage:'Rejected', color:'#94a3b8'});
-  const rejPill = document.createElement('div');
-  rejPill.className = 'ci-stage-pill';
-  rejPill.style.cssText = `background:${rejCol.bg};border:1px solid ${rejCol.border};color:${rejCol.color};cursor:default;min-width:80px;font-size:9.5px;`;
-  rejPill.innerHTML = `<div style="font-weight:600;">Rejected</div>${rejCol.indicator}`;
-  row2.appendChild(rejPill);
-
-  // Arrow to Justify
-  const a2 = document.createElement('div');
-  a2.className='ci-arrow';a2.style.fontSize='12px';a2.textContent='→';
-  row2.appendChild(a2);
-
-  // Justify pill
-  const justifyCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes('reject') && r['Reject Justify']);
-  const jTotal = rejCases.length;
-  const jDone = justifyCases.length;
-  const jBg = jTotal===0?'rgba(100,116,139,.1)':jDone===jTotal?'rgba(16,185,129,.2)':'rgba(245,158,11,.2)';
-  const jBorder = jTotal===0?'var(--border)':jDone===jTotal?'#10B981':'#F59E0B';
-  const jColor = jTotal===0?'var(--text3)':jDone===jTotal?'#34d399':'#fbbf24';
-  const jPill = document.createElement('div');
-  jPill.className='ci-stage-pill';
-  jPill.style.cssText=`background:${jBg};border:1px solid ${jBorder};color:${jColor};cursor:default;min-width:90px;font-size:9.5px;`;
-  jPill.innerHTML=`<div style="font-weight:600;">📝 Justify</div><div style="font-size:9px;margin-top:3px;">${jDone}/${jTotal} filled</div>`;
-  row2.appendChild(jPill);
-
-  wrap.appendChild(row2);
-  bar.appendChild(wrap);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURE 4 — PAYMENT & SETTLEMENT STAGE PILLS
-// ═══════════════════════════════════════════════════════════════════════════
-
-function renderPayStagePills() {
-  const bar = document.getElementById('pay-stage-bar');
-  if (!bar) return;
-  bar.innerHTML = '';
-  const plans = [
-    { key:'4x',   label:'4x\nPayment',   color:'#3B82F6' },
-    { key:'3x',   label:'3x\nPayment',   color:'#8B5CF6' },
-    { key:'2x',   label:'2x\nPayment',   color:'#F59E0B' },
-    { key:'Full', label:'Full\nPayment', color:'#10B981' },
-  ];
-  plans.forEach((p, idx) => {
-    const planRows = paymentData.filter(r => (r['Payment Plan']||'').trim() === p.key);
-    const total = planRows.length;
-    const pending = planRows.filter(r => !getPayStatus(r, p.key).completed).length;
-    const done = total > 0 && pending === 0;
-    let bg, border, color, indicator;
-    if (total === 0) { bg='rgba(100,116,139,.1)';border='var(--border)';color='var(--text3)';indicator='<div style="font-size:9px;margin-top:3px;color:var(--text3);">—</div>'; }
-    else if (done) { bg='rgba(16,185,129,.2)';border='#10B981';color='#34d399';indicator=`<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}/${total}</div>`; }
-    else { bg=`${p.color}22`;border=p.color;color=p.color;indicator=`<div style="font-size:9px;font-weight:700;margin-top:3px;">⚠ ${pending} pending</div>`; }
-    const isLast = idx === plans.length-1;
-    const labelLines = p.label.split('\n').map(l=>`<div>${l}</div>`).join('');
-    const pill = document.createElement('div');
-    pill.className='ci-stage-pill';
-    pill.style.cssText=`background:${bg};border:1px solid ${border};color:${color};cursor:pointer;min-width:80px;`;
-    pill.innerHTML=labelLines+indicator;
-    pill.onclick=()=>{ setPayPlan(p.key, document.getElementById('payplan-'+p.key)); };
-    bar.appendChild(pill);
-    if (!isLast){const a=document.createElement('div');a.className='ci-arrow';a.textContent='→';bar.appendChild(a);}
-  });
-}
-
-function renderSettleStagePills() {
-  const bar = document.getElementById('settle-stage-bar');
-  if (!bar) return;
-  bar.innerHTML = '';
-  const prins = [
-    {name:'STM',color:'#10B981'},{name:'Zurich',color:'#2563EB'},{name:'Etiqa',color:'#F59E0B'},
-    {name:'Tokio Marine',color:'#38BDF8'},{name:'Allianz',color:'#60A5FA'},{name:'MPI',color:'#EF4444'},
-  ];
-  prins.forEach((p, idx) => {
-    const keyword = p.name.toLowerCase().split(' ')[0];
-    const rows = (settleData&&settleData.length?settleData:paymentData).filter(r => (r['Principle']||r['Principle 1']||'').toLowerCase().includes(keyword));
-    const total=rows.length;const pending=rows.filter(r=>!getPayStatus(r,r['Payment Plan']).completed).length;const done=total>0&&pending===0;
-    let bg,border,color,indicator;
-    if(total===0){bg='rgba(100,116,139,.1)';border='var(--border)';color='var(--text3)';indicator='<div style="font-size:9px;margin-top:3px;color:var(--text3);">—</div>';}
-    else if(done){bg='rgba(16,185,129,.2)';border='#10B981';color='#34d399';indicator=`<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ settled</div>`;}
-    else{bg=`${p.color}22`;border=p.color;color=p.color;indicator=`<div style="font-size:9px;font-weight:700;margin-top:3px;">⚠ ${pending} left</div>`;}
-    const isLast=idx===prins.length-1;
-    const pill=document.createElement('div');
-    pill.className='ci-stage-pill';
-    pill.style.cssText=`background:${bg};border:1px solid ${border};color:${color};cursor:pointer;min-width:80px;`;
-    pill.innerHTML=`<div style="font-size:11px;font-weight:700;">${p.name}</div>${indicator}`;
-    pill.onclick=()=>showSettleList(p.name);
-    bar.appendChild(pill);
-    if(!isLast){const a=document.createElement('div');a.className='ci-arrow';a.textContent='→';bar.appendChild(a);}
-  });
-}
-
-function updateNewCaseBtn() {
-  const btn = document.getElementById('btnNewCase');
-  if (!btn) return;
-  const isLogin = document.getElementById('screen-login')?.classList.contains('active');
-  const isSetup = document.getElementById('screen-setup')?.classList.contains('active');
-  btn.style.display = (typeof cu !== 'undefined' && cu) && !isLogin && !isSetup ? '' : 'none';
-}
-
-// init handled by block 1
-
-
-
-// ═══════════════════════════════════════════════════════════════════════════
-
-
 
 function openGlobalCreate() {
   // Auto-switch tab based on current active screen
@@ -2740,100 +2057,266 @@ const CI_STAGE_ORDER = [
   { key: 'closed',        label: 'Closed',                        stage: 'Closed' },
 ];
 
+function renderCIStagePills() {
+  const bar = document.getElementById('ci-stage-bar');
+  if (!bar) return;
+  const cases = getCICases().filter(r => r.year === ciYear);
 
+  CI_STAGE_ORDER.forEach((s, idx) => {
+    const stageCases = cases.filter(r => r.stage === s.stage);
+    const total = stageCases.length;
+    const pending = stageCases.filter(r => r.status !== 'Closed').length;
+    const done = total > 0 && pending === 0;
+    const isActive = ciStageFilter === s.stage;
 
-// [old stage pill functions removed - using updated versions above]
+    // Colour logic: green = all done / none pending, red = has pending, grey = no cases
+    let bg, border, color, indicator;
+    if (total === 0) {
+      bg = 'rgba(100,116,139,.1)'; border = 'var(--border)'; color = 'var(--text3)';
+      indicator = '';
+    } else if (done || s.stage === 'Closed') {
+      bg = 'rgba(16,185,129,.2)'; border = '#10B981'; color = '#34d399';
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}</div>`;
+    } else {
+      bg = 'rgba(239,68,68,.2)'; border = '#EF4444'; color = '#fc8181';
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">⚠ ${pending}</div>`;
+    }
 
-// [duplicate updateNewCaseBtn removed]
+    const isLast = idx === CI_STAGE_ORDER.length - 1;
+    const labelLines = s.label.split('\n').map(l => `<div>${l}</div>`).join('');
+
+    const pill = document.createElement('div');
+    pill.className = 'ci-stage-pill' + (isActive ? ' ci-active' : '');
+    pill.id = 'cist-' + s.key;
+    pill.style.cssText = `background:${bg};border:1px solid ${border};color:${color};${isActive ? 'box-shadow:0 0 14px rgba(59,130,246,.5);filter:brightness(1.2);' : ''}`;
+    pill.innerHTML = labelLines + indicator;
+    pill.onclick = () => setCIStage(s.stage);
+    bar.appendChild(pill);
+
+    if (!isLast) {
+      const arrow = document.createElement('div');
+      arrow.className = 'ci-arrow';
+      arrow.textContent = '→';
+      bar.appendChild(arrow);
+    }
+  });
+
+  // Filters button at end
+  const filterBtn = document.createElement('button');
+  filterBtn.className = 'btn btn-outline';
+  filterBtn.style.cssText = 'margin-left:auto;white-space:nowrap;flex-shrink:0;';
+  filterBtn.textContent = '⚙ Filters';
+  filterBtn.onclick = () => {
+    const p = document.getElementById('ciFiltersPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  };
+  bar.appendChild(filterBtn);
+}
+
+// renderCIAll is defined in ci_js.txt — we extend it here safely using a flag
+let _ciAllRunning = false;
+const _ciAllBase = window.renderCIAll;  // capture after ci_js loaded
+// actual override happens at bottom of this script block
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURE 3 — PROGRESS: Sales Pipeline Funnel stage pills
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PROG_STAGE_ORDER = [
+  { key: 'prospecting', label: 'Prospect-\ning',         stage: 'Prospecting',   color: '#3B82F6' },
+  { key: 'quoting',     label: 'Quoting',                stage: 'Quoting',       color: '#6366F1' },
+  { key: 'comparative', label: 'Compara-\ntive',         stage: 'Comparative',   color: '#8B5CF6' },
+  { key: 'appointment', label: 'Appoint-\nment',         stage: 'Appointment',   color: '#F59E0B' },
+  { key: 'decision',    label: 'Decision',               stage: 'Decision',      color: '#EF4444' },
+  { key: 'holdcover',   label: 'Hold\nCover',            stage: 'Hold Cover',    color: '#10B981' },
+  { key: 'policyissued',label: 'Policy\nIssued',         stage: 'Policy Issued', color: '#059669' },
+  { key: 'rejected',    label: 'Rejected',               stage: 'Rejected',      color: '#94a3b8' },
+];
+
+function renderProgStagePills() {
+  const bar = document.getElementById('prog-stage-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  const data = getFilteredProgData();
+
+  PROG_STAGE_ORDER.forEach((s, idx) => {
+    const stageCases = data.filter(r => {
+      const stage = (r['Current Stage'] || '').toLowerCase();
+      return stage.includes(s.stage.toLowerCase());
+    });
+    const total = stageCases.length;
+    const isDone = s.stage === 'Policy Issued' || s.stage === 'Rejected';
+
+    let bg, border, color, indicator;
+    if (total === 0) {
+      bg = 'rgba(100,116,139,.1)'; border = 'var(--border)'; color = 'var(--text3)';
+      indicator = '<div style="font-size:9px;margin-top:3px;color:var(--text3);">0</div>';
+    } else if (isDone) {
+      bg = s.stage === 'Policy Issued' ? 'rgba(16,185,129,.2)' : 'rgba(148,163,184,.15)';
+      border = s.color;
+      color = s.color;
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}</div>`;
+    } else {
+      // Active stages — colour based on count significance
+      bg = `${s.color}22`;
+      border = s.color;
+      color = s.color;
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">${total} active</div>`;
+    }
+
+    const isLast = idx === PROG_STAGE_ORDER.length - 1;
+    const labelLines = s.label.split('\n').map(l => `<div>${l}</div>`).join('');
+
+    const pill = document.createElement('div');
+    pill.className = 'ci-stage-pill'; // reuse same style
+    pill.style.cssText = `background:${bg};border:1px solid ${border};color:${color};cursor:default;min-width:72px;`;
+    pill.innerHTML = labelLines + indicator;
+    bar.appendChild(pill);
+
+    if (!isLast) {
+      const arrow = document.createElement('div');
+      arrow.className = 'ci-arrow';
+      arrow.textContent = '→';
+      bar.appendChild(arrow);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURE 4 — PAYMENT & SETTLEMENT: stage pills
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderPayStagePills() {
+  const bar = document.getElementById('pay-stage-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  const plans = [
+    { key: '4x',   label: '4x\nPayment',   color: '#3B82F6', checks: ['4x Pay 1 ✓','4x Pay 2 ✓','4x Pay 3 ✓','4x Pay 4 ✓'] },
+    { key: '3x',   label: '3x\nPayment',   color: '#8B5CF6', checks: ['3x Pay 1 ✓','3x Pay 2 ✓','3x Pay 3 ✓'] },
+    { key: '2x',   label: '2x\nPayment',   color: '#F59E0B', checks: ['2x Pay 1 ✓','2x Pay 2 ✓'] },
+    { key: 'Full', label: 'Full\nPayment', color: '#10B981', checks: ['Full Pay ✓'] },
+  ];
+
+  plans.forEach((p, idx) => {
+    const planRows = paymentData.filter(r => (r['Payment Plan'] || '').trim() === p.key);
+    const total = planRows.length;
+    const pending = planRows.filter(r => !getPayStatus(r, p.key).completed).length;
+    const done = total > 0 && pending === 0;
+
+    let bg, border, color, indicator;
+    if (total === 0) {
+      bg = 'rgba(100,116,139,.1)'; border = 'var(--border)'; color = 'var(--text3)';
+      indicator = '<div style="font-size:9px;margin-top:3px;color:var(--text3);">—</div>';
+    } else if (done) {
+      bg = 'rgba(16,185,129,.2)'; border = '#10B981'; color = '#34d399';
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ ${total}/${total}</div>`;
+    } else {
+      bg = `${p.color}22`; border = p.color; color = p.color;
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">⚠ ${pending} pending</div>`;
+    }
+
+    const isLast = idx === plans.length - 1;
+    const labelLines = p.label.split('\n').map(l => `<div>${l}</div>`).join('');
+
+    const pill = document.createElement('div');
+    pill.className = 'ci-stage-pill';
+    pill.style.cssText = `background:${bg};border:1px solid ${border};color:${color};cursor:pointer;min-width:80px;`;
+    pill.innerHTML = labelLines + indicator;
+    pill.onclick = () => { setPayPlan(p.key, document.getElementById('payplan-' + p.key)); };
+    bar.appendChild(pill);
+
+    if (!isLast) {
+      const arrow = document.createElement('div');
+      arrow.className = 'ci-arrow';
+      arrow.textContent = '→';
+      bar.appendChild(arrow);
+    }
+  });
+}
+
+function renderSettleStagePills() {
+  const bar = document.getElementById('settle-stage-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  const prins = [
+    { name: 'STM',         color: '#10B981' },
+    { name: 'Zurich',      color: '#2563EB' },
+    { name: 'Etiqa',       color: '#F59E0B' },
+    { name: 'Tokio Marine',color: '#38BDF8' },
+    { name: 'Allianz',     color: '#60A5FA' },
+    { name: 'MPI',         color: '#EF4444' },
+  ];
+
+  prins.forEach((p, idx) => {
+    const keyword = p.name.toLowerCase().split(' ')[0];
+    const rows = (settleData && settleData.length ? settleData : paymentData).filter(r => {
+      const prin = (r['Principle'] || r['Principle 1'] || '').toLowerCase();
+      return prin.includes(keyword);
+    });
+    const total = rows.length;
+    const pending = rows.filter(r => !getPayStatus(r, r['Payment Plan']).completed).length;
+    const done = total > 0 && pending === 0;
+
+    let bg, border, color, indicator;
+    if (total === 0) {
+      bg = 'rgba(100,116,139,.1)'; border = 'var(--border)'; color = 'var(--text3)';
+      indicator = '<div style="font-size:9px;margin-top:3px;color:var(--text3);">—</div>';
+    } else if (done) {
+      bg = 'rgba(16,185,129,.2)'; border = '#10B981'; color = '#34d399';
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">✓ settled</div>`;
+    } else {
+      bg = `${p.color}22`; border = p.color; color = p.color;
+      indicator = `<div style="font-size:9px;font-weight:700;margin-top:3px;">⚠ ${pending} left</div>`;
+    }
+
+    const isLast = idx === prins.length - 1;
+    const pill = document.createElement('div');
+    pill.className = 'ci-stage-pill';
+    pill.style.cssText = `background:${bg};border:1px solid ${border};color:${color};cursor:pointer;min-width:80px;`;
+    pill.innerHTML = `<div style="font-size:11px;font-weight:700;">${p.name}</div>${indicator}`;
+    pill.onclick = () => showSettleList(p.name);
+    bar.appendChild(pill);
+
+    if (!isLast) {
+      const arrow = document.createElement('div');
+      arrow.className = 'ci-arrow';
+      arrow.textContent = '→';
+      bar.appendChild(arrow);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HOOK — stage pills trigger via direct calls (no function override/wrapping)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateNewCaseBtn() {
+  const btn = document.getElementById('btnNewCase');
+  if (!btn) return;
+  const isLogin = document.getElementById('screen-login')?.classList.contains('active');
+  const isSetup = document.getElementById('screen-setup')?.classList.contains('active');
+  btn.style.display = cu && !isLogin && !isSetup ? '' : 'none';
+}
+
+// No function overrides — stage pills are called directly from go() below
+// which replaces the go() defined in original_js.js (last definition wins in JS)
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadLocalCases();
+  updateNewCaseBtn();
+  // Set current month for gcm-s-month default
+  const mo = document.getElementById('gcm-s-month');
+  if (mo) mo.value = String(new Date().getMonth());
+});
+
+// Also call on window load as fallback
+window.addEventListener('load', function() {
+  loadLocalCases();
+  updateNewCaseBtn();
+});
 
 </script>
-
-
-
-<div class="modal" id="globalCreateModal">
-  <div class="modal-card" style="max-width:520px;max-height:90vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;">
-      <h3 id="gcm-title" style="margin:0;">Create New Case</h3>
-      <button onclick="closeGlobalCreate()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;">✕</button>
-    </div>
-    <!-- TAB SELECTOR -->
-    <div style="display:flex;gap:4px;background:var(--card2);border-radius:9px;padding:3px;border:1px solid var(--border);margin-bottom:1.2rem;">
-      <button class="nav-btn active" id="gcm-tab-sales" onclick="switchGCMTab('sales')">📊 Sales</button>
-      <button class="nav-btn" id="gcm-tab-progress" onclick="switchGCMTab('progress')">🎯 Progress</button>
-      <button class="nav-btn" id="gcm-tab-ci" onclick="switchGCMTab('ci')">📝 CI Amendment</button>
-      <button class="nav-btn" id="gcm-tab-payment" onclick="switchGCMTab('payment')">💳 Payment</button>
-    </div>
-
-    <!-- SALES FORM -->
-    <div id="gcm-form-sales">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>JMB Name</label><input type="text" id="gcm-s-jmb" placeholder="JMB Name"></div>
-        <div class="field"><label>Marketer</label><select id="gcm-s-mk"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="sbm">SBM</option></select></div>
-        <div class="field"><label>Month of Sales</label><select id="gcm-s-month"><option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option></select></div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-s-year" value="2026" min="2020" max="2035"></div>
-        <div class="field"><label>Case Type</label><select id="gcm-s-casetype"><option value="Renewal">Renewal</option><option value="New">New</option></select></div>
-        <div class="field"><label>Principle</label><select id="gcm-s-prin"><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>Premium (with tax) RM</label><input type="number" id="gcm-s-prem" placeholder="0.00" min="0" step="0.01"></div>
-        <div class="field"><label>Premium (without tax) RM</label><input type="number" id="gcm-s-premnotax" placeholder="0.00" min="0" step="0.01"></div>
-      </div>
-      <div class="field"><label>Payment Option</label><select id="gcm-s-pay"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
-    </div>
-
-    <!-- PROGRESS FORM -->
-    <div id="gcm-form-progress" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>JMB Name</label><input type="text" id="gcm-p-jmb" placeholder="JMB Name"></div>
-        <div class="field"><label>Marketer</label><select id="gcm-p-mk"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="sbm">SBM</option></select></div>
-        <div class="field"><label>Current Stage</label><select id="gcm-p-stage"><option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option><option>Decision</option><option>Hold Cover</option><option>Policy Issued</option><option>Rejected</option></select></div>
-        <div class="field"><label>Stage Date</label><input type="date" id="gcm-p-stagedate"></div>
-        <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry"></div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-p-year" value="2026" min="2020" max="2035"></div>
-        <div class="field"><label>Principle 1</label><select id="gcm-p-prin1"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-        <div class="field"><label>Principle 2</label><select id="gcm-p-prin2"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-      </div>
-    </div>
-
-    <!-- CI AMENDMENT FORM -->
-    <div id="gcm-form-ci" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>Case ID</label><input type="text" id="gcm-ci-id" placeholder="e.g. CI-014" style="font-family:monospace;"></div>
-        <div class="field"><label>JMB Name</label><input type="text" id="gcm-ci-jmb" placeholder="JMB Name"></div>
-        <div class="field"><label>Current Stage</label><select id="gcm-ci-stage"><option>JMB/Client Email</option><option>Staff Read &amp; Process</option><option>Staff Email to Principle</option><option>Principle Amend</option><option>Staff Receive &amp; Validate</option><option>Staff Email back to JMB</option><option>Closed</option></select></div>
-        <div class="field"><label>Status</label><select id="gcm-ci-status"><option value="New">New</option><option value="In Progress">In Progress</option><option value="Overdue">Overdue</option><option value="Validation">Validation</option><option value="Closed">Closed</option></select></div>
-        <div class="field"><label>Assigned Staff</label><select id="gcm-ci-staff"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="Admin">Admin</option></select></div>
-        <div class="field"><label>Last Activity Date</label><input type="date" id="gcm-ci-date"></div>
-        <div class="field"><label>Days at Staff</label><input type="number" id="gcm-ci-dstaff" placeholder="0" min="0"></div>
-        <div class="field"><label>Days at Principle</label><input type="number" id="gcm-ci-dprin" placeholder="0" min="0"></div>
-      </div>
-    </div>
-
-    <!-- PAYMENT FORM -->
-    <div id="gcm-form-payment" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>JMB Name</label><input type="text" id="gcm-py-jmb" placeholder="JMB Name"></div>
-        <div class="field"><label>Marketer</label><select id="gcm-py-mk"><option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="sbm">SBM</option></select></div>
-        <div class="field"><label>Principle</label><select id="gcm-py-prin"><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>Premium Total (RM)</label><input type="number" id="gcm-py-prem" placeholder="0.00" min="0" step="0.01"></div>
-        <div class="field"><label>Payment Plan</label><select id="gcm-py-plan" onchange="updateGCMPayChecks()"><option value="4x">4x</option><option value="3x">3x</option><option value="2x">2x</option><option value="Full">Full</option></select></div>
-        <div class="field"><label>Year</label><input type="number" id="gcm-py-year" value="2026" min="2020" max="2035"></div>
-      </div>
-      <div id="gcm-py-checks" style="margin-top:4px;"></div>
-    </div>
-
-    <!-- SYNC STATUS -->
-    <div id="gcm-sync-status" style="display:none;margin-top:10px;padding:8px 12px;border-radius:7px;font-size:12px;"></div>
-
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeGlobalCreate()">Cancel</button>
-      <button class="btn btn-primary" id="gcm-save-btn" onclick="saveGlobalCase()">💾 Save Case</button>
-    </div>
-  
-</div>
-</div>
-
-
-
 </body>
 </html>
