@@ -2113,6 +2113,255 @@ function loadMasterJmb() {
   renderExpiringJmb();
 }
 
+// ── PROGRESS FORM MODE (New / Update) ──────────────────────────────────────
+let progFormMode = 'new';
+
+function setProgMode(mode) {
+  progFormMode = mode;
+  document.getElementById('prog-mode-new').classList.toggle('active', mode === 'new');
+  document.getElementById('prog-mode-update').classList.toggle('active', mode === 'update');
+  document.getElementById('prog-panel-new').style.display = mode === 'new' ? '' : 'none';
+  document.getElementById('prog-panel-update').style.display = mode === 'update' ? '' : 'none';
+
+  if (mode === 'update') {
+    // Populate update JMB dropdown from progData
+    const sel = document.getElementById('gcm-u-jmb');
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Select JMB --</option>';
+      const uniqueJMBs = [...new Set(progData.map(r => r['JMB Name']).filter(Boolean))].sort();
+      if (uniqueJMBs.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '— No progress records yet —'; opt.disabled = true;
+        sel.appendChild(opt);
+      } else {
+        uniqueJMBs.forEach(name => {
+          const r = progData.find(p => p['JMB Name'] === name);
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name + (r ? '  (' + (r['Current Stage']||'') + ')' : '');
+          sel.appendChild(opt);
+        });
+      }
+    }
+    // Also check localStorage for saved entries
+    try {
+      const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+      const sel2 = document.getElementById('gcm-u-jmb');
+      if (sel2 && saved.length) {
+        const existing = [...sel2.options].map(o => o.value);
+        saved.forEach(r => {
+          if (r['JMB Name'] && !existing.includes(r['JMB Name'])) {
+            const opt = document.createElement('option');
+            opt.value = r['JMB Name'];
+            opt.textContent = r['JMB Name'] + '  (' + (r['Current Stage']||'') + ')';
+            sel2.appendChild(opt);
+          }
+        });
+      }
+    } catch(e) {}
+    gcmUpdateSetDate();
+  }
+}
+
+function gcmUpdateAutoFill() {
+  const jmb = document.getElementById('gcm-u-jmb')?.value;
+  const curDiv = document.getElementById('gcm-u-current');
+  const noMatch = document.getElementById('gcm-u-nomatch');
+  if (!jmb) { if(curDiv) curDiv.style.display='none'; return; }
+
+  // Find in progData or localStorage
+  let rec = progData.find(r => r['JMB Name'] === jmb);
+  if (!rec) {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+      rec = saved.find(r => r['JMB Name'] === jmb);
+    } catch(e) {}
+  }
+
+  if (rec) {
+    if(curDiv) curDiv.style.display = '';
+    if(noMatch) noMatch.style.display = 'none';
+    const el = id => document.getElementById(id);
+    if(el('gcm-u-cur-stage')) el('gcm-u-cur-stage').textContent = rec['Current Stage'] || '—';
+    if(el('gcm-u-cur-date')) el('gcm-u-cur-date').textContent = rec['Stage Date'] || '—';
+    if(el('gcm-u-cur-mk')) el('gcm-u-cur-mk').textContent = {hazim:'Hazim',shahira:'Shahira',admin:'SBM'}[rec._marketer] || rec._marketer || '—';
+    if(el('gcm-u-cur-updated')) {
+      const upd = rec._lastUpdated ? new Date(rec._lastUpdated).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      el('gcm-u-cur-updated').textContent = upd;
+    }
+    // Pre-fill new stage with current stage
+    if(el('gcm-u-stage')) el('gcm-u-stage').value = rec['Current Stage'] || 'Prospecting';
+    // Pre-fill principles
+    ['1','2','3','4'].forEach(n => {
+      const ps = el('gcm-u-prin'+n); if(ps) ps.value = rec['Principle '+n] || '';
+      const qs = el('gcm-u-p'+n+'status'); if(qs) qs.value = rec['P'+n+' Quote Status'] || '';
+    });
+    gcmUpdateSetDate();
+    gcmToggleUpdatePrinciples();
+    // Reject justify
+    const rj = el('gcm-u-justify'); if(rj) rj.value = rec['Reject Justify'] || '';
+  } else {
+    if(curDiv) curDiv.style.display = 'none';
+    if(noMatch) noMatch.style.display = '';
+  }
+}
+
+function gcmUpdateSetDate() {
+  const sd = document.getElementById('gcm-u-stagedate');
+  if (sd) sd.value = new Date().toISOString().split('T')[0];
+}
+
+function gcmToggleUpdatePrinciples() {
+  const stage = document.getElementById('gcm-u-stage')?.value || '';
+  const quotingStages = ['Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy'];
+  const show = quotingStages.includes(stage);
+  const sec = document.getElementById('gcm-u-prin-section');
+  if (sec) sec.style.display = show ? '' : 'none';
+  // Reject box
+  const rBox = document.getElementById('gcm-u-reject-box');
+  if (rBox) rBox.style.display = stage === 'Rejected' ? '' : 'none';
+}
+
+// ── FILTER for Create New JMB dropdown ────────────────────────────────────
+function applyProgFilter() {
+  const mkFilter = document.getElementById('pf-marketer')?.value || '';
+  const monthFilter = document.getElementById('pf-month')?.value || '';
+  const countEl = document.getElementById('pf-count');
+
+  // Re-populate JMB dropdown with filter applied
+  const sel = document.getElementById('gcm-p-jmb');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Select JMB --</option>';
+
+  let expiring = getExpiringJMBs();
+
+  // Apply marketer filter
+  if (mkFilter) {
+    expiring = expiring.filter(j => {
+      const rec = masterJmbData.find(m => m.name === j.name);
+      return rec && rec.marketer === mkFilter;
+    });
+  }
+
+  // Apply month filter
+  if (monthFilter) {
+    expiring = expiring.filter(j => {
+      const exp = j._effectiveExp || (j.expiryDate ? new Date(j.expiryDate) : null);
+      return exp && exp.getMonth() + 1 === parseInt(monthFilter);
+    });
+  }
+
+  if (expiring.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '— No JMB matches filter —'; opt.disabled = true;
+    sel.appendChild(opt);
+    if (countEl) countEl.textContent = '0 JMB found';
+    return;
+  }
+
+  const grp = document.createElement('optgroup');
+  grp.label = '⚠ Expiring ≤ 60 Days (' + expiring.length + ' JMB)';
+  expiring.forEach(j => {
+    const opt = document.createElement('option');
+    opt.value = j.name;
+    opt.textContent = j.name + '  — ' + (j._effectiveDays||0) + 'd';
+    if (j.name === cur) opt.selected = true;
+    grp.appendChild(opt);
+  });
+  sel.appendChild(grp);
+  if (countEl) countEl.textContent = expiring.length + ' JMB found';
+}
+
+// Override saveGlobalCase for Update mode
+const _origSaveGlobal = saveGlobalCase;
+function saveGlobalCase() {
+  if (typeof gcmCurrentTab !== 'undefined' && gcmCurrentTab === 'progress' && progFormMode === 'update') {
+    saveUpdateStage();
+    return;
+  }
+  _origSaveGlobal();
+}
+
+function saveUpdateStage() {
+  const btn = document.getElementById('gcm-save-btn');
+  if(btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
+
+  const jmb = document.getElementById('gcm-u-jmb')?.value;
+  if (!jmb) { alert('Select a JMB to update.'); if(btn){btn.textContent='💾 Save Entry';btn.disabled=false;} return; }
+
+  const newStage = document.getElementById('gcm-u-stage')?.value;
+  const newDate  = document.getElementById('gcm-u-stagedate')?.value || new Date().toISOString().split('T')[0];
+  const el = id => document.getElementById(id);
+
+  // Update in progData
+  const idx = progData.findIndex(r => r['JMB Name'] === jmb);
+  const update = {
+    'Current Stage': newStage,
+    'Stage Date': newDate,
+    'Principle 1': el('gcm-u-prin1')?.value || '',
+    'P1 Quote Status': el('gcm-u-p1status')?.value || '',
+    'Principle 2': el('gcm-u-prin2')?.value || '',
+    'P2 Quote Status': el('gcm-u-p2status')?.value || '',
+    'Principle 3': el('gcm-u-prin3')?.value || '',
+    'P3 Quote Status': el('gcm-u-p3status')?.value || '',
+    'Principle 4': el('gcm-u-prin4')?.value || '',
+    'P4 Quote Status': el('gcm-u-p4status')?.value || '',
+    'Reject Justify': newStage === 'Rejected' ? (el('gcm-u-justify')?.value||'') : '',
+    '_lastUpdated': new Date().toISOString(),
+  };
+
+  if (idx >= 0) {
+    progData[idx] = {...progData[idx], ...update};
+  }
+
+  // Update localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+    const si = saved.findIndex(r => r['JMB Name'] === jmb);
+    if (si >= 0) { saved[si] = {...saved[si], ...update}; }
+    else { saved.push({'JMB Name': jmb, ...update}); }
+    localStorage.setItem('sd_gcm_prog_v1', JSON.stringify(saved));
+  } catch(e) {}
+
+  // Sync to GSheet
+  if (typeof syncToGSheet === 'function') {
+    syncToGSheet('progress_update', {jmb, ...update});
+  }
+
+  updateProgStats(); renderProgCards();
+  if (typeof renderProgStagePills === 'function') renderProgStagePills();
+  const ss = document.getElementById('gcm-sync-status');
+  if(ss){ ss.textContent='✓ Stage updated for ' + jmb; ss.style.display=''; ss.style.background='rgba(16,185,129,.1)'; ss.style.color='#34d399'; }
+  if(btn){ btn.textContent='💾 Save Entry'; btn.disabled=false; }
+
+  // Refresh the update dropdown
+  setTimeout(() => { if(progFormMode==='update') setProgMode('update'); }, 200);
+}
+
+// Populate filter month options dynamically from expiring JMBs
+function populateProgFilterMonths() {
+  const monthSel = document.getElementById('pf-month');
+  if (!monthSel) return;
+  const expiring = getExpiringJMBs();
+  const months = new Set();
+  expiring.forEach(j => {
+    const exp = j._effectiveExp;
+    if (exp) months.add(exp.getMonth() + 1);
+  });
+  const cur = monthSel.value;
+  monthSel.innerHTML = '<option value="">All Months</option>';
+  const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  [...months].sort((a,b)=>a-b).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = monthNames[m] + ' 2026';
+    if (String(m) === cur) opt.selected = true;
+    monthSel.appendChild(opt);
+  });
+}
+
+
 populateLoginDropdown();
 
 // ── ADMIN DELETE FUNCTIONS ───────────────────────────────────
@@ -2445,48 +2694,144 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
 
     <!-- ── PROGRESS FORM ── -->
     <!-- ── PROGRESS FORM ── -->
+        <!-- ── PROGRESS FORM ── -->
     <div id="gcm-form-progress" style="display:none;">
-      <div id="gcm-p-lastupdate" style="display:none;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#60a5fa;">
-        📝 Existing record — last updated: <span id="gcm-p-lastupdate-val" style="font-weight:600;"></span>
+
+      <!-- MODE TOGGLE: New Entry vs Update Stage -->
+      <div style="display:flex;gap:4px;background:var(--card2);border-radius:8px;padding:3px;border:1px solid var(--border);margin-bottom:12px;">
+        <button class="nav-btn active" id="prog-mode-new" onclick="setProgMode('new')" style="flex:1;text-align:center;font-size:12px;">➕ Create New</button>
+        <button class="nav-btn" id="prog-mode-update" onclick="setProgMode('update')" style="flex:1;text-align:center;font-size:12px;">✏️ Update Stage</button>
       </div>
-      <div id="gcm-p-notice" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24;">
-        ⚠ <span id="gcm-p-notice-val"></span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field" style="grid-column:1/-1;">
-          <label>JMB Name</label>
-          <select id="gcm-p-jmb" onchange="gcmProgAutoFill()" style="width:100%;"><option value="">-- Select JMB --</option></select>
+
+      <!-- ── CREATE NEW MODE ── -->
+      <div id="prog-panel-new">
+        <!-- FILTERS -->
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">🔍 Filter JMB List</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="field" style="margin-bottom:0;">
+              <label style="font-size:11px;">Marketer</label>
+              <select id="pf-marketer" onchange="applyProgFilter()" style="width:100%;padding:6px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg,#111827);color:var(--text);outline:none;">
+                <option value="">All</option>
+                <option value="hazim">Hazim</option>
+                <option value="shahira">Shahira</option>
+                <option value="admin">SBM</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label style="font-size:11px;">Expiry Month</label>
+              <select id="pf-month" onchange="applyProgFilter()" style="width:100%;padding:6px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg,#111827);color:var(--text);outline:none;">
+                <option value="">All</option>
+                <option value="7">July 2026</option>
+                <option value="8">August 2026</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text3);" id="pf-count">Showing all expiring JMB</div>
         </div>
-        <div class="field"><label>Marketer (PIC)</label>
-          <select id="gcm-p-mk" style="width:100%;"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option></select>
+
+        <!-- LAST UPDATED BANNER -->
+        <div id="gcm-p-lastupdate" style="display:none;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#60a5fa;">
+          📝 Existing record — last updated: <span id="gcm-p-lastupdate-val" style="font-weight:600;"></span>
         </div>
-        <div class="field">
-          <label>Current Stage</label>
-          <select id="gcm-p-stage" onchange="gcmCheckReject();gcmProgSetStageDate();gcmTogglePrinciples()" style="width:100%;">
-            <option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option>
-            <option>Decision</option><option>Won</option><option>Hold Cover</option><option>Policy Issued</option>
-            <option>JMB Received Policy</option><option>Rejected</option>
-          </select>
+        <div id="gcm-p-notice" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24;">
+          ⚠ <span id="gcm-p-notice-val"></span>
         </div>
-        <div class="field"><label>Stage Date <span style="font-size:10px;color:var(--text3);">(auto on stage change)</span></label><input type="date" id="gcm-p-stagedate" style="width:100%;"></div>
-        <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry" style="width:100%;"></div>
-      </div>
-      <div id="gcm-p-prin-section" style="display:none;transition:all .2s;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px;display:flex;align-items:center;gap:6px;"><span>Principles &amp; Quote Status</span><span style="font-size:10px;color:#3B82F6;background:rgba(59,130,246,.1);border-radius:4px;padding:1px 6px;">Quoting stage onwards</span></div>
+
+        <!-- FIELDS -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="field"><label>Principle 1</label><select id="gcm-p-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-          <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-          <div class="field"><label>Principle 2</label><select id="gcm-p-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-          <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-          <div class="field"><label>Principle 3</label><select id="gcm-p-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-          <div class="field"><label>P3 Quote Status</label><select id="gcm-p-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
-          <div class="field"><label>Principle 4</label><select id="gcm-p-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-          <div class="field"><label>P4 Quote Status</label><select id="gcm-p-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+          <div class="field" style="grid-column:1/-1;">
+            <label>JMB Name</label>
+            <select id="gcm-p-jmb" onchange="gcmProgAutoFill()" style="width:100%;"><option value="">-- Select JMB --</option></select>
+          </div>
+          <div class="field"><label>Marketer (PIC)</label>
+            <select id="gcm-p-mk" style="width:100%;"><option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option></select>
+          </div>
+          <div class="field">
+            <label>Current Stage</label>
+            <select id="gcm-p-stage" onchange="gcmCheckReject();gcmProgSetStageDate();gcmTogglePrinciples()" style="width:100%;">
+              <option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option>
+              <option>Decision</option><option>Won</option><option>Hold Cover</option><option>Policy Issued</option>
+              <option>JMB Received Policy</option><option>Rejected</option>
+            </select>
+          </div>
+          <div class="field"><label>Stage Date <span style="font-size:10px;color:var(--text3);">(auto)</span></label><input type="date" id="gcm-p-stagedate" style="width:100%;"></div>
+          <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry" style="width:100%;"></div>
+        </div>
+
+        <!-- PRINCIPLES -->
+        <div id="gcm-p-prin-section" style="display:none;transition:all .2s;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px;display:flex;align-items:center;gap:6px;">
+            <span>Principles &amp; Quote Status</span>
+            <span style="font-size:10px;color:#3B82F6;background:rgba(59,130,246,.1);border-radius:4px;padding:1px 6px;">Quoting stage onwards</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field"><label>Principle 1</label><select id="gcm-p-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 2</label><select id="gcm-p-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 3</label><select id="gcm-p-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P3 Quote Status</label><select id="gcm-p-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 4</label><select id="gcm-p-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P4 Quote Status</label><select id="gcm-p-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+          </div>
+        </div>
+
+        <div id="gcm-p-reject-box" style="display:none;margin-top:4px;">
+          <div class="field"><label>🚫 Rejection Justification</label><textarea id="gcm-p-justify" rows="3" placeholder="Reason rejected by JMB / Principal..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea></div>
         </div>
       </div>
-      <div id="gcm-p-reject-box" style="display:none;margin-top:4px;">
-        <div class="field"><label>🚫 Rejection Justification</label><textarea id="gcm-p-justify" rows="3" placeholder="Reason rejected by JMB / Principal..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea></div>
+
+      <!-- ── UPDATE STAGE MODE ── -->
+      <div id="prog-panel-update" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="field" style="grid-column:1/-1;">
+            <label>JMB Name</label>
+            <select id="gcm-u-jmb" onchange="gcmUpdateAutoFill()" style="width:100%;"><option value="">-- Select JMB --</option></select>
+          </div>
+        </div>
+        <!-- Current info display -->
+        <div id="gcm-u-current" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;">
+          <div style="color:var(--text3);margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Current Record</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div><span style="color:var(--text3);">Stage: </span><span id="gcm-u-cur-stage" style="color:var(--text);font-weight:600;"></span></div>
+            <div><span style="color:var(--text3);">Date: </span><span id="gcm-u-cur-date" style="color:var(--text);font-weight:600;"></span></div>
+            <div><span style="color:var(--text3);">Marketer: </span><span id="gcm-u-cur-mk" style="color:var(--text);font-weight:600;"></span></div>
+            <div><span style="color:var(--text3);">Updated: </span><span id="gcm-u-cur-updated" style="color:var(--text);font-weight:600;"></span></div>
+          </div>
+        </div>
+        <!-- New stage fields -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="field">
+            <label>New Stage</label>
+            <select id="gcm-u-stage" onchange="gcmUpdateSetDate();gcmToggleUpdatePrinciples()" style="width:100%;">
+              <option>Prospecting</option><option>Quoting</option><option>Comparative</option><option>Appointment</option>
+              <option>Decision</option><option>Won</option><option>Hold Cover</option><option>Policy Issued</option>
+              <option>JMB Received Policy</option><option>Rejected</option>
+            </select>
+          </div>
+          <div class="field"><label>Stage Date <span style="font-size:10px;color:var(--text3);">(auto)</span></label><input type="date" id="gcm-u-stagedate" style="width:100%;"></div>
+        </div>
+        <!-- Principles for update mode -->
+        <div id="gcm-u-prin-section" style="display:none;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 6px;">Update Quote Status</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="field"><label>Principle 1</label><select id="gcm-u-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P1 Status</label><select id="gcm-u-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 2</label><select id="gcm-u-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P2 Status</label><select id="gcm-u-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 3</label><select id="gcm-u-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P3 Status</label><select id="gcm-u-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>Principle 4</label><select id="gcm-u-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
+            <div class="field"><label>P4 Status</label><select id="gcm-u-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+          </div>
+        </div>
+        <div id="gcm-u-reject-box" style="display:none;margin-top:4px;">
+          <div class="field"><label>🚫 Rejection Justification</label><textarea id="gcm-u-justify" rows="3" placeholder="Reason rejected by JMB / Principal..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea></div>
+        </div>
+        <div id="gcm-u-nomatch" style="display:none;padding:12px;text-align:center;color:var(--text3);font-size:13px;">No progress records found. Use Create New to add.</div>
       </div>
+
     </div>
 
     <!-- ── CI AMENDMENT FORM ── -->
