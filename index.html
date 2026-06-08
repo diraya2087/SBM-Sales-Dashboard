@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1382,21 +1381,18 @@ let filterPrin=null;
 
 // Force clear old user data on every load
 try{localStorage.removeItem(USERS_KEY);}catch(e){}
-// Clear old CI dummy data (from previous test sessions)
+// Clear ALL old data from previous test/dummy sessions
+// Version stamp — if version changes, clear all data
+const DATA_VERSION = 'v2026-06-08';
 try{
-  const ciData = JSON.parse(localStorage.getItem('sd_ci_cases_v1')||'[]');
-  const dummyNames = ['JMB Seri Mewah','JMB Harmoni','JMB Perdana','JMB Sentosa','JMB Damai',
-    'JMB Wangsa','JMB Bayu','JMB Cempaka','JMB Mutiara','JMB Kenanga','JMB Anggerik',
-    'JMB Teratai','JMB Seroja'];
-  const hasDummy = ciData.some(r => dummyNames.includes(r.jmb));
-  if(hasDummy) localStorage.removeItem('sd_ci_cases_v1');
-}catch(e){}
-// Clear old payment dummy data
-try{
-  const payData = JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
-  const dummyPay = ['1 Desa Residence','1 Razak Mansion','162 Residency','3 Kia Peng KLCC'];
-  const hasOld = payData.some(r => dummyPay.includes(r['JMB Name']));
-  if(hasOld) localStorage.removeItem('sd_gcm_pay_v1');
+  const storedVer = localStorage.getItem('sd_data_version');
+  if(storedVer !== DATA_VERSION){
+    // New version — wipe all old data
+    ['sd_ci_cases_v1','sd_gcm_sales_v1','sd_gcm_prog_v1','sd_gcm_pay_v1','sd_master_jmb_v1'].forEach(k=>{
+      try{localStorage.removeItem(k);}catch(e){}
+    });
+    localStorage.setItem('sd_data_version', DATA_VERSION);
+  }
 }catch(e){}
 
 function getUsers(){return {...DEFAULT_USERS};}
@@ -1583,8 +1579,7 @@ function updateNoConn(){
   const noData=rawData.length===0;
   const nc=document.getElementById('noConn');if(nc)nc.style.display=noData?'block':'none';
   const hint=document.getElementById('setupHint');
-Done
-   if(hint){const role=cu&&users[cu]?users[cu].role:'';hint.innerHTML=role==='admin'?'Connect GSheet in <b>Setup</b> or use <b>+ Create New Entry</b>.':'Use <b>+ Create New Entry</b> to add records.';}
+  if(hint){const role=cu&&users[cu]?users[cu].role:'';hint.innerHTML=role==='admin'?'Connect GSheet in <b>Setup</b> or use <b>+ Create New Entry</b>.':'Use <b>+ Create New Entry</b> to add records.';}
 }
 
 const fd=y=>rawData.filter(r=>r.year===y);
@@ -1910,32 +1905,9 @@ let masterJmbShowAll = false;
 
 // Fetch master JMB list from GSheet tab "JMB Database"
 async function fetchMasterJMB() {
-  const el = document.getElementById('masterJmbSub');
-  if (el) el.textContent = 'Fetching...';
-  try {
-    const url = AS_BASE + '?type=jmb_list';
-    const data = await fetchJSON(url);
-    if (data && data.length > 0) {
-      masterJmbData = data.map(r => ({
-        name:       r['JMB Name'] || r.name || r.jmb || '',
-        marketer:   (r['Marketer'] || r.marketer || '').toLowerCase(),
-        expiryDate: r['Expiry Date'] || r.expirydate || r.expiry || '',
-        policyNo:   r['Policy No'] || r.policyno || '',
-      })).filter(r => r.name);
-      // Cache locally
-      try { localStorage.setItem(MASTER_JMB_KEY, JSON.stringify(masterJmbData)); } catch(e) {}
-    } else {
-      // Load from cache
-      const cached = localStorage.getItem(MASTER_JMB_KEY);
-      if (cached) masterJmbData = JSON.parse(cached);
-    }
-  } catch(e) {
-    // Load from cache on network fail
-    try {
-      const cached = localStorage.getItem(MASTER_JMB_KEY);
-      if (cached) masterJmbData = JSON.parse(cached);
-    } catch(e2) {}
-  }
+  // Always use hardcoded list as primary source — GSheet fetch disabled
+  // to prevent 13-JMB GSheet data from overwriting 489 hardcoded JMB
+  if (masterJmbData.length === 0) loadMasterJmb();
   renderMasterJmb();
   renderExpiringJmb();
 }
@@ -2516,7 +2488,6 @@ function gcmPayUpdateAutoFill() {
 // ── OVERRIDE saveGlobalCase for CI/Pay update modes ─────────────────────
 const _origSaveForCIPay = saveGlobalCase;
 function saveGlobalCase() {
-Done
   if (gcmCurrentTab === 'ci' && ciFormMode === 'update') { saveCIUpdate(); return; }
   if (gcmCurrentTab === 'payment' && payFormMode === 'update') { savePayUpdate(); return; }
   if (gcmCurrentTab === 'settlement') {
@@ -4416,5 +4387,3 @@ const CI_STAGE_ORDER = [
 
 </body>
 </html>
-
-Done
