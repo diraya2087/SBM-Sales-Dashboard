@@ -1,3 +1,10 @@
+.jcard-history{padding:6px 12px 4px;border-top:1px solid var(--border);margin-top:4px;max-height:110px;overflow-y:auto;}
+.jcard-hist-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;}
+.jcard-hist-row:last-child{border-bottom:none;}
+.jcard-hist-current .jcard-hist-stage{color:#60a5fa;font-weight:700;}
+.jcard-hist-current .jcard-hist-time{color:#60a5fa;}
+.jcard-hist-stage{color:var(--text2);font-weight:500;}
+.jcard-hist-time{color:var(--text3);font-size:10px;font-family:monospace;}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -506,6 +513,45 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
 <!-- SETUP -->
 <div class="screen" id="screen-setup">
   <div class="ph"><div><h1>⚙️ Setup & Administration</h1><p>Manage connection and users</p></div></div>
+
+  <!-- JMB List Management -->
+  <div class="scard" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;">📋 JMB Master List <span id="jmb-manage-count" style="font-size:13px;color:var(--text3);font-weight:400;margin-left:6px;"></span></h3>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">➕ Tambah JMB Baru</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:end;">
+        <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">JMB Name</label>
+          <input type="text" id="jmb-add-name" placeholder="Nama JMB..." style="width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg,#111827);color:var(--text);outline:none;box-sizing:border-box;"></div>
+        <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Marketer</label>
+          <select id="jmb-add-mk" style="padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg,#111827);color:var(--text);outline:none;">
+            <option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option>
+          </select></div>
+        <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Expiry Month</label>
+          <select id="jmb-add-month" style="padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg,#111827);color:var(--text);outline:none;">
+            <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option>
+            <option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option>
+            <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+          </select></div>
+        <button onclick="addNewJMB()" style="padding:7px 16px;background:#3B82F6;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Add</button>
+      </div>
+    </div>
+    <div style="max-height:350px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead style="position:sticky;top:0;background:var(--card2);z-index:1;">
+          <tr>
+            <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);">JMB Name</th>
+            <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);">Marketer</th>
+            <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);">Expiry</th>
+            <th style="padding:8px 10px;border-bottom:1px solid var(--border);"></th>
+          </tr>
+        </thead>
+        <tbody id="jmb-manage-list"><tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text3);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="scard">
     <h3>🔗 Google Sheets Connection</h3>
     <div class="ssub">Connect your Form Responses sheet as CSV</div>
@@ -890,9 +936,16 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
   <!-- PROGRESS STAGE PILLS BAR (Feature 3) -->
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:13px;overflow-x:auto;">
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Sales Pipeline — Stage Tracker</div>
-    <div style="display:flex;align-items:center;gap:0;min-width:700px;" id="prog-stage-bar">
-      <!-- rendered by renderProgStagePills() -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Sales Pipeline — Stage Tracker</div>
+      <select id="stage-tracker-jmb" onchange="renderProgStagePills()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--text);outline:none;max-width:220px;">
+        <option value="">— All JMB —</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto;">
+      <div id="prog-stage-bar" style="min-width:600px;">
+        <!-- rendered by renderProgStagePills() -->
+      </div>
     </div>
   </div>
 
@@ -1207,24 +1260,34 @@ function updateProgHeader(){
 }
 
 async function fetchProgressData(){
-  if(progData.length===0){
-    const grid=document.getElementById('jmbGrid');
-    if(grid)grid.innerHTML='<div class="prog-empty"><div class="prog-empty-icon">⏳</div><div>Connecting...</div></div>';
-  }
   buildProgYearPills(); buildMonthPills(); updateProgHeader();
-  try{
-    const results=await Promise.all([fetchJSON(PROG_URLS.hazim),fetchJSON(PROG_URLS.shahira),fetchJSON(PROG_URLS.admin)]);
-    progData=[...results[0].map(r=>({...r,_marketer:'hazim'})),...results[1].map(r=>({...r,_marketer:'shahira'})),...results[2].map(r=>({...r,_marketer:'admin'}))];
-  }catch(e){
-    const grid=document.getElementById('jmbGrid');
-    if(progData.length===0&&grid)grid.innerHTML='<div class="prog-empty"><div class="prog-empty-icon">📝</div><div style="color:var(--text2);font-weight:600;">No data yet</div><div style="font-size:12px;margin-top:6px;">Use <strong>+ Create New Entry</strong> to add JMB progress records</div></div>';
-  }
-  const w=document.getElementById('monthPillsWrap');if(w)w.style.display='block';
-  updateProgStats(); renderProgCards();
+
+  // Load localStorage data into progData (merge, no overwrite)
+  try {
+    const localSaved = JSON.parse(localStorage.getItem(GCM_PROG_KEY) || '[]');
+    // Dedup and merge
+    const progMap = new Map();
+    progData.forEach(r => { if(r['JMB Name']) progMap.set(r['JMB Name'], r); });
+    localSaved.forEach(r => {
+      if (!r['JMB Name']) return;
+      const existing = progMap.get(r['JMB Name']);
+      if (!existing || new Date(r['_lastUpdated']||0) >= new Date(existing['_lastUpdated']||0)) {
+        progMap.set(r['JMB Name'], r);
+      }
+    });
+    progData = [...progMap.values()];
+    // Write back clean data
+    localStorage.setItem(GCM_PROG_KEY, JSON.stringify(progData));
+  } catch(e) {}
+
+  const w = document.getElementById('monthPillsWrap'); if(w) w.style.display='block';
+  updateProgStats();
+  renderProgCards();
   if(typeof renderExpiringJmb==='function') renderExpiringJmb();
   if(typeof renderMasterJmb==='function') renderMasterJmb();
   if(typeof renderProgStagePills==='function') renderProgStagePills();
 }
+
 
 function daysToExpiry(expiryStr){
   if(!expiryStr)return null;
@@ -1265,7 +1328,29 @@ function renderProgAnalysis(data){
   const topDiv=document.getElementById('topPerformerDiv'),topText=document.getElementById('topPerformerText');
   if(topDiv&&topMk&&topMk[1]>0){topDiv.style.display='block';topText.textContent=`🥇 TOP PERFORMER: ${mkLabels[topMk[0]].toUpperCase()} (${topMk[1]} cases)`;}
   let wj=0,wp=0,wi=0;
-  data.forEach(r=>{const stage=(r['Current Stage']||'').toLowerCase();const sd=r['Stage Date']?new Date(r['Stage Date']):null;let diff=0;if(sd&&!isNaN(sd))diff=Math.floor((new Date()-sd)/(1000*60*60*24));if(diff>7){if(stage.includes('prospect')||stage.includes('appoint')||stage.includes('decision'))wj++;else if(stage.includes('quot')||stage.includes('hold')||stage.includes('policy'))wp++;else wi++;}});
+  data.forEach(r=>{
+    const stage=(r['Current Stage']||'').toLowerCase();
+    const sd=r['Stage Date']?new Date(r['Stage Date']):null;
+    let diff=0;
+    if(sd&&!isNaN(sd))diff=Math.floor((new Date()-sd)/(1000*60*60*24));
+
+    // Awaiting Principle: Quoting/Comparative WITH any Pending quote status (regardless of days)
+    const hasPendingQuote = ['P1 Quote Status','P2 Quote Status','P3 Quote Status','P4 Quote Status']
+      .some(k => (r[k]||'').toLowerCase() === 'pending');
+    const isQuoting = stage.includes('quot') || stage.includes('comparative');
+
+    // Awaiting JMB: Prospecting or Appointment or Decision — waiting for JMB response
+    const isAwaitingJMB = stage.includes('prospect') || stage.includes('appoint') || stage.includes('decision');
+
+    if(isAwaitingJMB){
+      wj++; // Awaiting JMB — regardless of days
+    } else if(isQuoting && hasPendingQuote){
+      wp++; // Awaiting Principle — quote pending
+    } else if(diff>7){
+      if(stage.includes('hold')||stage.includes('policy'))wp++;
+      else wi++; // Internal follow-up
+    }
+  });
   const bnDiv=document.getElementById('bottleneckDiv');
   if(bnDiv)bnDiv.innerHTML=[{label:'Awaiting JMB',count:wj,color:'#EF4444',icon:'🔴'},{label:'Awaiting Principal',count:wp,color:'#F59E0B',icon:'🟠'},{label:'Internal Follow-up',count:wi,color:'#FFD966',icon:'🟡'}].map(item=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;"><div style="font-size:12px;color:var(--text);">${item.icon} ${item.label}</div><div style="font-size:18px;font-weight:700;color:${item.color};">${item.count}</div></div>`).join('');
   const cb=document.getElementById('criticalAlertsBody');
@@ -1298,7 +1383,8 @@ function getFilteredProgData(){
 }
 
 function updateProgStats(){
-  const data=getFilteredProgData();
+  // Use all progData for KPI boxes (not filtered by month)
+  const data=progData.length ? progData : getFilteredProgData();
   const total=data.length;let won=0,prog=0,rej=0,urgent=0;
   data.forEach(r=>{const u=getUrgency(r);if(u==='won')won++;else if(u==='rejected')rej++;else{prog++;if(u==='urgent')urgent++;}});
   const pct=v=>total?Math.round(v/total*100)+'%':'0%';
@@ -1306,7 +1392,7 @@ function updateProgStats(){
   ['total','won','prog','rej','urgent'].forEach((id,i)=>{const el=document.getElementById('ps-'+id+'-pct');if(el)el.textContent=[pct(total),pct(won),pct(prog),pct(rej),pct(urgent)][i];});
   ['won','prog','rej','urgent'].forEach((id,i)=>{const el=document.getElementById('lg-'+id);if(el)el.textContent=[won,prog,rej,urgent][i];});
   const dt=document.getElementById('progDonutTotal');if(dt)dt.textContent=total;
-  renderProgAnalysis(data);
+  renderProgAnalysis(progData.length ? progData : data);
   const svg=document.getElementById('progDonutSvg');
   if(svg){svg.querySelectorAll('.pseg').forEach(s=>s.remove());if(total>0){const R=50,circ=2*Math.PI*R;const segs=[{v:won,c:'#10B981'},{v:prog-urgent,c:'#3B82F6'},{v:rej,c:'#94a3b8'},{v:urgent,c:'#EF4444'}];let offset=0;segs.forEach(seg=>{if(!seg.v)return;const dash=(seg.v/total)*circ;const el=document.createElementNS('http://www.w3.org/2000/svg','circle');el.setAttribute('class','pseg');el.setAttribute('cx',60);el.setAttribute('cy',60);el.setAttribute('r',R);el.setAttribute('fill','none');el.setAttribute('stroke',seg.c);el.setAttribute('stroke-width','16');el.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);el.setAttribute('stroke-dashoffset',-offset);el.setAttribute('transform','rotate(-90 60 60)');svg.appendChild(el);offset+=dash;});}}
 }
@@ -1320,7 +1406,17 @@ function renderProgCards(){
   const grid=document.getElementById('jmbGrid');
   const search=(document.getElementById('progSearch')?.value||'').toLowerCase();
   const urgencyOrder={urgent:0,warning:1,normal:2,won:3,rejected:4};
-  let filtered=getFilteredProgData().filter(r=>{
+  // Use all progData (not month-filtered) so newly created entries always show
+  // Deduplicate: keep latest record per JMB name
+  const seen = new Map();
+  (progData.length ? progData : getFilteredProgData()).forEach(r => {
+    const name = r['JMB Name'] || '';
+    if (!seen.has(name) || new Date(r['_lastUpdated']||0) > new Date(seen.get(name)['_lastUpdated']||0)) {
+      seen.set(name, r);
+    }
+  });
+  const baseData = [...seen.values()];
+  let filtered=baseData.filter(r=>{
     const name=(r['JMB Name']||'').toLowerCase();
     if(search&&!name.includes(search))return false;
     return true;
@@ -1342,9 +1438,8 @@ function renderProgCards(){
     if(stageDate){const sd=new Date(stageDate);if(!isNaN(sd)){const diff=Math.floor((new Date()-sd)/(1000*60*60*24));if(diff>=0)stageDays=`${diff} days in this stage`;}}
     const prins=[[r['Principle 1']||'',r['P1 Quote Status']||''],[r['Principle 2']||'',r['P2 Quote Status']||''],[r['Principle 3']||'',r['P3 Quote Status']||''],[r['Principle 4']||'',r['P4 Quote Status']||'']].filter(([p])=>p);
     const prinsHTML=prins.length?prins.map(([p,s])=>`<span class="prin-pill ${prinClass(p)}">${p}${quoteIcon(s)}</span>`).join(''):`<span class="prin-pill empty">No quote requested</span>`;
-    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
+    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>`<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${h.stage}</span><span class="jcard-hist-time">${new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div>`).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
     ${isAdmin()?`<div style="display:flex;gap:6px;padding:8px 16px;border-top:1px solid var(--border);">
-      <button onclick="editProgressEntry('${name}')" style="flex:1;padding:5px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;">✏️ Edit</button>
       <button onclick="deleteProgressEntry('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;">🗑️</button>
     </div>`:''}
     </div>`;
@@ -1383,7 +1478,7 @@ let filterPrin=null;
 try{localStorage.removeItem(USERS_KEY);}catch(e){}
 // Clear ALL old data from previous test/dummy sessions
 // Version stamp — if version changes, clear all data
-const DATA_VERSION = 'v2026-06-08';
+const DATA_VERSION = 'v2026-06-08c';
 try{
   const storedVer = localStorage.getItem('sd_data_version');
   if(storedVer !== DATA_VERSION){
@@ -1571,6 +1666,163 @@ function showTerr(m){const el=document.getElementById('terr');if(el){el.textCont
 function renderSetup(){
   const el=document.getElementById('connCard');if(el)el.style.display='none';
   const cl=document.getElementById('curlink');if(cl)cl.textContent=HARDCODED_SHEET_URL;
+  renderJMBManage();
+}
+
+function renderJMBManage(){
+  const container = document.getElementById('jmb-manage-list');
+  if(!container) return;
+  const custom = getCustomJMB();
+  const all = [...masterJmbData];
+  const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  container.innerHTML = '';
+  all.forEach((j, i) => {
+    const isOriginal = (typeof MASTER_JMB_HARDCODED !== 'undefined') && MASTER_JMB_HARDCODED.some(h => h.name.trim().toLowerCase() === j.name.trim().toLowerCase());
+    const isCustom = !isOriginal;
+    const m = j.expiryDate ? parseInt(j.expiryDate.split('-')[1]) : 0;
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid var(--border)';
+    tr.innerHTML =
+      '<td style="padding:6px 8px;font-size:12px;color:var(--text);">' + j.name +
+        (isCustom ? '<span style="font-size:10px;color:#F59E0B;margin-left:4px;">✏</span>' : '') + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;color:var(--text2);">' +
+        (j.marketer==='hazim'?'Hazim':j.marketer==='shahira'?'Shahira':'SBM') + '</td>' +
+      '<td style="padding:6px 8px;font-size:12px;color:var(--text2);">' + (m ? monthNames[m] : '—') + '</td>' +
+      '<td style="padding:6px 4px;text-align:right;">' +
+        '<button data-jmb-idx="' + i + '" class="jmb-edit-btn" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;margin-right:4px;">✏ Edit</button>' +
+        (isCustom ? '<button data-jmb-idx="' + i + '" class="jmb-del-btn" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;">✕ Padam</button>' : '') +
+      '</td>';
+    container.appendChild(tr);
+  });
+  // Event delegation
+  container.onclick = function(e) {
+    const editBtn = e.target.closest('.jmb-edit-btn');
+    const delBtn = e.target.closest('.jmb-del-btn');
+    if (editBtn) {
+      const idx = parseInt(editBtn.dataset.jmbIdx);
+      editJMBEntry(idx);
+    }
+    if (delBtn) {
+      const idx = parseInt(delBtn.dataset.jmbIdx);
+      deleteCustomJMB(idx);
+    }
+
+  };
+  const countEl = document.getElementById('jmb-manage-count');
+  if(countEl) countEl.textContent = all.length + ' JMB';
+}
+
+
+function deleteCustomJMB(idx){
+  const j = masterJmbData[idx];
+  if(!j) return;
+  if(!confirm('Padam "'+j.name+'" dari list?')) return;
+  const nameLower = j.name.trim().toLowerCase();
+  // Remove from masterJmbData
+  const mi = masterJmbData.findIndex(m=>m.name.trim().toLowerCase()===nameLower);
+  if(mi>=0) masterJmbData.splice(mi,1);
+  // Remove from custom localStorage
+  const custom = getCustomJMB().filter(c=>c.name.trim().toLowerCase()!==nameLower);
+  saveCustomJMB(custom);
+  renderJMBManage();
+  renderMasterJmb();
+  renderExpiringJmb();
+}
+
+function getCustomJMB(){
+  try{ return JSON.parse(localStorage.getItem('sd_custom_jmb_v1')||'[]'); }catch(e){return [];}
+}
+
+function saveCustomJMB(list){
+  localStorage.setItem('sd_custom_jmb_v1', JSON.stringify(list));
+}
+
+function addNewJMB(){
+  const name = document.getElementById('jmb-add-name')?.value?.trim();
+  const mk = document.getElementById('jmb-add-mk')?.value || 'hazim';
+  const month = parseInt(document.getElementById('jmb-add-month')?.value || '1');
+  if(!name){alert('Masukkan JMB Name.');return;}
+  const today = new Date();
+  let year = today.getFullYear();
+  if(month < today.getMonth()+1) year++;
+  const expiry = year+'-'+(month<10?'0':'')+month+'-01';
+  const newEntry = {name, marketer:mk, expiryDate:expiry};
+  // Add to masterJmbData
+  const exists = masterJmbData.find(j=>j.name.toLowerCase()===name.toLowerCase());
+  if(exists){alert('JMB "'+name+'" dah ada dalam list.');return;}
+  masterJmbData.push(newEntry);
+  // Save to custom list
+  const custom = getCustomJMB();
+  custom.push(newEntry);
+  saveCustomJMB(custom);
+  // Clear inputs
+  document.getElementById('jmb-add-name').value='';
+  renderJMBManage();
+  renderMasterJmb();
+  renderExpiringJmb();
+  alert('✓ JMB "'+name+'" ditambah!');
+}
+
+function editJMBEntry(idx){
+  const j = masterJmbData[idx];
+  if(!j) return;
+  const monthNames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const curMonth = j.expiryDate ? parseInt(j.expiryDate.split('-')[1]) : 1;
+  // Show inline edit row
+  const rows = document.querySelectorAll('#jmb-manage-list tr');
+  if(!rows[idx]) return;
+  const tr = rows[idx];
+  tr.innerHTML =
+    '<td style="padding:4px 8px;font-size:12px;color:var(--text);font-weight:600;">' + j.name + '</td>' +
+    '<td style="padding:4px 8px;">' +
+      '<select id="jmb-edit-mk" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg,#111827);color:var(--text);">' +
+        '<option value="hazim"' + (j.marketer==='hazim'?' selected':'') + '>Hazim</option>' +
+        '<option value="shahira"' + (j.marketer==='shahira'?' selected':'') + '>Shahira</option>' +
+        '<option value="admin"' + (j.marketer==='admin'?' selected':'') + '>SBM</option>' +
+      '</select>' +
+    '</td>' +
+    '<td style="padding:4px 8px;">' +
+      '<select id="jmb-edit-month" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg,#111827);color:var(--text);">' +
+        monthNames.slice(1).map((mn,i) => '<option value="'+(i+1)+'"'+(curMonth===(i+1)?' selected':'')+'>'+mn+'</option>').join('') +
+      '</select>' +
+    '</td>' +
+    '<td style="padding:4px 6px;text-align:right;white-space:nowrap;">' +
+      '<button onclick="saveJMBEdit(' + idx + ')" style="background:#10B981;color:#fff;border:none;padding:3px 10px;font-size:11px;border-radius:4px;cursor:pointer;margin-right:4px;">✓ Save</button>' +
+      '<button onclick="renderJMBManage()" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:3px 8px;font-size:11px;border-radius:4px;cursor:pointer;">Cancel</button>' +
+    '</td>';
+}
+
+function saveJMBEdit(idx){
+  const j = masterJmbData[idx];
+  if(!j) return;
+  const mk = document.getElementById('jmb-edit-mk')?.value || j.marketer;
+  const m = parseInt(document.getElementById('jmb-edit-month')?.value || '1');
+  const today = new Date();
+  let year = today.getFullYear();
+  const curMo = today.getMonth() + 1;
+  if(m < curMo) year++;
+  j.marketer = mk;
+  j.expiryDate = year + '-' + (m<10?'0':'') + m + '-01';
+  masterJmbData[idx] = j;
+  const custom = getCustomJMB();
+  const ci = custom.findIndex(c=>c.name===j.name);
+  if(ci>=0) custom[ci]={...j}; else custom.push({...j});
+  saveCustomJMB(custom);
+  renderJMBManage();
+  renderMasterJmb();
+  renderExpiringJmb();
+}
+
+
+
+// Load custom JMB additions on startup
+function loadCustomJMB(){
+  const custom = getCustomJMB();
+  custom.forEach(c=>{
+    const exists = masterJmbData.find(j=>j.name===c.name);
+    if(!exists) masterJmbData.push(c);
+    else { const ei=masterJmbData.findIndex(j=>j.name===c.name); if(ei>=0) masterJmbData[ei]={...masterJmbData[ei],...c}; }
+  });
 }
 function startTimer(){stopTimer();}
 function stopTimer(){if(timer){clearInterval(timer);timer=null;}}
@@ -2080,7 +2332,7 @@ function deleteMasterJmb(name) {
   renderExpiringJmb();
 }
 
-const MASTER_JMB_HARDCODED = [{"name": "1 Desa Residence", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "1 Razak Mansion", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "10 Mont Kiara Condo", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "162 Residency Selayang", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "28 Boulevard", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "288 Residensi Setapak", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "3 Kia Peng KLCC , Service Apartment", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "3 KIA PENG, KLCC, KL, SERVICED APARTMENT", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "3 Residensi Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "6 Capsquare Condo", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "7 Tree Seven Residence", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "9Madge", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "A'Marine", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Abadi Villa", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "ABADI VILLA JMB", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Akasia Apartment", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Alam Puri", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Alam Sanjung", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Almaspuri", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Alpha Villa Apartment", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Aman Heights Seri Kembangan", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "AMAN HEIGHTS SERI KEMBANGAN CONDO", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Amanja semi'D", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Amara Boulevard Services Residence", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Amber Cove", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Ameera Residence", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Ampang Astaria(Fara buat hal)", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Ampang Boulevard", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Ampang Prima Condominium", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Andari Townvilla 1", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Andari Townvilla 2", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Angkasa Impian 1", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Angkasa Impian 2", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Angkupuri", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Anjalii North Kiara", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Anjung Villa Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Anyaman Residence", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Anzen Business Park", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Apartment Bistaria Residensi", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Apartment Camellia", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Apartment Cemara", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Apartment Pandan Utama", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Apartment Putra 1", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Apartment Sri Ayu", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Apartment Tiara Intan", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Apartment Vista Angkasa", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Arena Green", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Astana damansara", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Astana Lumayan Kondominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Astana square kepong", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Aston Kiara 3", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Ativo Plaza JMB", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Avant Court", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Avantas Residence", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Avenue Crest", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Awana Puri Condominium", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Awana Puri Management Corporation", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Axis Sohu Ampang", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Badan Pengurusan Bersama Bayu Sentul", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Baiduri Apartment", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Bam Villa Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Bangi Gateway Fasa !", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "BANGI GATEWAY FASA 1", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Bangsar Peak", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Bangsar Permai", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Bangsar Puteri Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Banjaria Court", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Banyan", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Batai Apartment", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Bayu Angkasa", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "BAYU ANGKASA CONDOMINIUM", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Bayu Pandan Jaya", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Bayu Puteri Apartment", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Bayu Tasik Condominium 2", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Bayu Tasik Condominium 1", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Beringin Residence", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Blok C&D Pangsapuri Putra Impian", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Boulevard Residence Damansara", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Brunsfield Embassyview", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Brunsfield Riverview", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "BSP Skypark", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Bukit OUG Condominium", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Bukit Pandan 2 Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Bungaraya Condominium", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Cantara Residences", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Casa Damansara 1", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Casa Damansara 2", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Casa Idaman Management Corporation", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Casa Kiara 1 Condo", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Casa Magna", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Casa Tropicana", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Casmaria Apartment", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Cendana Apartment", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Cengal Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Central Residence", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Centrestage (Centre Stage)", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "CENTRIO PANTAI HILLPARK", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Centrio SOHO @ Pantai Hillpark", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Ceylonz Suites @ Bukit Ceylon", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Changkat View Condominium", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Cheras Heights Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Cheras Intan 1", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Cita Damansara JMB", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Citizen @ Old Klang Road", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Citizen 2", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Citra Embun", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "City Garden Garden Commercial Center (Hons)", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "City of Green Condominium", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Clearwater Residence", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "CloudTree Residence", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Condominium Kojaya", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Conezion Residence", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Contessa - Jalan Kapas Bangsar", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Cova Suites", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Cova Villa Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Covillea Bukit Jalil", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Crescent Court Condominium", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Crystal Tower Apartment", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "D'Aman Crimson Condominium", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "D'Aman Residences", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "D'aman Ria Condo", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "D'Kristal Apartment", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "D'Mayang Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "D'Melor Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "D'Nuri Residences", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "D'Pines Ampang", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "D'Puncak Suasana", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "D'Rapport Residences", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "D'Suria Condominium", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "D’SURIA CONDOMINIUM JMB", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "D'tinggian Suasana", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Dahlia Apartment", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Damai Apartment", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Damansara Intan", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Damansara Intan Management Office", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Danau Murni Apartment", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Dataran Prima", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "De Bayu Apartment", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Dedaun Condominium", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Delima J Desa Pandan", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Desa 288 Apartment", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Desa Angkasa Condominium", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Desa Angkasa Management Corporation", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Desa Damansara Condo", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Desa Green Apartment", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Desa Kiara Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Desa Putra Condominium", "marketer": "admin", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Desa View Towers (Chairman garang)", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Desa Villa Condominium", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Desaku I & III", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Desaminium flora Condominium", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Desaria Villa Condominium", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Diamond Regency", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Dk Senza Residence", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Dua Menjalara Condominium", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Dua Residency", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Duta Villa shah alam", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Ehsan Ria Condominium", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Elaeis 2 Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Elmira Residence", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Emerald Hill Condominium", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Empire Damansara Management Office", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Endah Villa", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Endahpuri", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Estana Court", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Eve Suite", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Exquisite Mode SDN BHD Johor", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Five Stones Condominium", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Flat Bandar Tasik Selatan", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Flat Taman Miharja", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Flora Damansara", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Flora Damansara A&B", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Fortune Perdana", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Fraser Towers", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Gapura Bayu Apartment", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Garden Villa Apartment", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Gardenview Residence", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Gaya Bangsar JMB", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "GCB Court", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Geo Bukit Rimau Residence", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Golden Villa Condominium", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Goodyear Court 1", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Green Avenue Condominium", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Green Park Residence @ Serdang", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Green Suria Apartment", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Gugusan Dedap", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Gugusan Siantan", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Gurney Height", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Hartamas Regency 1", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Hartamas Regency 2", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Harvard Tower (Garden Plaza)", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Hedgeford 10 Residence - Wangsa Maju", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Hijauan Saujana - Shah Alam", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Hillcrest Heights Condominium - Puchong Utama", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Hillpark Residence - Bdr Tech. Kajang", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "HON RESIDENSI CITY GARDEN COMMERCIAL CENTRE", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "i-zen @kiara 1&2", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Icon Residence", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Idaman Putra Condominium", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Idaman Suria", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Idaman Suria Management Corp", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Idaman Sutera Management Corp", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Imperium Residence", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Impian Meridian Condominium", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Impian Sentosa Apartment", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Impiana Court Kondominium", "marketer": "admin", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Impiana On The Waterfront", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Indah Apartment", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Indera Subang Condominium", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Inwood Residences Pantai Sentral Park", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Isola Serviced Apartments", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Ixora Apartment", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Ixora Apartment Taman Wangsa Permai", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "JMB Damai Apartment", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "JMB Flora Damansara A&B", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "JMB Pelangi Utama 2", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Kasturi Idaman Condominium", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Kelana Mahkota Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kelana Puteri Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kemensah Villa", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "KEN BANGSAR", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Ken Damansara 3 Condominium", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Kenanga Apartment", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Kenny Hills Residence", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kepong Sentral Condominium", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Ketumbar Heights", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kiara Designer Suite", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Kiara East", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Kiara Park Condominium", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kiara Plaza", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kiara Residence 1", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Kiara Residency 9", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kiara View Condominium", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Kiaramas Cendana", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Kiaraville", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kiaraville Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kinrara Mas Apartment", "marketer": "admin", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kipark Selayang", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Kirana Residence", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "KL Traders Square", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "KL Trillion", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "KOI Prima", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Koi Prima Condominium", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Koi Suites Condominium", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Koi Tropika Condominium", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Kondo Derozelle", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Kondominium Chancellor", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Kondominium Desa Villas", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kondominium Impian Selatan", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Kondominium Kristal", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Kondominium Rimbun", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Kondominium Sentul Utama", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "KU Suites Residence", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Kuchai Avenue", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Kyoto Garden Condominium", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "La Grande Kiara", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "La Thea Residences", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Lagoon Suite Condo", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Lake front home Cyberjaya", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Lake front home Cyberjaya -tender", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Lakefront Residence", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Laman Vista Alam", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Lanai Gurney Condominium", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Lestari Apatment", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Lido Residency", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Lojing Height", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Madge Mansion Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Magnaville", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Mahasa Villa", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Mahsuri Apartment", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Management Corp Pangsapuri Angsana", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Mandy Villa", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Mawar Sari Apartment", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Menara Alpha", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Menara Infiniti JMB", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Menara Jade", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Menara Rajawali", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Menara Sri Cendana", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Menara U1", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Menara U2", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Menara Uncang Emas", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Menjalara 18 Residence", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Mentari Kondominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Meridian Maxim Sdn Bhd", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Mewah 9 Residence", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "MH Platinum Residence", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Midfield Condominium", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Mirage By The Lake", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "MKH Boulevard", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Mont Kiara Astana", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Mont Kiara Bayu", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Mont Kiara Damai Resort Condominium", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Mont Kiara Palma", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Mont Kiara Pelangi", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Mont Kiara Sophia", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Mont' Kiara Pelangi", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Monte Bayu Condominium", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Mount Karunmas", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Mutiara Condominium", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Mutiara Sentul Condo", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Mutiara Serdang Residence", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "MyHabitat", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Nadayu melawati", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "North Point One Ampang Avenue", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Nova 1 Apartment", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Nova Saujana", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "nova1", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "O2 Residence", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Oakleaf Park Condominium", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "OASIS 1", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Oasis 2", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Oasis Corporate Park JMB Management Office", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Oasis Square", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "OG Heights Condominium", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "One Menerung Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "One Sentral Johor", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "One Sentul Kondominimum", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Orkid Apartment", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Palm Spring @ Damansara", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Palm Villa Ampang", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Pangsapuri Angsana", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Pangsapuri Berembang Indah", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Pangsapuri Beringin Gombak", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Pangsapuri D'Cahaya", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "PANGSAPURI DESA LEMBAH PERMAI", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Pangsapuri Desa Lembah Permai B2", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Pangsapuri Desa Lembah Permai B3", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Pangsapuri Desa Lembah Permai B4", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Pangsapuri Gugusan Teratai", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Pangsapuri Intana Ria", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Pangsapuri Kasturi Idaman", "marketer": "admin", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Pangsapuri Kempas Indah", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Pangsapuri Kenanga", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Pangsapuri Mawar", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pangsapuri Melur", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Pangsapuri Menara Orkid", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pangsapuri Palma Puteri & Perak", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Pangsapuri Permai Putera", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pangsapuri Permai Puteri", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Pangsapuri Permai Seri", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Pangsapuri PPA1M Selasih", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Pangsapuri Putra Indah", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Pangsapuri Putra Permai", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Pangsapuri Saujana Gombak", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Pangsapuri Sri Cempaka", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pangsapuri Sri Endah", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Pangsapuri Sri Harmonis", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Pangsapuri Sri Hijauan", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Pangsapuri Sri Kayangan", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Pangsapuri Sri Penara", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Pangsapuri Taman Industrial Lembah Jaya", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Pangsapuri Teratai Puchong", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Pangsapuri Villa Angkasa", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Pangsapuri Villam Mas", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Pangsapuri Vista Prima", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Panorama Sentul", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pantai Hill Park 1", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Pantai Panorama Condoinium", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pejabat Perbadanan Pengurusan Sri Batu", "marketer": "admin", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Pelangi Indah Management Corp", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Pelangi Kondominium Mgmt Corp", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Pelangi Utama 2", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Pelangi Utama DEF Condo", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Perbadanan Pengurusan CBD Perdana 1", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Perdana Selatan COA", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Permai Court 2", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Pesona Villa", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Platinum Lake Condominium PV15", "marketer": "hazim", "expiryDate": "", "expiryRaw": "NA"}, {"name": "PPR Apartment Abdullah Hukum 1", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "PPR Danau Kota", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "PPR Seri Semarak", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Prima Setapak II Condo", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Pudu Impian", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Puncak Athenaeum Management Corp", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Putra Residence", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Putra Villa Condominium", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Radius Residence", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Rampai Court Fasa 1", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Residensi 222", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Residensi Akuatik Salak", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Residensi kerinchi", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Residensi Laguna Biru 2", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Residensi RazakMas 1", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Resident Melor Bangi", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Riana Green East", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Rivercity Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Rumah Kelab, D'Rimba Apartments", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Sang Suria Condominium", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Season Garden", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Selayang 18 Residences", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Selayang Point", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "SENI Mont' Kiara", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Seri Murni F1 Enterprise", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Seri Puteri Hills", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Seroja Hill residence", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Setapak Ria Condominium", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Setiawangsa Busniess Center (132 shop)", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Shahzan Court Management Corp", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Simfoni Height", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "SkyAwani Residence Sentul", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Sommerset Close", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "South View Condominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Spring Villa", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Sri Alstonea & Pangsapuri Seri Nilam", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Sri Ampang Hilir Kondominium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Sri Ampang Mas", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Sri Angsana Hilir", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Sri Jati II", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Sri Kinabalu Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Sri Lojing", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Sri Pandan Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Sri Pelangi Management Kondominium", "marketer": "shahira", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Sri Pinang Villa", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "ST Mary Residences", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Suajaya Management Corporation", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Subang Perdana Management Corporation Court 1", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Suria Jelatek", "marketer": "hazim", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Suria Jelutong", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Suria Residence", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Symphony Court", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Taman Sri Murni Fasa 2", "marketer": "admin", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Tar Villa", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Teratai Mewah Apartment", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Teratai Mewah Apartment (15,17,18,21)", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Teratai Mewah Block 4-6", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Teratai Mewah Condo", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "The Birch", "marketer": "hazim", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "The Icon Residence", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "The Peak Residences", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "The Pines Condominium", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "The Tamarind Sentul East", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Tiara Duta Condominium", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Tudor Court", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "V Residensi 2 (V-Residensi 2)", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Valencia Apartment @ Seksyen 25", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Vantage Point Condomium", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Verticas Residensi", "marketer": "hazim", "expiryDate": "2026-05-01", "expiryRaw": "5"}, {"name": "Vila Vista Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Villa Angsana", "marketer": "admin", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Villa Angsana Condominium", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Villa Flora", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Villa Lagenda Condominium", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Villa Makmur", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Villa OUG Taman Yarl", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Villa Park Condominium", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Villa Pavilion", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Villa Scott Condominium", "marketer": "shahira", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Villa Seri Puteri - Cheras", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Villa Tropika Apartment", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Villa Wangsamas", "marketer": "shahira", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Villamas Condovilla Sierramas", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Vipod Residences", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Vista Alam", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Vista Amani", "marketer": "hazim", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Vista Bangi Jalan Reko", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Vista Bayu Apartment Jalan Batu Unjur 9", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Vista Impiana Taman Bukit Serdang", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Vista Kiara Jalan Kiara 3", "marketer": "shahira", "expiryDate": "2026-07-01", "expiryRaw": "7"}, {"name": "Vista Komanwel A", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Vista Komanwel B", "marketer": "shahira", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Vista Mahogani Saujana Impian", "marketer": "hazim", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Vista Pinggiran Apartment", "marketer": "hazim", "expiryDate": "", "expiryRaw": "NA"}, {"name": "Vista Prima Bandar Bukit Puchong", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Vista Seri Putra Bandar Seri Putra", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Vista Sri Tanjung", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "VIVO Residential Suites @ 9 Seputeh", "marketer": "hazim", "expiryDate": "2026-04-01", "expiryRaw": "4"}, {"name": "Vogue Residence KL Eco City", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Vue Residences", "marketer": "shahira", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Waldorf Tower", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Waltz Residence", "marketer": "hazim", "expiryDate": "2026-06-01", "expiryRaw": "6"}, {"name": "Wangsa 9 Residency", "marketer": "hazim", "expiryDate": "2026-03-01", "expiryRaw": "3"}, {"name": "Wangsa height Management Corp", "marketer": "hazim", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Wangsa Metroview", "marketer": "shahira", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Warian Citiview Fasa 1", "marketer": "hazim", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Warisan City View 2 Condominium", "marketer": "admin", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Widuri Impian Condo", "marketer": "hazim", "expiryDate": "2026-12-01", "expiryRaw": "12"}, {"name": "Winner Court B", "marketer": "admin", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "Wisma PJ5 Soho", "marketer": "hazim", "expiryDate": "2026-01-01", "expiryRaw": "1"}, {"name": "You Residences", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "You Vista @ You City", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}, {"name": "Z Residence", "marketer": "shahira", "expiryDate": "2026-08-01", "expiryRaw": "8"}, {"name": "Zamrud Residence", "marketer": "shahira", "expiryDate": "2026-02-01", "expiryRaw": "2"}, {"name": "Zehn Bukit Pantai", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Zenith Residences", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Zentro Residence (Sierra 10) Bandar 16 Sierra", "marketer": "shahira", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Zeta Deskye Condominium", "marketer": "shahira", "expiryDate": "2026-11-01", "expiryRaw": "11"}, {"name": "Zete Deskye Condominium", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Zete Deskye Condominium 03-62776768", "marketer": "hazim", "expiryDate": "2026-09-01", "expiryRaw": "9"}, {"name": "Zeva Residence", "marketer": "shahira", "expiryDate": "2026-10-01", "expiryRaw": "10"}];
+const MASTER_JMB_HARDCODED = [{"name": "1 Desa Residence", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "1 Razak Mansion", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "10 Mont Kiara Condo", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "162 Residency Selayang", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "28 Boulevard", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "288 Residensi Setapak", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "3 Kia Peng KLCC , Service Apartment", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "3 Residensi Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "6 Capsquare Condo", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "7 Tree Seven Residence", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "9Madge", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "A'Marine", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Abadi Villa", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "ABADI VILLA JMB", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Akasia Apartment", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Alam Puri", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Alam Sanjung", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Almaspuri", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Alpha Villa Apartment", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Aman Heights Seri Kembangan", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Amanja semi'D", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Amara Boulevard Services Residence", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Amber Cove", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Ameera Residence", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Ampang Astaria", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Ampang Boulevard", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Ampang Prima Condominium", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Andari Townvilla 1", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Andari Townvilla 2", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Angkasa Impian 1", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Angkasa Impian 2", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Angkupuri", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Anjalii North Kiara", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "Anjung Villa Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Anyaman Residence", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Anzen Business Park", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Apartment Bistaria Residensi", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Apartment Camellia", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Apartment Cemara", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Apartment Pandan Utama", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Apartment Putra 1", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Apartment Sri Ayu", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Apartment Tiara Intan", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Apartment Vista Angkasa", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Arena Green", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Astana damansara", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Astana Lumayan Kondominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Astana square kepong", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Aston Kiara 3", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Ativo Plaza JMB", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Avant Court", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Avantas Residence", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Avenue Crest", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Awana Puri Condominium", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "Awana Puri Management Corporation", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "Axis Sohu Ampang", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Badan Pengurusan Bersama Bayu Sentul", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Baiduri Apartment", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Bam Villa Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Bangi Gateway Fasa 1", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Bangsar Peak", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Bangsar Permai", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Bangsar Puteri Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Banjaria Court", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Banyan", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Batai Apartment", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Bayu Angkasa", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Bayu Pandan Jaya", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "Bayu Puteri Apartment", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Bayu Tasik Condominium 2", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Bayu Tasik Condominium 1", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Beringin Residence", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Blok C&D Pangsapuri Putra Impian", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Boulevard Residence Damansara", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Brunsfield Embassyview", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Brunsfield Riverview", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "BSP Skypark", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Bukit OUG Condominium", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Bukit Pandan 2 Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Bungaraya Condominium", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Cantara Residences", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Casa Damansara 1", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Casa Damansara 2", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Casa Idaman Management Corporation", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Casa Kiara 1 Condo", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Casa Magna", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Casa Tropicana", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Casmaria Apartment", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Cendana Apartment", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Cengal Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Central Residence", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Centrestage (Centre Stage)", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Centrio Pantai Hill Park", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Centrio SOHO @ Pantai Hillpark", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Ceylonz Suites @ Bukit Ceylon", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Changkat View Condominium", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Cheras Heights Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Cheras Intan 1", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Cita Damansara JMB", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Citizen @ Old Klang Road", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Citizen 2", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Citra Embun", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "City Garden Garden Commercial Center (Hons)", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "City of Green Condominium", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Clearwater Residence", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "CloudTree Residence", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Condominium Kojaya", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Conezion Residence", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Contessa - Jalan Kapas Bangsar", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Cova Suites", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Cova Villa Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Covillea Bukit Jalil", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Crescent Court Condominium", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Crystal Tower Apartment", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "D'Aman Crimson Condominium", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "D'Aman Residences", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "D'aman Ria Condo", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "D'Kristal Apartment", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "D'Mayang Condominium", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "D'Melor Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "D'Nuri Residences", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "D'Pines Ampang", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "D'Puncak Suasana", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "D'Rapport Residences", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "D'Suria Condominium", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "D'SURIA CONDOMINIUM JMB", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "D'tinggian Suasana", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Dahlia Apartment", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Damai Apartment", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Damansara Intan", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Damansara Intan Management Office", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Danau Murni Apartment", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Dataran Prima", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "De Bayu Apartment", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Dedaun Condominium", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Delima J Desa Pandan", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Desa 288 Apartment", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Desa Angkasa Condominium", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Desa Damansara Condo", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Desa Green Apartment", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Desa Kiara Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Desa Putra Condominium", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Desa View Towers", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Desa Villa Condominium", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Desaku I & III", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Desaminium flora Condominium", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Desaria Villa Condominium", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Diamond Regency", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Dk Senza Residence", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Dua Menjalara Condominium", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Dua Residency", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Duta Villa shah alam", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Ehsan Ria Condominium", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Elaeis 2 Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Elmira Residence", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Emerald Hill Condominium", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Empire Damansara Management Office", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Endah Villa", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Endahpuri", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Estana Court", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "Eve Suite", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Five Stones Condominium", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Flat Bandar Tasik Selatan", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Flat Taman Miharja", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Flora Damansara", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Flora Damansara A&B", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Fortune Perdana", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Fraser Towers", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Gapura Bayu Apartment", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Garden Villa Apartment", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Gardenview Residence", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Gaya Bangsar JMB", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "GCB Court", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Geo Bukit Rimau Residence", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Golden Villa Condominium", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Goodyear Court 1", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Green Avenue Condominium", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Green Park Residence @ Serdang", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Green Suria Apartment", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Gugusan Dedap", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Gugusan Siantan", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Gurney Height", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Hartamas Regency 1", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Hartamas Regency 2", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Harvard Tower (Garden Plaza)", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Hedgeford 10 Residence - Wangsa Maju", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Hijauan Saujana - Shah Alam", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Hillcrest Heights Condominium - Puchong Utama", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Hillpark Residence - Bdr Tech. Kajang", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Hon Residensi City Garden Commercial Centre", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "i-zen @kiara 1&2", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Icon Residence", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Idaman Putra Condominium", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Idaman Suria", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Idaman Suria Management Corp", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Idaman Sutera Management Corp", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Imperium Residence", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Impian Meridian Condominium", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Impian Sentosa Apartment", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Impiana Court Kondominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Impiana On The Waterfront", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Indah Apartment", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Indera Subang Condominium", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Inwood Residences Pantai Sentral Park", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Isola Serviced Apartments", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Ixora Apartment", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Ixora Apartment Taman Wangsa Permai", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Kasturi Idaman Condominium", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Kelana Mahkota Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kelana Puteri Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kemensah Villa", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "KEN BANGSAR", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Ken Damansara 3 Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kenanga Apartment", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Kenny Hills Residence", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Kepong Sentral Condominium", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Ketumbar Heights", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kiara Designer Suite", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Kiara East", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Kiara Park Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kiara Plaza", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Kiara Residence 1", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Kiara Residency 9", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kiara View Condominium", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Kiaramas Cendana", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Kiaraville", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Kiaraville Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Kinrara Mas Apartment", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Kipark Selayang", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Kirana Residence", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "KL Traders Square", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "KL Trillion", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Koi Prima Condominium", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Koi Suites Condominium", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Koi Tropika Condominium", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Kondo Derozelle", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Kondominium Chancellor", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Kondominium Desa Villas", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Kondominium Impian Selatan", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Kondominium Kristal", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Kondominium Rimbun", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Kondominium Sentul Utama", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "KU Suites Residence", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Kuchai Avenue", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Kyoto Garden Condominium", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "La Grande Kiara", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "La Thea Residences", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Lagoon Suite Condo", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Lake front home Cyberjaya", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Lake front home Cyberjaya -tender", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Lakefront Residence", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Laman Vista Alam", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Lanai Gurney Condominium", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Lestari Apatment", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Lido Residency", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Lojing Height", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Madge Mansion Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Magnaville", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Mahasa Villa", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Mahsuri Apartment", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Management Corp Pangsapuri Angsana", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Mandy Villa", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Mawar Sari Apartment", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Menara Alpha", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Menara Infiniti JMB", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Menara Jade", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Menara Rajawali", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Menara Sri Cendana", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Menara U1", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Menara U2", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Menara Uncang Emas", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Menjalara 18 Residence", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Mentari Kondominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Meridian Maxim Sdn Bhd", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Mewah 9 Residence", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "MH Platinum Residence", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Midfield Condominium", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Mirage By The Lake", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "MKH Boulevard", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Mont Kiara Astana", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Mont Kiara Bayu", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Mont Kiara Damai Resort Condominium", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Mont Kiara Palma", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Mont Kiara Pelangi", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Mont Kiara Sophia", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Monte Bayu Condominium", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Mount Karunmas", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Mutiara Condominium", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Mutiara Sentul Condo", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Mutiara Serdang Residence", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "MyHabitat", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Nadayu melawati", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "North Point One Ampang Avenue", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Nova 1 Apartment", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Nova Saujana", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "O2 Residence", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Oakleaf Park Condominium", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Oasis 1", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Oasis 2", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Oasis Corporate Park JMB Management Office", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Oasis Square", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "OG Heights Condominium", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "One Menerung Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "One Sentral Johor", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "One Sentul Kondominimum", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Orkid Apartment", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Palm Spring @ Damansara", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Palm Villa Ampang", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Pangsapuri Angsana", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Pangsapuri Berembang Indah", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Pangsapuri Beringin Gombak", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Pangsapuri D'Cahaya", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "PANGSAPURI DESA LEMBAH PERMAI", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Pangsapuri Desa Lembah Permai B2", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Pangsapuri Desa Lembah Permai B3", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Pangsapuri Desa Lembah Permai B4", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Pangsapuri Gugusan Teratai", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Pangsapuri Intana Ria", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Pangsapuri Kasturi Idaman", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Pangsapuri Kempas Indah", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Pangsapuri Kenanga", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Pangsapuri Mawar", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Pangsapuri Melur", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Pangsapuri Menara Orkid", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Pangsapuri Palma Puteri & Perak", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Pangsapuri Permai Putera", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Pangsapuri Permai Puteri", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Pangsapuri Permai Seri", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Pangsapuri PPA1M Selasih", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Pangsapuri Putra Indah", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Pangsapuri Putra Permai", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Pangsapuri Saujana Gombak", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Pangsapuri Sri Cempaka", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Pangsapuri Sri Endah", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Pangsapuri Sri Harmonis", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Pangsapuri Sri Hijauan", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Pangsapuri Sri Kayangan", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Pangsapuri Sri Penara", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Pangsapuri Taman Industrial Lembah Jaya", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Pangsapuri Teratai Puchong", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Pangsapuri Villa Angkasa", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Pangsapuri Villam Mas", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Pangsapuri Vista Prima", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Panorama Sentul", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Pantai Hill Park 1", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Pantai Panorama Condoinium", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Pejabat Perbadanan Pengurusan Sri Batu", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Pelangi Indah Management Corp", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Pelangi Kondominium Mgmt Corp", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Pelangi Utama DEF Condo", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Perbadanan Pengurusan CBD Perdana 1", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Perdana Selatan COA", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Permai Court 2", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Pesona Villa", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Platinum Lake Condominium PV15", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "PPR Apartment Abdullah Hukum 1", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "PPR Danau Kota", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "PPR Seri Semarak", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Prima Setapak II Condo", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Pudu Impian", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Puncak Athenaeum Management Corp", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Putra Residence", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Putra Villa Condominium", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "Radius Residence", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Rampai Court Fasa 1", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Residensi 222", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Residensi Akuatik Salak", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Residensi kerinchi", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Residensi Laguna Biru 2", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Residensi RazakMas 1", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Resident Melor Bangi", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Riana Green East", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Rivercity Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Rumah Kelab, D'Rimba Apartments", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Sang Suria Condominium", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Season Garden", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Selayang 18 Residences", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Selayang Point", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "SENI Mont' Kiara", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Seri Murni F1 Enterprise", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Seri Puteri Hills", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Seroja Hill residence", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Setapak Ria Condominium", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Setiawangsa Busniess Center (132 shop)", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Shahzan Court Management Corp", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Simfoni Height", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "SkyAwani Residence Sentul", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Sommerset Close", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "South View Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Spring Villa", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Sri Alstonea & Pangsapuri Seri Nilam", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Sri Ampang Hilir Kondominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Sri Ampang Mas", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Sri Angsana Hilir", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Sri Jati II", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Sri Kinabalu Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Sri Lojing", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Sri Pandan Condominium", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Sri Pelangi Management Kondominium", "marketer": "shahira", "expiryDate": "2027-05-01"}, {"name": "Sri Pinang Villa", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "ST Mary Residences", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Suajaya Management Corporation", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Subang Perdana Management Corporation Court 1", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Suria Jelatek", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "Suria Residence", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Symphony Court", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Tar Villa", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Teratai Mewah Apartment", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Teratai Mewah Apartment (15,17,18,21)", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Teratai Mewah Block 4-6", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Teratai Mewah Condo", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "The Birch", "marketer": "hazim", "expiryDate": "2026-11-01"}, {"name": "The Icon Residence", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "The Peak Residences", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "The Pines Condominium", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "The Tamarind Sentul East", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Tiara Duta Condominium", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Tudor Court", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "V Residensi 2 (V-Residensi 2)", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Valencia Apartment @ Seksyen 25", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Vantage Point Condomium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Verticas Residensi", "marketer": "hazim", "expiryDate": "2027-05-01"}, {"name": "Vila Vista Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Villa Angsana Condominium", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Villa Flora", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Villa Lagenda Condominium", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Villa Makmur", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Villa OUG Taman Yarl", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Villa Park Condominium", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Villa Pavilion", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Villa Scott Condominium", "marketer": "shahira", "expiryDate": "2027-03-01"}, {"name": "Villa Seri Puteri - Cheras", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Villa Tropika Apartment", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Villa Wangsamas", "marketer": "shahira", "expiryDate": "2027-04-01"}, {"name": "Villamas Condovilla Sierramas", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Vipod Residences", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Vista Alam", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Vista Amani", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "Vista Bangi Jalan Reko", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Vista Bayu Apartment Jalan Batu Unjur 9", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Vista Impiana Taman Bukit Serdang", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Vista Kiara Jalan Kiara 3", "marketer": "shahira", "expiryDate": "2026-07-01"}, {"name": "Vista Komanwel A", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Vista Komanwel B", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Vista Mahogani Saujana Impian", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Vista Pinggiran Apartment", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Vista Prima Bandar Bukit Puchong", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Vista Seri Putra Bandar Seri Putra", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Vista Sri Tanjung", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "VIVO Residential Suites @ 9 Seputeh", "marketer": "hazim", "expiryDate": "2027-04-01"}, {"name": "Vogue Residence KL Eco City", "marketer": "hazim", "expiryDate": "2026-09-01"}, {"name": "Vue Residences", "marketer": "shahira", "expiryDate": "2027-06-01"}, {"name": "Waldorf Tower", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Waltz Residence", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Wangsa 9 Residency", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Wangsa height Management Corp", "marketer": "hazim", "expiryDate": "2026-08-01"}, {"name": "Wangsa Metroview", "marketer": "shahira", "expiryDate": "2026-12-01"}, {"name": "Warian Citiview Fasa 1", "marketer": "hazim", "expiryDate": "2026-10-01"}, {"name": "Warisan City View 2 Condominium", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Widuri Impian Condo", "marketer": "hazim", "expiryDate": "2026-12-01"}, {"name": "Winner Court B", "marketer": "shahira", "expiryDate": "2027-01-01"}, {"name": "Wisma PJ5 Soho", "marketer": "hazim", "expiryDate": "2027-01-01"}, {"name": "You Residences", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "You Vista @ You City", "marketer": "shahira", "expiryDate": "2026-10-01"}, {"name": "Z Residence", "marketer": "shahira", "expiryDate": "2026-08-01"}, {"name": "Zamrud Residence", "marketer": "shahira", "expiryDate": "2027-02-01"}, {"name": "Zehn Bukit Pantai", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Zenith Residences", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Zentro Residence (Sierra 10) Bandar 16 Sierra", "marketer": "shahira", "expiryDate": "2026-09-01"}, {"name": "Zeta Deskye Condominium", "marketer": "shahira", "expiryDate": "2026-11-01"}, {"name": "Pangsapuri Green View", "marketer": "hazim", "expiryDate": "2027-03-01"}, {"name": "Suria Jelutong", "marketer": "hazim", "expiryDate": "2027-06-01"}, {"name": "Arahsia Residensi", "marketer": "hazim", "expiryDate": "2027-02-01"}, {"name": "OCP Skypark", "marketer": "hazim", "expiryDate": "2026-07-01"}, {"name": "JMB The Place", "marketer": "hazim", "expiryDate": "2027-06-01"}];
 
 // Load master JMB — hardcoded data as primary source
 function loadMasterJmb() {
@@ -2114,18 +2366,39 @@ function setProgMode(mode) {
   document.getElementById('prog-panel-update').style.display = mode === 'update' ? '' : 'none';
 
   if (mode === 'update') {
-    // Populate update JMB dropdown from progData
+    // Populate update JMB dropdown — only show JMBs created by current logged-in user
     const sel = document.getElementById('gcm-u-jmb');
     if (sel) {
       sel.innerHTML = '<option value="">-- Select JMB --</option>';
-      const uniqueJMBs = [...new Set(progData.map(r => r['JMB Name']).filter(Boolean))].sort();
+      const users = getUsers();
+      const role = cu && users[cu] ? users[cu].role : '';
+      const isAdminUser = role === 'admin' || role === 'management';
+
+      // Get all progress records from memory + localStorage
+      const allProg = [...progData];
+      try {
+        const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+        saved.forEach(r => {
+          if (r['JMB Name'] && !allProg.find(p => p['JMB Name'] === r['JMB Name'])) {
+            allProg.push(r);
+          }
+        });
+      } catch(e) {}
+
+      // Filter: admin/management sees all, marketer sees own only
+      const filtered = isAdminUser
+        ? allProg
+        : allProg.filter(r => (r._marketer || '').toLowerCase() === cu.toLowerCase());
+
+      const uniqueJMBs = [...new Set(filtered.map(r => r['JMB Name']).filter(Boolean))].sort();
+
       if (uniqueJMBs.length === 0) {
         const opt = document.createElement('option');
-        opt.value = ''; opt.textContent = '— No progress records yet —'; opt.disabled = true;
+        opt.value = ''; opt.textContent = isAdminUser ? '— No progress records yet —' : '— You have no progress records yet —'; opt.disabled = true;
         sel.appendChild(opt);
       } else {
         uniqueJMBs.forEach(name => {
-          const r = progData.find(p => p['JMB Name'] === name);
+          const r = allProg.find(p => p['JMB Name'] === name);
           const opt = document.createElement('option');
           opt.value = name;
           opt.textContent = name + (r ? '  (' + (r['Current Stage']||'') + ')' : '');
@@ -2133,22 +2406,6 @@ function setProgMode(mode) {
         });
       }
     }
-    // Also check localStorage for saved entries
-    try {
-      const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
-      const sel2 = document.getElementById('gcm-u-jmb');
-      if (sel2 && saved.length) {
-        const existing = [...sel2.options].map(o => o.value);
-        saved.forEach(r => {
-          if (r['JMB Name'] && !existing.includes(r['JMB Name'])) {
-            const opt = document.createElement('option');
-            opt.value = r['JMB Name'];
-            opt.textContent = r['JMB Name'] + '  (' + (r['Current Stage']||'') + ')';
-            sel2.appendChild(opt);
-          }
-        });
-      }
-    } catch(e) {}
     gcmUpdateSetDate();
   }
 }
@@ -2176,17 +2433,58 @@ function gcmUpdateAutoFill() {
     if(el('gcm-u-cur-date')) el('gcm-u-cur-date').textContent = rec['Stage Date'] || '—';
     if(el('gcm-u-cur-mk')) el('gcm-u-cur-mk').textContent = {hazim:'Hazim',shahira:'Shahira',admin:'SBM'}[rec._marketer] || rec._marketer || '—';
     if(el('gcm-u-cur-updated')) {
-      const upd = rec._lastUpdated ? new Date(rec._lastUpdated).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      const upd = rec._lastUpdated ? new Date(rec._lastUpdated).toLocaleString('en-MY',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
       el('gcm-u-cur-updated').textContent = upd;
     }
-    // Pre-fill new stage with current stage
-    if(el('gcm-u-stage')) el('gcm-u-stage').value = rec['Current Stage'] || 'Prospecting';
+    // Populate gcm-u-stage: current + forward only
+    // If Rejected → stop at Rejected (no Won path)
+    // If Won/beyond → show Won path to end (no Rejected)
+    const mainFlow = ['Prospecting','Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy'];
+    const curStage = rec['Current Stage'] || 'Prospecting';
+    const isRejected = curStage === 'Rejected';
+    const isWonPath = ['Won','Hold Cover','Policy Issued','JMB Received Policy'].includes(curStage);
+    const curMainIdx = mainFlow.indexOf(curStage);
+
+    const stageSel = el('gcm-u-stage');
+    if (stageSel) {
+      stageSel.innerHTML = '';
+      if (isRejected) {
+        // Already rejected — only show Rejected
+        const opt = document.createElement('option');
+        opt.value = 'Rejected'; opt.textContent = 'Rejected'; opt.selected = true;
+        stageSel.appendChild(opt);
+      } else if (isWonPath) {
+        // Won path — show from current to JMB Received Policy (no Rejected)
+        mainFlow.forEach((s, si) => {
+          if (si < curMainIdx) return;
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          if (s === curStage) opt.selected = true;
+          stageSel.appendChild(opt);
+        });
+      } else {
+        // Before Decision — show current onwards in main flow + Rejected option
+        mainFlow.forEach((s, si) => {
+          if (si < curMainIdx) return;
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          if (s === curStage) opt.selected = true;
+          stageSel.appendChild(opt);
+        });
+        // Add Rejected as branch option (only before Won)
+        if (curMainIdx <= 4) { // up to Decision
+          const rejOpt = document.createElement('option');
+          rejOpt.value = 'Rejected'; rejOpt.textContent = 'Rejected';
+          stageSel.appendChild(rejOpt);
+        }
+      }
+    }
     // Pre-fill principles
     ['1','2','3','4'].forEach(n => {
       const ps = el('gcm-u-prin'+n); if(ps) ps.value = rec['Principle '+n] || '';
       const qs = el('gcm-u-p'+n+'status'); if(qs) qs.value = rec['P'+n+' Quote Status'] || '';
     });
-    gcmUpdateSetDate();
+    gcmUpdateSetDate(); // Always reset to today
     gcmToggleUpdatePrinciples();
     // Reject justify
     const rj = el('gcm-u-justify'); if(rj) rj.value = rec['Reject Justify'] || '';
@@ -2203,7 +2501,8 @@ function gcmUpdateSetDate() {
 
 function gcmToggleUpdatePrinciples() {
   const stage = document.getElementById('gcm-u-stage')?.value || '';
-  const quotingStages = ['Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy'];
+  // Principles only for Quoting and Comparative (when getting quotes from principle)
+  const quotingStages = ['Quoting','Comparative'];
   const show = quotingStages.includes(stage);
   const sec = document.getElementById('gcm-u-prin-section');
   if (sec) sec.style.display = show ? '' : 'none';
@@ -2264,14 +2563,6 @@ function applyProgFilter() {
 }
 
 // Override saveGlobalCase for Update mode
-const _origSaveGlobal = saveGlobalCase;
-function saveGlobalCase() {
-  if (typeof gcmCurrentTab !== 'undefined' && gcmCurrentTab === 'progress' && progFormMode === 'update') {
-    saveUpdateStage();
-    return;
-  }
-  _origSaveGlobal();
-}
 
 function saveUpdateStage() {
   const btn = document.getElementById('gcm-save-btn');
@@ -2281,24 +2572,54 @@ function saveUpdateStage() {
   if (!jmb) { alert('Select a JMB to update.'); if(btn){btn.textContent='💾 Save Entry';btn.disabled=false;} return; }
 
   const newStage = document.getElementById('gcm-u-stage')?.value;
-  const newDate  = document.getElementById('gcm-u-stagedate')?.value || new Date().toISOString().split('T')[0];
+  // Always use today as stage date for the update
+  const newDate = new Date().toISOString().split('T')[0];
   const el = id => document.getElementById(id);
 
   // Update in progData
   const idx = progData.findIndex(r => r['JMB Name'] === jmb);
+  const now = new Date().toISOString();
+  // Build history entry
+  const histEntry = {
+    stage: newStage,
+    date: newDate,
+    ts: now,
+    p1: el('gcm-u-prin1')?.value || '',
+    p1s: el('gcm-u-p1status')?.value || '',
+    p2: el('gcm-u-prin2')?.value || '',
+    p2s: el('gcm-u-p2status')?.value || '',
+    p3: el('gcm-u-prin3')?.value || '',
+    p3s: el('gcm-u-p3status')?.value || '',
+    p4: el('gcm-u-prin4')?.value || '',
+    p4s: el('gcm-u-p4status')?.value || '',
+  };
+
+  // Get existing record to append history (check both progData and localStorage)
+  let existingRec = idx >= 0 ? progData[idx] : null;
+  if (!existingRec || !existingRec._history) {
+    try {
+      const lsData = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+      const lsRec = lsData.find(r => r['JMB Name'] === jmb);
+      if (lsRec) existingRec = lsRec;
+    } catch(e) {}
+  }
+  existingRec = existingRec || {};
+  const history = [...(existingRec._history || []), histEntry];
+
   const update = {
     'Current Stage': newStage,
     'Stage Date': newDate,
-    'Principle 1': el('gcm-u-prin1')?.value || '',
-    'P1 Quote Status': el('gcm-u-p1status')?.value || '',
-    'Principle 2': el('gcm-u-prin2')?.value || '',
-    'P2 Quote Status': el('gcm-u-p2status')?.value || '',
-    'Principle 3': el('gcm-u-prin3')?.value || '',
-    'P3 Quote Status': el('gcm-u-p3status')?.value || '',
-    'Principle 4': el('gcm-u-prin4')?.value || '',
-    'P4 Quote Status': el('gcm-u-p4status')?.value || '',
+    'Principle 1': histEntry.p1,
+    'P1 Quote Status': histEntry.p1s,
+    'Principle 2': histEntry.p2,
+    'P2 Quote Status': histEntry.p2s,
+    'Principle 3': histEntry.p3,
+    'P3 Quote Status': histEntry.p3s,
+    'Principle 4': histEntry.p4,
+    'P4 Quote Status': histEntry.p4s,
     'Reject Justify': newStage === 'Rejected' ? (el('gcm-u-justify')?.value||'') : '',
-    '_lastUpdated': new Date().toISOString(),
+    '_lastUpdated': now,
+    '_history': history,
   };
 
   if (idx >= 0) {
@@ -2319,8 +2640,14 @@ function saveUpdateStage() {
     syncToGSheet('progress_update', {jmb, ...update});
   }
 
+  if(typeof markJMBAware==='function') markJMBAware(jmb);
+  if(typeof markJMBAware==='function') markJMBAware(jmb);
+  if(typeof markJMBAware==='function') markJMBAware(jmb);
+  if(typeof markJMBAware==='function') markJMBAware(jmb);
   updateProgStats(); renderProgCards();
   if (typeof renderProgStagePills === 'function') renderProgStagePills();
+  if(typeof renderExpiringJmb==='function') renderExpiringJmb();
+  if(typeof renderMasterJmb==='function') renderMasterJmb();
   const ss = document.getElementById('gcm-sync-status');
   if(ss){ ss.textContent='✓ Stage updated for ' + jmb; ss.style.display=''; ss.style.background='rgba(16,185,129,.1)'; ss.style.color='#34d399'; }
   if(btn){ btn.textContent='💾 Save Entry'; btn.disabled=false; }
@@ -2486,16 +2813,6 @@ function gcmPayUpdateAutoFill() {
 }
 
 // ── OVERRIDE saveGlobalCase for CI/Pay update modes ─────────────────────
-const _origSaveForCIPay = saveGlobalCase;
-function saveGlobalCase() {
-  if (gcmCurrentTab === 'ci' && ciFormMode === 'update') { saveCIUpdate(); return; }
-  if (gcmCurrentTab === 'payment' && payFormMode === 'update') { savePayUpdate(); return; }
-  if (gcmCurrentTab === 'settlement') {
-    if (settleFormMode === 'new') { saveSettleNew(); return; }
-    if (settleFormMode === 'update') { saveSettleUpdate(); return; }
-  }
-  _origSaveForCIPay();
-}
 
 function saveCIUpdate() {
   const btn = document.getElementById('gcm-save-btn');
@@ -2836,6 +3153,8 @@ window.addEventListener('load',function(){
   if(typeof loadLocalCases==='function')loadLocalCases();
   if(typeof updateNewCaseBtn==='function')updateNewCaseBtn();
   if(typeof loadMasterJmb==='function')loadMasterJmb();
+  if(typeof loadCustomJMB==='function')loadCustomJMB();
+  setTimeout(function(){if(typeof renderExpiringJmb==='function')renderExpiringJmb();if(typeof renderMasterJmb==='function')renderMasterJmb();},300);
   const mo=document.getElementById('gcm-s-month');
   if(mo)mo.value=String(new Date().getMonth());
 });
@@ -3745,86 +4064,201 @@ function renderProgStagePills() {
   const bar = document.getElementById('prog-stage-bar');
   if (!bar) return;
   bar.innerHTML = '';
-  const data = getFilteredProgData();
 
-  // ── ROW 1: Main flow ──
-  // Prospecting → Quote → Comparative → Appointment → Decision → Won → Hold Cover → Policy Issued → JMB Received Policy
-  const mainFlow = [
-    { stage:'Prospecting',       color:'#3B82F6' },
-    { stage:'Quoting',           color:'#6366F1' },
-    { stage:'Comparative',       color:'#8B5CF6' },
-    { stage:'Appointment',       color:'#F59E0B' },
-    { stage:'Decision',          color:'#EF4444' },
-    { stage:'Won',               color:'#10B981' },
-    { stage:'Hold Cover',        color:'#059669' },
-    { stage:'Policy Issued',     color:'#047857' },
-    { stage:'JMB Received Policy', color:'#065f46' },
-  ];
+  const data = progData.length ? progData : getFilteredProgData();
+  const stageOrder = ['Prospecting','Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy'];
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;width:100%;';
+  // Populate JMB dropdown
+  const sel = document.getElementById('stage-tracker-jmb');
+  if (sel) {
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="">— All JMB —</option>';
+    const names = [...new Set(data.map(r => r['JMB Name']).filter(Boolean))].sort();
+    names.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      if (name === curVal) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
 
-  const row1 = document.createElement('div');
-  row1.style.cssText = 'display:flex;align-items:stretch;gap:0;';
+  const selectedJMB = sel ? sel.value : '';
 
-  mainFlow.forEach((s, idx) => {
-    const stageCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes(s.stage.toLowerCase()));
-    const col = progStagePillColour(stageCases, s);
-    const pill = document.createElement('div');
-    pill.className = 'ci-stage-pill';
-    pill.style.cssText = `background:${col.bg};border:1px solid ${col.border};color:${col.color};cursor:default;min-width:72px;font-size:9.5px;flex:1;`;
-    pill.innerHTML = `<div style="font-weight:600;">${s.stage}</div>${col.indicator}`;
-    row1.appendChild(pill);
-    if (idx < mainFlow.length-1) {
-      const a = document.createElement('div');
-      a.className = 'ci-arrow';
-      a.style.cssText = 'font-size:12px;align-self:center;';
-      a.textContent = '→';
-      row1.appendChild(a);
+  if (selectedJMB) {
+    // ── SINGLE JMB VIEW ──
+    const rec = data.find(r => r['JMB Name'] === selectedJMB);
+    if (!rec) { bar.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">No data for this JMB.</div>'; return; }
+
+    const curStage = (rec['Current Stage'] || '').trim();
+    const isRejected = curStage.toLowerCase().includes('reject');
+    const curIdx = stageOrder.findIndex(s => s.toLowerCase() === curStage.toLowerCase());
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    // Row 1: Main flow
+    const row1 = document.createElement('div');
+    row1.style.cssText = 'display:flex;align-items:center;gap:0;flex-wrap:nowrap;';
+
+    stageOrder.forEach((stage, i) => {
+      const isCurrent = i === curIdx;
+      const isDone = curIdx > i && !isRejected;
+      const isBlurred = isRejected && i > 4; // after Decision, blur Won path if rejected
+
+      let bg, border, color, indicator;
+      if (isDone) {
+        bg = 'rgba(16,185,129,.25)'; border = '#10B981'; color = '#34d399';
+        indicator = '<div style="font-size:9px;font-weight:700;margin-top:2px;">✓</div>';
+      } else if (isCurrent && !isRejected) {
+        bg = 'rgba(239,68,68,.25)'; border = '#EF4444'; color = '#fc8181';
+        indicator = '<div style="font-size:9px;font-weight:700;margin-top:2px;">◉ NOW</div>';
+      } else {
+        bg = 'rgba(100,116,139,.08)'; border = 'var(--border)'; color = 'var(--text3)';
+        indicator = '<div style="font-size:9px;margin-top:2px;">—</div>';
+      }
+
+      const pill = document.createElement('div');
+      pill.className = 'ci-stage-pill';
+      pill.style.cssText = [
+        'min-width:68px', 'font-size:9.5px', 'flex:1', 'cursor:default',
+        'background:' + bg, 'border:1px solid ' + border, 'color:' + color,
+        isBlurred ? 'opacity:0.2;filter:grayscale(1);' : '',
+      ].filter(Boolean).join(';');
+      pill.innerHTML = '<div style="font-weight:600;">' + stage + '</div>' + indicator;
+      row1.appendChild(pill);
+
+      if (i < stageOrder.length - 1) {
+        const a = document.createElement('div');
+        a.className = 'ci-arrow'; a.style.cssText = 'font-size:12px;align-self:center;flex-shrink:0;';
+        a.textContent = '→'; row1.appendChild(a);
+      }
+    });
+    wrap.appendChild(row1);
+
+    // Row 2: Reject branch
+    const row2 = document.createElement('div');
+    row2.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    const branchLbl = document.createElement('div');
+    branchLbl.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;margin-right:4px;';
+    branchLbl.textContent = 'Decision ↘';
+    row2.appendChild(branchLbl);
+
+    const rejBg = isRejected ? 'rgba(239,68,68,.25)' : 'rgba(100,116,139,.08)';
+    const rejBorder = isRejected ? '#EF4444' : 'var(--border)';
+    const rejColor = isRejected ? '#fc8181' : 'var(--text3)';
+    const rejPill = document.createElement('div');
+    rejPill.className = 'ci-stage-pill';
+    rejPill.style.cssText = [
+      'min-width:80px', 'font-size:9.5px', 'cursor:default',
+      'background:' + rejBg, 'border:1px solid ' + rejBorder, 'color:' + rejColor,
+      !isRejected ? 'opacity:0.2;filter:grayscale(1);' : '',
+    ].filter(Boolean).join(';');
+    rejPill.innerHTML = '<div style="font-weight:600;">Rejected</div>' +
+      (isRejected ? '<div style="font-size:9px;font-weight:700;margin-top:2px;">◉ NOW</div>' : '<div style="font-size:9px;margin-top:2px;">—</div>');
+    row2.appendChild(rejPill);
+
+    // Justify pill
+    const a3 = document.createElement('div'); a3.className='ci-arrow'; a3.style.fontSize='12px'; a3.textContent='→';
+    row2.appendChild(a3);
+    const hasJustify = !!(rec['Reject Justify'] && rec['Reject Justify'].trim());
+    const jPill = document.createElement('div');
+    jPill.className = 'ci-stage-pill';
+    jPill.style.cssText = [
+      'min-width:80px', 'font-size:9.5px', 'cursor:default',
+      hasJustify ? 'background:rgba(16,185,129,.2);border:1px solid #10B981;color:#34d399;' : 'background:rgba(100,116,139,.08);border:1px solid var(--border);color:var(--text3);',
+      !isRejected ? 'opacity:0.2;filter:grayscale(1);' : '',
+    ].filter(Boolean).join(';');
+    jPill.innerHTML = '<div style="font-weight:600;">📝 Justify</div>' +
+      '<div style="font-size:9px;margin-top:2px;">' + (hasJustify ? '✓ filled' : 'pending') + '</div>';
+    row2.appendChild(jPill);
+
+    wrap.appendChild(row2);
+
+    // Principles progress (if in quoting+)
+    if (curIdx >= 1) {
+      const prins = [1,2,3,4].map(n => ({
+        prin: rec['Principle '+n] || '', status: rec['P'+n+' Quote Status'] || ''
+      })).filter(p => p.prin);
+      if (prins.length) {
+        const row3 = document.createElement('div');
+        row3.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'width:100%;font-size:10px;color:var(--text3);margin-bottom:2px;';
+        lbl.textContent = 'Quote Status:';
+        row3.appendChild(lbl);
+        prins.forEach(p => {
+          const statusColor = p.status==='Received'?'#10B981':p.status==='Declined'?'#EF4444':'#F59E0B';
+          const pp = document.createElement('div');
+          pp.style.cssText = 'padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:' + statusColor + '22;border:1px solid ' + statusColor + ';color:' + statusColor + ';';
+          pp.textContent = p.prin + ' — ' + (p.status || 'Pending');
+          row3.appendChild(pp);
+        });
+        wrap.appendChild(row3);
+      }
     }
-  });
-  wrap.appendChild(row1);
 
-  // ── ROW 2: Branch from Decision → Reject ──
-  const row2 = document.createElement('div');
-  row2.style.cssText = 'display:flex;align-items:center;gap:0;padding-left:calc(4 * (72px + 20px));'; // align under Decision
+    bar.appendChild(wrap);
 
-  // "From Decision ↓" label
-  const branchArrow = document.createElement('div');
-  branchArrow.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;margin-right:6px;font-weight:500;';
-  branchArrow.textContent = 'Decision ↘ Reject:';
-  row2.appendChild(branchArrow);
+  } else {
+    // ── ALL JMB AGGREGATE VIEW ──
+    const hasRejected = data.some(r => (r['Current Stage']||'').toLowerCase().includes('reject'));
+    const hasWon = data.some(r => { const s=(r['Current Stage']||'').toLowerCase(); return s.includes('won')||s.includes('hold cover')||s.includes('policy issued')||s.includes('jmb received'); });
 
-  // Reject pill
-  const rejCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes('reject'));
-  const rejCol = progStagePillColour(rejCases, {stage:'Rejected', color:'#94a3b8'});
-  const rejPill = document.createElement('div');
-  rejPill.className = 'ci-stage-pill';
-  rejPill.style.cssText = `background:${rejCol.bg};border:1px solid ${rejCol.border};color:${rejCol.color};cursor:default;min-width:80px;font-size:9.5px;`;
-  rejPill.innerHTML = `<div style="font-weight:600;">Rejected</div>${rejCol.indicator}`;
-  row2.appendChild(rejPill);
+    const mainFlow = [
+      {stage:'Prospecting',color:'#3B82F6'},{stage:'Quoting',color:'#6366F1'},
+      {stage:'Comparative',color:'#8B5CF6'},{stage:'Appointment',color:'#F59E0B'},
+      {stage:'Decision',color:'#EF4444'},{stage:'Won',color:'#10B981'},
+      {stage:'Hold Cover',color:'#059669'},{stage:'Policy Issued',color:'#047857'},
+      {stage:'JMB Received Policy',color:'#065f46'},
+    ];
 
-  // Arrow to Justify
-  const a2 = document.createElement('div');
-  a2.className='ci-arrow';a2.style.fontSize='12px';a2.textContent='→';
-  row2.appendChild(a2);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+    const row1 = document.createElement('div');
+    row1.style.cssText = 'display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;';
 
-  // Justify pill
-  const justifyCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes('reject') && r['Reject Justify']);
-  const jTotal = rejCases.length;
-  const jDone = justifyCases.length;
-  const jBg = jTotal===0?'rgba(100,116,139,.1)':jDone===jTotal?'rgba(16,185,129,.2)':'rgba(245,158,11,.2)';
-  const jBorder = jTotal===0?'var(--border)':jDone===jTotal?'#10B981':'#F59E0B';
-  const jColor = jTotal===0?'var(--text3)':jDone===jTotal?'#34d399':'#fbbf24';
-  const jPill = document.createElement('div');
-  jPill.className='ci-stage-pill';
-  jPill.style.cssText=`background:${jBg};border:1px solid ${jBorder};color:${jColor};cursor:default;min-width:90px;font-size:9.5px;`;
-  jPill.innerHTML=`<div style="font-weight:600;">📝 Justify</div><div style="font-size:9px;margin-top:3px;">${jDone}/${jTotal} filled</div>`;
-  row2.appendChild(jPill);
+    mainFlow.forEach((s, i) => {
+      const stageCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes(s.stage.toLowerCase()));
+      const col = progStagePillColour(stageCases, s);
+      const shouldBlur = i >= 5 && hasRejected && !hasWon;
+      const pill = document.createElement('div');
+      pill.className = 'ci-stage-pill';
+      pill.style.cssText = ['min-width:68px','font-size:9.5px','flex:1','cursor:default',
+        'background:'+col.bg,'border:1px solid '+col.border,'color:'+col.color,
+        shouldBlur?'opacity:0.25;filter:grayscale(1);':''
+      ].filter(Boolean).join(';');
+      pill.innerHTML = '<div style="font-weight:600;">'+s.stage+'</div>'+col.indicator;
+      row1.appendChild(pill);
+      if (i < mainFlow.length-1) {
+        const a=document.createElement('div'); a.className='ci-arrow'; a.style.cssText='font-size:12px;align-self:center;flex-shrink:0;'; a.textContent='→'; row1.appendChild(a);
+      }
+    });
+    wrap.appendChild(row1);
 
-  wrap.appendChild(row2);
-  bar.appendChild(wrap);
+    const row2 = document.createElement('div');
+    row2.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    const bl=document.createElement('div'); bl.style.cssText='font-size:10px;color:var(--text3);white-space:nowrap;margin-right:4px;'; bl.textContent='Decision ↘'; row2.appendChild(bl);
+    const rejCases = data.filter(r => (r['Current Stage']||'').toLowerCase().includes('reject'));
+    const rejCol = progStagePillColour(rejCases, {stage:'Rejected',color:'#94a3b8'});
+    const blurRej = hasWon && !hasRejected;
+    const rp=document.createElement('div'); rp.className='ci-stage-pill';
+    rp.style.cssText=['min-width:80px','font-size:9.5px','cursor:default','background:'+rejCol.bg,'border:1px solid '+rejCol.border,'color:'+rejCol.color,blurRej?'opacity:0.25;filter:grayscale(1);':''].filter(Boolean).join(';');
+    rp.innerHTML='<div style="font-weight:600;">Rejected</div>'+rejCol.indicator; row2.appendChild(rp);
+    const a2=document.createElement('div'); a2.className='ci-arrow'; a2.style.fontSize='12px'; a2.textContent='→'; row2.appendChild(a2);
+    const justCases=rejCases.filter(r=>r['Reject Justify']);
+    const jBg=rejCases.length===0?'rgba(100,116,139,.1)':justCases.length===rejCases.length?'rgba(16,185,129,.2)':'rgba(245,158,11,.2)';
+    const jBd=rejCases.length===0?'var(--border)':justCases.length===rejCases.length?'#10B981':'#F59E0B';
+    const jCl=rejCases.length===0?'var(--text3)':justCases.length===rejCases.length?'#34d399':'#fbbf24';
+    const jp=document.createElement('div'); jp.className='ci-stage-pill';
+    jp.style.cssText=['min-width:90px','font-size:9.5px','cursor:default','background:'+jBg,'border:1px solid '+jBd,'color:'+jCl,blurRej?'opacity:0.25;filter:grayscale(1);':''].filter(Boolean).join(';');
+    jp.innerHTML='<div style="font-weight:600;">📝 Justify</div><div style="font-size:9px;margin-top:3px;">'+justCases.length+'/'+rejCases.length+' filled</div>'; row2.appendChild(jp);
+    wrap.appendChild(row2);
+    bar.appendChild(wrap);
+  }
 }
+
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FEATURE 4 — PAYMENT & SETTLEMENT STAGE PILLS
@@ -3914,8 +4348,8 @@ function gcmProgSetStageDate() {
 function gcmTogglePrinciples() {
   const stage = document.getElementById('gcm-p-stage')?.value || '';
   const prinSection = document.getElementById('gcm-p-prin-section');
-  // Show principles from Quoting stage onwards
-  const quotingStages = ['Quoting','Comparative','Appointment','Decision','Won','Hold Cover','Policy Issued','JMB Received Policy'];
+  // Only show principles for Quoting and Comparative
+  const quotingStages = ['Quoting','Comparative'];
   const show = quotingStages.includes(stage);
   if (prinSection) {
     prinSection.style.display = show ? '' : 'none';
@@ -4125,6 +4559,15 @@ async function syncToGSheet(type, row) {
 }
 
 function saveGlobalCase() {
+  // Route to update handlers if in update mode
+  if (gcmCurrentTab === 'progress' && progFormMode === 'update') { saveUpdateStage(); return; }
+  if (gcmCurrentTab === 'ci' && ciFormMode === 'update') { saveCIUpdate(); return; }
+  if (gcmCurrentTab === 'payment' && payFormMode === 'update') { savePayUpdate(); return; }
+  if (gcmCurrentTab === 'settlement') {
+    if (settleFormMode === 'new') { saveSettleNew(); return; }
+    if (settleFormMode === 'update') { saveSettleUpdate(); return; }
+  }
+
   const btn = document.getElementById('gcm-save-btn');
   btn.textContent = '⏳ Saving...';
   btn.disabled = true;
@@ -4187,11 +4630,18 @@ function saveGlobalCase() {
         'P4 Quote Status': document.getElementById('gcm-p-p4status')?.value || '',
         'Reject Justify': stage==='Rejected' ? (document.getElementById('gcm-p-justify')?.value||'') : '',
         '_lastUpdated': new Date().toISOString(),
+        '_history': [{ stage: stage, date: document.getElementById('gcm-p-stagedate').value || new Date().toISOString().split('T')[0], ts: new Date().toISOString() }],
         year: new Date().getFullYear(),
       };
-      progData.push(rec);
+      // Upsert: update existing JMB record, don't create duplicate
+      const existIdx = progData.findIndex(r => r['JMB Name'] === jmb);
+      if (existIdx >= 0) progData[existIdx] = rec;
+      else progData.push(rec);
+      // Same for localStorage
       const saved = JSON.parse(localStorage.getItem(GCM_PROG_KEY) || '[]');
-      saved.push(rec);
+      const savedIdx = saved.findIndex(r => r['JMB Name'] === jmb);
+      if (savedIdx >= 0) saved[savedIdx] = rec;
+      else saved.push(rec);
       localStorage.setItem(GCM_PROG_KEY, JSON.stringify(saved));
       syncToGSheet('progress', rec).then(ok => {
         showGCMSync(ok ? '✓ Saved locally & synced to GSheet!' : '✓ Saved locally — GSheet sync failed', ok);
@@ -4268,7 +4718,19 @@ function loadLocalCases() {
   } catch(e) {}
   try {
     const p = JSON.parse(localStorage.getItem(GCM_PROG_KEY) || '[]');
-    p.forEach(r => progData.push(r));
+    // Deduplicate: keep latest per JMB name
+    const progMap = new Map();
+    p.forEach(r => {
+      const name = r['JMB Name'] || '';
+      if (!name) return;
+      const existing = progMap.get(name);
+      if (!existing || new Date(r['_lastUpdated']||0) > new Date(existing['_lastUpdated']||0)) {
+        progMap.set(name, r);
+      }
+    });
+    progMap.forEach(r => progData.push(r));
+    // Write back deduplicated data
+    if (p.length !== progMap.size) localStorage.setItem(GCM_PROG_KEY, JSON.stringify([...progMap.values()]));
   } catch(e) {}
   try {
     const py = JSON.parse(localStorage.getItem(GCM_PAY_KEY) || '[]');
