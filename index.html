@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v202606060717 -->
+<!-- v202606091500 -->
 <script>
 // Minimal Chart.js compatible stub — no CDN needed
 window.Chart = (function(){
@@ -1386,7 +1386,17 @@ function getFilteredProgData(){
 function updateProgStats(){
   // Use all progData for KPI boxes (not filtered by month)
   const data=progData.length ? progData : getFilteredProgData();
-  const total=data.length;let won=0,prog=0,rej=0,urgent=0;
+  // Total = expiring JMBs from master list (includes those without entries)
+  const todayMs = new Date().setHours(0,0,0,0);
+  const expiringTotal = masterJmbData.filter(j=>{
+    if(!j.name||!j.expiryDate) return false;
+    const d=new Date(j.expiryDate);if(isNaN(d)) return false;
+    if(d.getTime()<todayMs) d.setFullYear(d.getFullYear()+1);
+    const days=Math.ceil((d.getTime()-todayMs)/86400000);
+    return days>=0&&days<=60;
+  }).length;
+  const total=expiringTotal||data.length;
+  let won=0,prog=0,rej=0,urgent=0;
   data.forEach(r=>{const u=getUrgency(r);if(u==='won')won++;else if(u==='rejected')rej++;else{prog++;if(u==='urgent')urgent++;}});
   const pct=v=>total?Math.round(v/total*100)+'%':'0%';
   ['total','won','prog','rej','urgent'].forEach((id,i)=>{const el=document.getElementById('ps-'+id);if(el)el.textContent=[total,won,prog,rej,urgent][i];});
@@ -1407,15 +1417,32 @@ function renderProgCards(){
   const grid=document.getElementById('jmbGrid');
   const search=(document.getElementById('progSearch')?.value||'').toLowerCase();
   const urgencyOrder={urgent:0,warning:1,normal:2,won:3,rejected:4};
-  // Use all progData (not month-filtered) so newly created entries always show
-  // Deduplicate: keep latest record per JMB name
+
+  // Only show JMBs that have progress entries (from progData + localStorage)
   const seen = new Map();
-  (progData.length ? progData : getFilteredProgData()).forEach(r => {
+
+  // Load from progData
+  progData.forEach(r => {
     const name = r['JMB Name'] || '';
-    if (!seen.has(name) || new Date(r['_lastUpdated']||0) > new Date(seen.get(name)['_lastUpdated']||0)) {
+    if(!name) return;
+    const existing = seen.get(name);
+    if(!existing || new Date(r['_lastUpdated']||0) > new Date(existing['_lastUpdated']||0)) {
       seen.set(name, r);
     }
   });
+  // Also load from localStorage
+  try{
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    saved.forEach(r => {
+      const name = r['JMB Name'] || '';
+      if(!name) return;
+      const existing = seen.get(name);
+      if(!existing || new Date(r['_lastUpdated']||0) >= new Date(existing['_lastUpdated']||0)) {
+        seen.set(name, r);
+      }
+    });
+  }catch(e){}
+
   const baseData = [...seen.values()];
   let filtered=baseData.filter(r=>{
     const name=(r['JMB Name']||'').toLowerCase();
@@ -1441,7 +1468,8 @@ function renderProgCards(){
     const prinsHTML=prins.length?prins.map(([p,s])=>`<span class="prin-pill ${prinClass(p)}">${p}${quoteIcon(s)}</span>`).join(''):`<span class="prin-pill empty">No quote requested</span>`;
     return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>`<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${h.stage}</span><span class="jcard-hist-time">${new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div>`).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
     ${isAdmin()?`<div style="display:flex;gap:6px;padding:8px 16px;border-top:1px solid var(--border);">
-      <button onclick="deleteProgressEntry('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;">🗑️</button>
+      <button onclick="openEditProgress('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;">✏️ Edit</button>
+      <button onclick="deleteProgressEntry('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;">🗑️ Delete</button>
     </div>`:''}
     </div>`;
   }).join('');
@@ -1690,25 +1718,11 @@ function renderJMBManage(){
         (j.marketer==='hazim'?'Hazim':j.marketer==='shahira'?'Shahira':'SBM') + '</td>' +
       '<td style="padding:6px 8px;font-size:12px;color:var(--text2);">' + (m ? monthNames[m] : '—') + '</td>' +
       '<td style="padding:6px 4px;text-align:right;">' +
-        '<button data-jmb-idx="' + i + '" class="jmb-edit-btn" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;margin-right:4px;">✏ Edit</button>' +
-        (isCustom ? '<button data-jmb-idx="' + i + '" class="jmb-del-btn" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;">✕ Padam</button>' : '') +
+        '<button onclick="editJMBEntry(' + i + ')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;margin-right:4px;">✏ Edit</button>' +
+        '<button onclick="deleteCustomJMB(' + i + ')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:10px;border-radius:4px;cursor:pointer;">🗑️ Delete</button>' +
       '</td>';
     container.appendChild(tr);
   });
-  // Event delegation
-  container.onclick = function(e) {
-    const editBtn = e.target.closest('.jmb-edit-btn');
-    const delBtn = e.target.closest('.jmb-del-btn');
-    if (editBtn) {
-      const idx = parseInt(editBtn.dataset.jmbIdx);
-      editJMBEntry(idx);
-    }
-    if (delBtn) {
-      const idx = parseInt(delBtn.dataset.jmbIdx);
-      deleteCustomJMB(idx);
-    }
-
-  };
   const countEl = document.getElementById('jmb-manage-count');
   if(countEl) countEl.textContent = all.length + ' JMB';
 }
@@ -1717,7 +1731,26 @@ function renderJMBManage(){
 function deleteCustomJMB(idx){
   const j = masterJmbData[idx];
   if(!j) return;
-  if(!confirm('Padam "'+j.name+'" dari list?')) return;
+  // Show inline confirm row instead of browser confirm (blocked in iframes)
+  const rows = document.querySelectorAll('#jmb-manage-list tr');
+  if(!rows[idx]) return;
+  const tr = rows[idx];
+  // Check if already showing confirm
+  if(tr.dataset.confirming === '1') {
+    // Second click = confirmed, proceed with delete
+    tr.dataset.confirming = '0';
+  } else {
+    // First click = show confirm UI in the row
+    tr.dataset.confirming = '1';
+    const td = tr.querySelector('td:last-child');
+    if(td) {
+      td.innerHTML = '<span style="font-size:11px;color:#EF4444;margin-right:6px;">Confirm delete?</span>' +
+        '<button onclick="deleteCustomJMB('+idx+')" style="background:#EF4444;color:#fff;border:none;padding:2px 10px;font-size:11px;border-radius:4px;cursor:pointer;margin-right:4px;">Yes, Delete</button>' +
+        '<button onclick="renderJMBManage()" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:11px;border-radius:4px;cursor:pointer;">Cancel</button>';
+    }
+    return;
+  }
+  const name = j.name;
   const nameLower = j.name.trim().toLowerCase();
   // Remove from masterJmbData
   const mi = masterJmbData.findIndex(m=>m.name.trim().toLowerCase()===nameLower);
@@ -1725,9 +1758,26 @@ function deleteCustomJMB(idx){
   // Remove from custom localStorage
   const custom = getCustomJMB().filter(c=>c.name.trim().toLowerCase()!==nameLower);
   saveCustomJMB(custom);
+  // Blocklist so hardcoded entries don't reload
+  try{
+    const blocked=JSON.parse(localStorage.getItem('sd_jmb_deleted_v1')||'[]');
+    if(!blocked.map(n=>n.toLowerCase()).includes(nameLower)){blocked.push(j.name.trim());localStorage.setItem('sd_jmb_deleted_v1',JSON.stringify(blocked));}
+  }catch(e){}
   renderJMBManage();
   renderMasterJmb();
   renderExpiringJmb();
+  // Reload progData from localStorage so progress cards don't disappear
+  try{
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    if(saved.length > 0){
+      const progMap = new Map();
+      progData.forEach(r=>{ if(r['JMB Name']) progMap.set(r['JMB Name'],r); });
+      saved.forEach(r=>{ if(r['JMB Name']) progMap.set(r['JMB Name'],r); });
+      progData = [...progMap.values()];
+    }
+  }catch(e){}
+  if(typeof updateProgStats==='function') updateProgStats();
+  if(typeof renderProgCards==='function') renderProgCards();
 }
 
 function getCustomJMB(){
@@ -1774,7 +1824,7 @@ function editJMBEntry(idx){
   if(!rows[idx]) return;
   const tr = rows[idx];
   tr.innerHTML =
-    '<td style="padding:4px 8px;font-size:12px;color:var(--text);font-weight:600;">' + j.name + '</td>' +
+    '<td style="padding:4px 8px;"><input id="jmb-edit-name" value="' + j.name.replace(/"/g,"&quot;") + '" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg,#111827);color:var(--text);width:100%;"></td>' +
     '<td style="padding:4px 8px;">' +
       '<select id="jmb-edit-mk" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg,#111827);color:var(--text);">' +
         '<option value="hazim"' + (j.marketer==='hazim'?' selected':'') + '>Hazim</option>' +
@@ -1796,8 +1846,10 @@ function editJMBEntry(idx){
 function saveJMBEdit(idx){
   const j = masterJmbData[idx];
   if(!j) return;
+  const newName = document.getElementById('jmb-edit-name')?.value?.trim();
   const mk = document.getElementById('jmb-edit-mk')?.value || j.marketer;
   const m = parseInt(document.getElementById('jmb-edit-month')?.value || '1');
+  if(newName && newName !== j.name) j.name = newName;
   const today = new Date();
   let year = today.getFullYear();
   const curMo = today.getMonth() + 1;
@@ -1812,6 +1864,18 @@ function saveJMBEdit(idx){
   renderJMBManage();
   renderMasterJmb();
   renderExpiringJmb();
+  // Reload progData from localStorage so progress cards don't disappear
+  try{
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    if(saved.length > 0){
+      const progMap = new Map();
+      progData.forEach(r=>{ if(r['JMB Name']) progMap.set(r['JMB Name'],r); });
+      saved.forEach(r=>{ if(r['JMB Name']) progMap.set(r['JMB Name'],r); });
+      progData = [...progMap.values()];
+    }
+  }catch(e){}
+  if(typeof updateProgStats==='function') updateProgStats();
+  if(typeof renderProgCards==='function') renderProgCards();
 }
 
 
@@ -2049,7 +2113,7 @@ function renderPaymentTable(){
   if(!tbody||!thead)return;
   thead.innerHTML=`<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th>${isAdmin()?'<th></th>':''}</tr>`;
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">No records found<br><small style="margin-top:6px;display:block;">Use + Create New Entry to add payment records</small></td></tr>';return;}
-  tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td><td>${isAdmin()?`<button onclick="deletePaymentEntry('${r['JMB Name']}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;">🗑️</button>`:'—'}</td></tr>`;}).join('');
+  tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td><td>${isAdmin()?`<button onclick="openEditPayment('${r['JMB Name']}')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;margin-right:4px;">✏️</button><button onclick="deletePaymentEntry('${r['JMB Name']}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;">🗑️</button>`:'—'}</td></tr>`;}).join('');
 }
 
 let settleYear=new Date().getFullYear();
@@ -2231,12 +2295,16 @@ function getExpiringJMBs() {
   // Returns JMBs expiring within 60 days (effective date, next year if passed)
   // EXCLUDING those already acknowledged by marketer
   const todayMs = new Date().setHours(0,0,0,0);
-  const aware = getAwarenessSet();
 
   return masterJmbData.filter(j => {
     if (!j.name || !j.expiryDate) return false;
-    // Already acknowledged = remove from list
-    if (aware.has(j.name.trim().toLowerCase())) return false;
+    // Already has progress entry = exclude from expiring list
+    const hasProgress = progData.some(r => (r['JMB Name']||'').toLowerCase() === j.name.trim().toLowerCase());
+    if(hasProgress) return false;
+    try{
+      const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+      if(saved.some(r => (r['JMB Name']||'').toLowerCase() === j.name.trim().toLowerCase())) return false;
+    }catch(e){}
     const d = new Date(j.expiryDate);
     if (isNaN(d)) return false;
     // Adjust past dates to next year
@@ -2277,18 +2345,18 @@ function renderExpiringJmb() {
 
   if (countEl) countEl.textContent = expiring.length;
 
-  // "Done" = JMBs that were expiring but marketer already created progress
-  const aware = getAwarenessSet();
-  const awareCount = masterJmbData.filter(j => {
-    if (!j.expiryDate || !j.name) return false;
+  // Count JMBs that have progress entries
+  const doneCount = masterJmbData.filter(j => {
+    if(!j.name || !j.expiryDate) return false;
     const todayMs = new Date().setHours(0,0,0,0);
     const d = new Date(j.expiryDate);
-    if (isNaN(d)) return false;
-    if (d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
+    if(isNaN(d)) return false;
+    if(d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
     const days = Math.ceil((d.getTime() - todayMs) / 86400000);
-    return days >= 0 && days <= 60 && aware.has(j.name.trim().toLowerCase());
+    if(days < 0 || days > 60) return false;
+    return progData.some(r => (r['JMB Name']||'').toLowerCase() === j.name.toLowerCase());
   }).length;
-  if (doneEl) doneEl.textContent = awareCount;
+  if (doneEl) doneEl.textContent = doneCount;
 
   if (!bodyEl) return;
 
@@ -2337,8 +2405,10 @@ const MASTER_JMB_HARDCODED = [{"name": "1 Desa Residence", "marketer": "hazim", 
 
 // Load master JMB — hardcoded data as primary source
 function loadMasterJmb() {
-  // Always start with hardcoded data
-  masterJmbData = [...MASTER_JMB_HARDCODED];
+  // Load blocklist
+  let blocked=[];
+  try{blocked=JSON.parse(localStorage.getItem('sd_jmb_deleted_v1')||'[]').map(n=>n.toLowerCase());}catch(e){}
+  masterJmbData = MASTER_JMB_HARDCODED.filter(h=>!blocked.includes(h.name.trim().toLowerCase()));
   // Override/merge with any cached additions from GSheet
   try {
     const cached = localStorage.getItem(MASTER_JMB_KEY);
@@ -3076,29 +3146,80 @@ function saveSettleUpdate() {
 populateLoginDropdown();
 
 // ── ADMIN DELETE FUNCTIONS ───────────────────────────────────
+
+// ── INLINE CONFIRM (replaces browser confirm() which is blocked in iframes) ──
+function inlineConfirm(msg, onYes){
+  // Create a floating confirm dialog
+  const existing = document.getElementById('_inline_confirm');
+  if(existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = '_inline_confirm';
+  div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid #EF4444;border-radius:12px;padding:20px 24px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:280px;text-align:center;';
+  div.innerHTML = '<div style="font-size:14px;color:var(--text);margin-bottom:16px;">⚠️ ' + msg + '</div>' +
+    '<div style="display:flex;gap:10px;justify-content:center;">' +
+    '<button id="_ic_yes" style="background:#EF4444;color:#fff;border:none;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;">Yes, Delete</button>' +
+    '<button id="_ic_no" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 20px;border-radius:7px;font-size:13px;cursor:pointer;">Cancel</button>' +
+    '</div>';
+  document.body.appendChild(div);
+  document.getElementById('_ic_yes').onclick = function(){ div.remove(); onYes(); };
+  document.getElementById('_ic_no').onclick = function(){ div.remove(); };
+}
+
+function openEditProgress(jmbName){
+  // Open global create modal in Progress > Update Stage mode, pre-select this JMB
+  if(typeof openGlobalCreate==='function') openGlobalCreate();
+  setTimeout(()=>{
+    if(typeof switchGCMTab==='function') switchGCMTab('progress');
+    setTimeout(()=>{
+      if(typeof setProgMode==='function') setProgMode('update');
+      setTimeout(()=>{
+        const sel = document.getElementById('gcm-u-jmb');
+        if(sel){ sel.value = jmbName; if(typeof gcmUpdateAutoFill==='function') gcmUpdateAutoFill(); }
+      },100);
+    },100);
+  },100);
+}
+
 function deleteProgressEntry(jmbName){
   if(!isAdmin()){alert('Only Admin can delete records.');return;}
-  if(!confirm('Delete progress record for "'+jmbName+'"?'))return;
-  progData=progData.filter(r=>r['JMB Name']!==jmbName);
-  try{
-    const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
-    localStorage.setItem('sd_gcm_prog_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
-  }catch(e){}
-  updateProgStats();renderProgCards();
-  if(typeof renderProgStagePills==='function')renderProgStagePills();
+  inlineConfirm('Delete progress record for "'+jmbName+'"?', function(){
+    progData=progData.filter(r=>r['JMB Name']!==jmbName);
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+      localStorage.setItem('sd_gcm_prog_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
+    }catch(e){}
+    updateProgStats();renderProgCards();
+    if(typeof renderExpiringJmb==='function')renderExpiringJmb();
+    if(typeof renderProgStagePills==='function')renderProgStagePills();
+  });
+}
+
+function openEditPayment(jmbName){
+  if(typeof openGlobalCreate==='function') openGlobalCreate();
+  setTimeout(()=>{
+    if(typeof switchGCMTab==='function') switchGCMTab('payment');
+    setTimeout(()=>{
+      if(typeof setPayMode==='function') setPayMode('update');
+      setTimeout(()=>{
+        const sel = document.getElementById('gcm-py-update-jmb');
+        if(sel){ sel.value = jmbName; if(typeof gcmPayUpdateAutoFill==='function') gcmPayUpdateAutoFill(); }
+      },100);
+    },100);
+  },100);
 }
 
 function deletePaymentEntry(jmbName){
   if(!isAdmin()){alert('Only Admin can delete records.');return;}
-  if(!confirm('Delete payment record for "'+jmbName+'"?'))return;
-  paymentData=paymentData.filter(r=>r['JMB Name']!==jmbName);
-  try{
-    const saved=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
-    localStorage.setItem('sd_gcm_pay_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
-  }catch(e){}
-  renderPaymentTable();renderSettlement();
-  if(typeof renderPayStagePills==='function')renderPayStagePills();
-  if(typeof renderSettleStagePills==='function')renderSettleStagePills();
+  inlineConfirm('Delete payment record for "'+jmbName+'"?', function(){
+    paymentData=paymentData.filter(r=>r['JMB Name']!==jmbName);
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
+      localStorage.setItem('sd_gcm_pay_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
+    }catch(e){}
+    renderPaymentTable();renderSettlement();
+    if(typeof renderPayStagePills==='function')renderPayStagePills();
+    if(typeof renderSettleStagePills==='function')renderSettleStagePills();
+  });
 }
 
 function deleteSalesEntry(jmb,mi,mk){
@@ -3347,9 +3468,10 @@ function saveCICase(){
 }
 
 function deleteCICase(id){
-  if(!confirm('Delete case '+id+'?'))return;
-  saveCICases(getCICases().filter(c=>c.id!==id));
-  renderCIAll();
+  inlineConfirm('Delete CI case '+id+'?', function(){
+    saveCICases(getCICases().filter(c=>c.id!==id));
+    renderCIAll();
+  });
 }
 
 function closeCIModal(){document.getElementById('ciModal').classList.remove('show');}
@@ -4850,4 +4972,3 @@ const CI_STAGE_ORDER = [
 
 </body>
 </html>
-
