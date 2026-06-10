@@ -58,7 +58,9 @@ window.Chart = (function(){
       const y = pad.top + ch - (ch*i/4);
       ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left+cw, y); ctx.stroke();
       ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(Math.round(maxVal*i/4), pad.left-4, y+3);
+      const yTickCallback = opts.scales && opts.scales.y && opts.scales.y.ticks && opts.scales.y.ticks.callback;
+      const yLabel = yTickCallback ? yTickCallback(Math.round(maxVal*i/4)) : String(Math.round(maxVal*i/4));
+      ctx.fillText(yLabel, pad.left-4, y+3);
     }
     // Draw bars/lines
     const n = labels.length;
@@ -595,73 +597,127 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
   <div id="noConn" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:9px;padding:12px 16px;margin-bottom:1.3rem;font-size:13px;color:#60a5fa;">📋 No data loaded yet. <span id="setupHint"></span></div>
 
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;">
-    <div class="kpi" onclick="showKpiDetail('total')"><div class="klabel">Total Premium</div><div class="kval" id="k1">-</div><div class="ksub kup" id="k1s"></div></div>
-    <div class="kpi" onclick="showKpiDetail('cases')"><div class="klabel">Total Cases</div><div class="kval" id="k2">-</div><div class="ksub" id="k2s"></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.3rem;">
+    <div style="background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.08));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onclick="showKpiDetail('total')">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+        <div>
+          <div class="klabel" style="color:#60a5fa;">Total Premium</div>
+          <div class="kval" id="k1" style="color:#3B82F6;font-size:22px;font-weight:700;">-</div>
+          <div class="ksub kup" id="k1s"></div>
+        </div>
+        <div style="border-left:1px solid rgba(139,92,246,.2);padding-left:12px;">
+          <div class="klabel" style="color:#a78bfa;">Total Cases</div>
+          <div class="kval" id="k2" style="color:#8B5CF6;font-size:22px;font-weight:700;">-</div>
+          <div class="ksub" id="k2s"></div>
+        </div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10B981,#F59E0B);"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+        <div style="cursor:pointer;" onclick="showKpiDetail('top')">
+          <div class="klabel" style="color:#34d399;">Top Marketer</div>
+          <div class="kval" id="k3" style="color:#10B981;font-size:16px;font-weight:700;">-</div>
+          <div class="ksub" id="k3s"></div>
+        </div>
+        <div style="border-left:1px solid rgba(245,158,11,.2);padding-left:12px;cursor:pointer;" onclick="showKpiDetail('prin')">
+          <div class="klabel" style="color:#fbbf24;">Top Principle</div>
+          <div class="kval" id="k4" style="color:#F59E0B;font-size:16px;font-weight:700;">-</div>
+          <div class="ksub" id="k4s"></div>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.3rem;">
-    <div class="kpi" onclick="showKpiDetail('top')"><div class="klabel">Top Marketer</div><div class="kval" id="k3">-</div><div class="ksub" id="k3s"></div></div>
-    <div class="kpi" onclick="showKpiDetail('prin')"><div class="klabel">Top Principle</div><div class="kval" id="k4">-</div><div class="ksub" id="k4s"></div></div>
-    <div class="kpi" onclick="showKpiDetail('case-type')"><div class="klabel">Renewal vs New</div><div class="kval" id="k5">-</div><div class="ksub" id="k5s"></div></div>
-  </div>
+  <div id="k5" style="display:none;"></div>
+  <div id="k5s" style="display:none;"></div>
   <div class="target-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
     <div class="kpi-target" id="tgt-hazim"></div>
     <div class="kpi-target" id="tgt-shahira"></div>
     <div class="kpi-target" id="tgt-admin"></div>
   </div>
-  <div class="card-full">
-    <div class="ct">Monthly Target Achievement — RM 250K per Marketer</div>
-    <div class="cs">🟢 Hit target &nbsp;·&nbsp; 🟡 Below target &nbsp;·&nbsp; Click bar for details</div>
-    <div style="position:relative;width:100%;height:240px;"><canvas id="cTarget"></canvas></div>
-  </div>
-  <div class="row2">
-    <div class="card">
-      <div class="ct">Monthly Premium</div>
-      <div class="cs">Total premium (with tax) — click bar for breakdown</div>
-      <div style="position:relative;width:100%;height:200px;"><canvas id="cMonthly"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="ct">Marketer Comparison</div>
-      <div class="cs">Hazim vs Shahira grouped — click bar for details</div>
-      <div class="fpills">
-        <button class="fp a-all" id="fmk-all" onclick="setMkFilter('all')">All</button>
-        <button class="fp" id="fmk-hazim" onclick="setMkFilter('hazim')" style="color:#60a5fa;">Hazim</button>
-        <button class="fp" id="fmk-shahira" onclick="setMkFilter('shahira')" style="color:#34d399;">Shahira</button>
-        <button class="fp" id="fmk-admin" onclick="setMkFilter('admin')" style="color:#a78bfa;">SBM</button>
+  <div style="background:linear-gradient(135deg,rgba(234,179,8,.12),rgba(249,115,22,.08));border:1px solid rgba(234,179,8,.3);border-radius:14px;padding:16px;margin-bottom:13px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#EAB308,#F97316,#EF4444);"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+      <div>
+        <div class="ct" style="color:#fbbf24;">Monthly Target Achievement — RM 250K</div>
+        <div class="cs">🟢 Hit &nbsp;·&nbsp; 🟡 Below target</div>
+        <div style="position:relative;width:100%;height:180px;"><canvas id="cTarget"></canvas></div>
       </div>
-      <div style="position:relative;width:100%;height:168px;"><canvas id="cMarketer"></canvas></div>
+      <div>
+        <div class="ct" style="color:#fb923c;">Marketer Comparison</div>
+        <div class="cs">Hazim vs Shahira vs SBM</div>
+        <div class="fpills">
+          <button class="fp a-all" id="fmk-all" onclick="setMkFilter('all')">All</button>
+          <button class="fp" id="fmk-hazim" onclick="setMkFilter('hazim')" style="color:#60a5fa;">Hazim</button>
+          <button class="fp" id="fmk-shahira" onclick="setMkFilter('shahira')" style="color:#34d399;">Shahira</button>
+          <button class="fp" id="fmk-admin" onclick="setMkFilter('admin')" style="color:#a78bfa;">SBM</button>
+        </div>
+        <div style="position:relative;width:100%;height:150px;"><canvas id="cMarketer"></canvas></div>
+      </div>
     </div>
   </div>
+
+  <div id="cCase" style="display:none;"></div>
   <div class="row2">
     <div class="card">
       <div class="ct">Principle Breakdown</div>
-      <div class="cs">Click segment to filter — click legend to toggle</div>
+      <div class="cs">Click segment to filter</div>
       <div class="legrow" id="donutLeg"></div>
-      <div style="position:relative;width:100%;height:180px;"><canvas id="cDonut"></canvas></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="cDonut"></canvas></div>
     </div>
     <div class="card">
-      <div class="ct">Case Type — Renewal vs New</div>
-      <div class="cs">Distribution of case types</div>
-      <div style="position:relative;width:100%;height:180px;"><canvas id="cCase"></canvas></div>
+      <div class="ct">Monthly Trend by Principle</div>
+      <div class="cs">All principles over the year</div>
+      <div class="legrow" id="prinLeg"></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="cPrin"></canvas></div>
     </div>
   </div>
-  <div class="card-full">
-    <div class="ct">Monthly Trend by Principle</div>
-    <div class="cs">All principles over the year</div>
-    <div class="legrow" id="prinLeg"></div>
-    <div style="position:relative;width:100%;height:230px;"><canvas id="cPrin"></canvas></div>
-  </div>
-  <div class="row2">
-    <div class="card">
-      <div class="ct">Premium Band</div>
-      <div class="cs">Cases by premium value range</div>
-      <div id="bandDiv" style="margin-top:10px;"></div>
+  <div style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(6,182,212,.06));border:1px solid rgba(16,185,129,.25);border-radius:14px;padding:16px;margin-bottom:13px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10B981,#06B6D4,#3B82F6);"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:4px;">
+      <div>
+        <div class="ct" style="color:#34d399;">Principle per Marketer</div>
+        <div class="cs">Hazim vs Shahira breakdown</div>
+        <div style="position:relative;width:100%;height:180px;"><canvas id="cMkPrin"></canvas></div>
+      </div>
+      <div style="border-left:1px solid rgba(16,185,129,.2);padding-left:14px;">
+        <div class="ct" style="color:#60a5fa;">Monthly Premium</div>
+        <div class="cs">Unit: RM K</div>
+        <div style="position:relative;width:100%;height:180px;"><canvas id="cMonthly"></canvas></div>
+      </div>
+      <div style="border-left:1px solid rgba(6,182,212,.2);padding-left:14px;">
+        <div class="ct" style="color:#22d3ee;">Premium Band</div>
+        <div class="cs">Cases by value range</div>
+        <div id="bandDiv" style="margin-top:8px;"></div>
+      </div>
     </div>
-    <div class="card">
-      <div class="ct">Principle per Marketer</div>
-      <div class="cs">Hazim vs Shahira — click bar for details</div>
-      <div style="position:relative;width:100%;height:200px;"><canvas id="cMkPrin"></canvas></div>
+  </div>
+  <div class="tcard" id="salesTableCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="ct" style="margin-bottom:0;">📋 Sales Entries</div>
+      <div style="display:flex;gap:6px;">
+        <select id="st-mk-filter" onchange="renderSalesTable()" style="padding:5px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--text);outline:none;">
+          <option value="">All Marketers</option>
+          <option value="hazim">Hazim</option>
+          <option value="shahira">Shahira</option>
+          <option value="admin">SBM</option>
+        </select>
+        <select id="st-prin-filter" onchange="renderSalesTable()" style="padding:5px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--text);outline:none;">
+          <option value="">All Principles</option>
+          <option>Etiqa</option><option>STM</option><option>Zurich</option>
+          <option>Tokio Marine</option><option>MPI</option><option>Allianz</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt" id="salesTable">
+        <thead id="salesTableHead"><tr>
+          <th>#</th><th>JMB Name</th><th>Marketer</th><th>Principle</th>
+          <th>Case Type</th><th>Hold Cover Date</th><th>Premium (w tax)</th><th>Payment</th>
+        </tr></thead>
+        <tbody id="salesTableBody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -866,51 +922,12 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <button class="nav-btn" id="pmk-admin" onclick="setPMK('admin',this)" style="color:#a78bfa;">SBM</button>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;">
-    <div onclick="showProgList('all')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL JMB</div>
-      <div style="font-size:36px;font-weight:700;color:#f1f5f9;line-height:1;" id="ps-total">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#60a5fa;" id="ps-total-pct">100%</span></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
-    </div>
-    <div onclick="showProgList('won')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#10B981'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">WON</div>
-      <div style="font-size:36px;font-weight:700;color:#10B981;line-height:1;" id="ps-won">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#10B981;" id="ps-won-pct">0%</span></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
-    </div>
-    <div onclick="showProgList('progress')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#3B82F6'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">IN PROGRESS</div>
-      <div style="font-size:36px;font-weight:700;color:#3B82F6;line-height:1;" id="ps-prog">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#3B82F6;" id="ps-prog-pct">0%</span></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
-    </div>
-    <div onclick="showProgList('rejected')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">REJECTED</div>
-      <div style="font-size:36px;font-weight:700;color:#94a3b8;line-height:1;" id="ps-rej">0</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;"><span style="color:#94a3b8;" id="ps-rej-pct">0%</span></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b8;"></div>
-    </div>
-    <div onclick="showProgList('urgent')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#EF4444'" onmouseout="this.style.borderColor='rgba(239,68,68,.3)'">
-      <div style="font-size:10px;color:#EF4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">URGENT &lt;15 DAYS</div>
-      <div style="font-size:36px;font-weight:700;color:#EF4444;line-height:1;" id="ps-urgent">0</div>
-      <div style="font-size:10px;color:rgba(239,68,68,.7);margin-top:4px;"><span id="ps-urgent-pct">0%</span></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#EF4444;"></div>
-    </div>
-  </div>
-  <div id="progListPanel" style="display:none;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;" id="progListTitle">JMB List</div>
-      <button onclick="document.getElementById('progListPanel').style.display='none'" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;">✕</button>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="dt"><thead><tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Stage</th><th>Days to Expiry</th><th>Expiry Date</th></tr></thead>
-      <tbody id="progListBody"></tbody></table>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;margin-bottom:16px;">
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:12px;">Status Breakdown</div>
+
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.08));border:1px solid rgba(139,92,246,.35);border-radius:14px;padding:16px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366F1,#8B5CF6,#A78BFA);border-radius:14px 14px 0 0;"></div>
+      <div style="font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:12px;margin-top:4px;">📊 Status Breakdown</div>
       <div style="display:flex;align-items:center;gap:16px;">
         <div class="prog-donut-wrap" style="width:110px;height:110px;flex-shrink:0;">
           <svg viewBox="0 0 120 120" id="progDonutSvg">
@@ -929,16 +946,24 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
         </div>
       </div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
-      <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Pipeline Health</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Stage distribution overview</div>
-      <div id="pipelineDonutDiv" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    <div style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,95,70,.08));border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10B981,#059669,#34d399);border-radius:14px 14px 0 0;"></div>
+      <div style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:4px;margin-top:4px;">🔀 Pipeline Health</div>
+      <div style="font-size:12px;color:rgba(52,211,153,.6);margin-bottom:10px;">Stage distribution overview</div>
+      <div id="pipelineDonutDiv" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+      <div style="height:1px;background:var(--border);margin-bottom:12px;"></div>
+      <div style="font-size:12px;font-weight:600;color:#f1f5f9;margin-bottom:8px;">Marketer Performance</div>
+      <div id="marketerPerfDiv" style="margin-bottom:8px;"></div>
+      <div id="topPerformerDiv" style="padding:8px 12px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;display:none;">
+        <div style="font-size:11px;font-weight:600;color:#10B981;" id="topPerformerText">🥇 TOP PERFORMER</div>
+      </div>
     </div>
   </div>
   <!-- PROGRESS STAGE PILLS BAR (Feature 3) -->
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:13px;overflow-x:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Sales Pipeline — Stage Tracker</div>
+  <div style="background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(99,102,241,.06));border:1px solid rgba(59,130,246,.3);border-radius:14px;padding:14px 16px;margin-bottom:13px;overflow-x:auto;position:relative;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#6366F1,#8B5CF6);border-radius:14px 14px 0 0;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:6px;">
+      <div style="font-size:11px;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.07em;">🎯 Sales Pipeline — Stage Tracker</div>
       <select id="stage-tracker-jmb" onchange="renderProgStagePills()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card2);color:var(--text);outline:none;max-width:220px;">
         <option value="">— All JMB —</option>
       </select>
@@ -950,42 +975,27 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;">
-    <div class="card">
-      <div class="ct">Sales Pipeline Funnel</div>
-      <div class="cs">Cases by current stage</div>
-      <div id="pipelineDiv" style="margin-top:4px;"></div>
-    </div>
-    <div class="card">
-      <div class="ct">Marketer Performance</div>
-      <div class="cs">Active cases per marketer</div>
-      <div id="marketerPerfDiv" style="margin-top:4px;"></div>
-      <div id="topPerformerDiv" style="margin-top:12px;padding:10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;display:none;">
-        <div style="font-size:12px;font-weight:600;color:#10B981;" id="topPerformerText">🥇 TOP PERFORMER</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="pipelineStatus"></div>
-      </div>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;">
-    <div class="card">
-      <div class="ct">Bottleneck Analysis</div>
-      <div class="cs">Where cases are stuck</div>
-      <div id="bottleneckDiv" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;"></div>
-      <div id="bottleneckMsg" style="margin-top:10px;font-size:12px;color:var(--text3);font-style:italic;"></div>
-    </div>
-    <div class="card">
-      <div class="ct">⚠️ Critical Alerts</div>
-      <div class="cs">Cases stuck &gt;15 days</div>
-      <div style="overflow-x:auto;margin-top:8px;">
-        <table class="dt" style="font-size:12px;">
-          <thead><tr><th>JMB Name</th><th>Marketer</th><th>Days</th><th>Stage</th><th>Status</th></tr></thead>
-          <tbody id="criticalAlertsBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+
+
   <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;" id="progCardsTitle">JMB Progress</div>
-  <div class="jmb-grid" id="jmbGrid">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;margin-bottom:12px;">
+    <div style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;font-size:18px;">🏆</div>
+        <div><div style="font-size:13px;font-weight:700;color:#10B981;">Won</div><div style="font-size:11px;color:#34d399;" id="won-count">0 JMB</div></div>
+      </div>
+      <div id="won-list" style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;"></div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.04));border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);display:flex;align-items:center;justify-content:center;font-size:18px;">❌</div>
+        <div><div style="font-size:13px;font-weight:700;color:#EF4444;">Rejected</div><div style="font-size:11px;color:#fc8181;" id="rej-count">0 JMB</div></div>
+      </div>
+      <div id="rej-list" style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div class="jmb-grid" id="jmbGrid" style="display:none;">
     <div class="prog-empty"><div class="prog-empty-icon">🎯</div><div>Loading progress data...</div></div>
   </div>
 </div>
@@ -1196,6 +1206,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   </div>
 </div>
 
+<div id="pipelineDiv" style="display:none;"></div>
 </div><!-- end mainWrap -->
 
 
@@ -1249,7 +1260,18 @@ function setPMK(mk,btn){
   progFilterMk=mk;
   ['all','hazim','shahira','admin'].forEach(id=>{const b=document.getElementById('pmk-'+id);if(b)b.classList.remove('active');});
   btn.classList.add('active');
-  updateProgStats(); renderProgCards();
+  // Reload progData from localStorage to ensure fresh data
+  try{
+    const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    if(saved.length>0){
+      const progMap=new Map();
+      progData.forEach(r=>{if(r['JMB Name'])progMap.set(r['JMB Name'],r);});
+      saved.forEach(r=>{if(r['JMB Name'])progMap.set(r['JMB Name'],r);});
+      progData=[...progMap.values()];
+    }
+  }catch(e){}
+  updateProgStats(); renderProgCards(); if(typeof renderWonRejList==='function') renderWonRejList();
+  if(typeof renderExpiringJmb==='function') renderExpiringJmb();
 }
 function setPF(mk,btn){setPMK(mk,btn);}
 function updateProgHeader(){
@@ -1262,6 +1284,16 @@ function updateProgHeader(){
 
 async function fetchProgressData(){
   buildProgYearPills(); buildMonthPills(); updateProgHeader();
+
+  // Always reload fresh from localStorage on refresh
+  try {
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    if(saved.length > 0){
+      const progMap = new Map();
+      saved.forEach(r => { if(r['JMB Name']) progMap.set(r['JMB Name'], r); });
+      progData = [...progMap.values()];
+    }
+  } catch(e) {}
 
   // Load localStorage data into progData (merge, no overwrite)
   try {
@@ -1413,6 +1445,64 @@ function setPU(urg,btn){progFilterUrgency=urg;btn.classList.add('a-all');updateP
 function prinClass(name){if(!name)return'empty';const n=name.toLowerCase();if(n.includes('stm'))return'stm';if(n.includes('zurich'))return'zurich';if(n.includes('etiqa'))return'etiqa';if(n.includes('tokio')||n.includes('marine'))return'tokiomarine';if(n.includes('allianz'))return'allianz';if(n.includes('mpi'))return'mpi';return'empty';}
 function quoteIcon(status){if(!status)return'';const s=status.toLowerCase();if(s==='received')return' ✓';if(s==='pending')return' ⏳';if(s==='declined')return' ✗';return'';}
 
+function renderWonRejList(){
+  const wonStages = ['won','hold cover','policy issued','jmb received policy'];
+  const wonEl = document.getElementById('won-list');
+  const rejEl = document.getElementById('rej-list');
+  const wonCnt = document.getElementById('won-count');
+  const rejCnt = document.getElementById('rej-count');
+  if(!wonEl||!rejEl) return;
+
+  // Load fresh from localStorage
+  const allProg = [];
+  try{
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    saved.forEach(r=>{ if(r['JMB Name']) allProg.push(r); });
+  }catch(e){}
+  progData.forEach(r=>{ if(r['JMB Name']&&!allProg.find(p=>p['JMB Name']===r['JMB Name'])) allProg.push(r); });
+
+  const won = allProg.filter(r=>wonStages.includes((r['Current Stage']||'').toLowerCase()));
+  const rej = allProg.filter(r=>(r['Current Stage']||'').toLowerCase().includes('reject'));
+
+  if(wonCnt) wonCnt.textContent = won.length + ' JMB';
+  if(rejCnt) rejCnt.textContent = rej.length + ' JMB';
+
+  const mkLabel = mk => mk==='hazim'?'Hazim':mk==='shahira'?'Shahira':'SBM';
+  const mkColor = mk => mk==='hazim'?'#60a5fa':mk==='shahira'?'#34d399':'#a78bfa';
+
+  function renderList(el, items, accent){
+    el.innerHTML = '';
+    if(!items.length){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px 0;">No entries yet</div>';
+      return;
+    }
+    items.forEach(r=>{
+      const mk = (r._marketer||'').toLowerCase();
+      const stage = r['Current Stage']||'';
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.15);border:1px solid '+accent+'33;cursor:pointer;';
+      item.onmouseover = ()=>{ item.style.background='rgba(0,0,0,.25)'; };
+      item.onmouseout  = ()=>{ item.style.background='rgba(0,0,0,.15)'; };
+      item.onclick = ()=>{
+        const sel = document.getElementById('stage-tracker-jmb');
+        if(sel){ sel.value=r['JMB Name']; renderProgStagePills(); }
+      };
+      const justify = r['Reject Justify'] ? r['Reject Justify'].trim() : '';
+      item.innerHTML =
+        '<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+r['JMB Name']+'</div>'
+          +'<div style="font-size:10px;color:'+accent+';margin-top:1px;">'+stage+'</div>'
+          +(justify?'<div style="font-size:10px;color:var(--text3);margin-top:2px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📝 '+justify+'</div>':'')
+        +'</div>'
+        +'<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:'+mkColor(mk)+'22;color:'+mkColor(mk)+';border:1px solid '+mkColor(mk)+'44;flex-shrink:0;margin-left:6px;">'+mkLabel(mk)+'</span>';
+      el.appendChild(item);
+    });
+  }
+
+  renderList(wonEl, won, '#10B981');
+  renderList(rejEl, rej, '#EF4444');
+}
+
 function renderProgCards(){
   const grid=document.getElementById('jmbGrid');
   const search=(document.getElementById('progSearch')?.value||'').toLowerCase();
@@ -1466,7 +1556,7 @@ function renderProgCards(){
     if(stageDate){const sd=new Date(stageDate);if(!isNaN(sd)){const diff=Math.floor((new Date()-sd)/(1000*60*60*24));if(diff>=0)stageDays=`${diff} days in this stage`;}}
     const prins=[[r['Principle 1']||'',r['P1 Quote Status']||''],[r['Principle 2']||'',r['P2 Quote Status']||''],[r['Principle 3']||'',r['P3 Quote Status']||''],[r['Principle 4']||'',r['P4 Quote Status']||'']].filter(([p])=>p);
     const prinsHTML=prins.length?prins.map(([p,s])=>`<span class="prin-pill ${prinClass(p)}">${p}${quoteIcon(s)}</span>`).join(''):`<span class="prin-pill empty">No quote requested</span>`;
-    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>`<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${h.stage}</span><span class="jcard-hist-time">${new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div>`).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
+    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>`<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${h.stage}${h.justify?' — 📝 '+h.justify:''}</span><span class="jcard-hist-time">${new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div>`).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
     ${isAdmin()?`<div style="display:flex;gap:6px;padding:8px 16px;border-top:1px solid var(--border);">
       <button onclick="openEditProgress('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;">✏️ Edit</button>
       <button onclick="deleteProgressEntry('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;">🗑️ Delete</button>
@@ -1778,6 +1868,7 @@ function deleteCustomJMB(idx){
   }catch(e){}
   if(typeof updateProgStats==='function') updateProgStats();
   if(typeof renderProgCards==='function') renderProgCards();
+  if(typeof renderWonRejList==='function') renderWonRejList();
 }
 
 function getCustomJMB(){
@@ -1876,6 +1967,7 @@ function saveJMBEdit(idx){
   }catch(e){}
   if(typeof updateProgStats==='function') updateProgStats();
   if(typeof renderProgCards==='function') renderProgCards();
+  if(typeof renderWonRejList==='function') renderWonRejList();
 }
 
 
@@ -1927,6 +2019,48 @@ function showKpiDetail(type){}
 function showMonthDetail(mi){}
 function showPrinDetail(prin){}
 
+function renderSalesTable(){
+  const tbody = document.getElementById('salesTableBody');
+  if(!tbody) return;
+  const mkF = document.getElementById('st-mk-filter')?.value || '';
+  const prinF = document.getElementById('st-prin-filter')?.value || '';
+  const MONTHS_FULL=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mkLabel = mk => mk==='hazim'?'Hazim':mk==='shahira'?'Shahira':'SBM';
+  const mkBadge = mk => mk==='hazim'?'bh':mk==='shahira'?'bs':'bn';
+
+  let data = [...rawData];
+  try{
+    const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
+    saved.forEach(r=>{if(!data.find(d=>d.jmb===r.jmb&&d.ts===r.ts))data.push(r);});
+  }catch(e){}
+
+  data = data.filter(r=>r.year===cy);
+  if(mkF) data = data.filter(r=>r.mk===mkF);
+  if(prinF) data = data.filter(r=>r.prin===prinF);
+  data.sort((a,b)=>new Date(b.ts||0)-new Date(a.ts||0));
+
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3);">No sales entries yet. Use + Create New Entry to add.</td></tr>';
+    return;
+  }
+
+  const adminUser = typeof isAdmin==='function'&&isAdmin();
+  tbody.innerHTML = data.map((r,i)=>{
+    const holdDate = r.ts ? new Date(r.ts).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'}) : '-';
+    return `<tr>
+      <td style="color:var(--text3);">${i+1}</td>
+      <td style="font-weight:500;">${r.jmb||'-'}</td>
+      <td><span class="badge ${mkBadge(r.mk)}">${mkLabel(r.mk)}</span></td>
+      <td>${r.prin||'-'}</td>
+      <td><span class="badge ${r.caseType==='Renewal'?'br':'bp'}">${r.caseType||'-'}</span></td>
+      <td style="font-family:monospace;font-size:11px;">${holdDate}</td>
+      <td style="font-weight:600;color:var(--accent);">${r.premTax?fmt(r.premTax):'-'}</td>
+      <td>${r.payment||'-'}</td>
+      ${adminUser?`<td><button onclick="deleteSalesEntry('${r.jmb}',${r.mi},'${r.mk}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;">🗑️</button></td>`:''}
+    </tr>`;
+  }).join('');
+}
+
 function renderDash(){
   updateNoConn();
   const data=fd(cy);
@@ -1953,6 +2087,7 @@ function renderDash(){
   });
   buildBands(data);
   if(!chartsBuilt&&typeof Chart!=='undefined'){buildCharts();chartsBuilt=true;}else if(chartsBuilt){refreshCharts();}
+  renderSalesTable();
 }
 
 function setMkFilter(mk){
@@ -1970,7 +2105,7 @@ const gc='rgba(255,255,255,.05)',tc='#64748b',tf={size:11};
 
 function buildCharts(){
   try{
-    cM=new Chart(document.getElementById('cMonthly'),{type:'bar',data:{labels:MONTHS,datasets:[{label:'Premium',data:MONTHS.map((_,i)=>Math.round(sumPrem(fd(cy).filter(r=>r.mi===i))/1000)),backgroundColor:'rgba(59,130,246,.8)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf},grid:{color:gc}}}}});
+    cM=new Chart(document.getElementById('cMonthly'),{type:'bar',data:{labels:MONTHS,datasets:[{label:"Premium (RM K)",data:MONTHS.map((_,i)=>Math.round(sumPrem(fd(cy).filter(r=>r.mi===i))/1000)),backgroundColor:'rgba(59,130,246,.8)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf,callback:function(v){return 'RM'+v+'K';}},grid:{color:gc},title:{display:true,text:"RM (K)",color:'#64748b',font:{size:10}}}}}});
     cMk=new Chart(document.getElementById('cMarketer'),{type:'bar',data:{labels:MONTHS,datasets:getMkDatasets()},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:tc,font:tf},grid:{color:gc}},y:{ticks:{color:tc,font:tf},grid:{color:gc}}}}});
     const pt=PRINS.map(p=>sumPrem(fd(cy).filter(r=>r.prin===p)));
     const ps=pt.reduce((a,b)=>a+b,0);
@@ -2261,7 +2396,7 @@ function renderMasterJmb() {
       const col    = mkColor[j.marketer] || '#64748b';
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
         <span style="font-size:11px;font-weight:500;color:var(--text);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.name}</span>
-        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${inProg?'rgba(16,185,129,.15)':'rgba(100,116,139,.15)'};color:${inProg?'#10B981':'var(--text3)'};">${inProg?'✓ In Progress':'Pending'}</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${inProg?'rgba(16,185,129,.15)':'rgba(100,116,139,.15)'};color:${inProg?'#10B981':'var(--text3)'};">${inProg?'✓ In Progress':'Request'}</span>
       </div>`;
     }).join('');
   }
@@ -2279,7 +2414,7 @@ function renderMasterJmb() {
           <td style="color:var(--text3);">${i+1}</td>
           <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;">${j.name}</td>
           <td><span style="font-size:10px;color:${col};">${j.marketer||'—'}</span></td>
-          <td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${inProg?'rgba(16,185,129,.15)':'rgba(100,116,139,.15)'};color:${inProg?'#10B981':'var(--text3)'};">${inProg?'✓ Progress':'Pending'}</span></td>
+          <td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${inProg?'rgba(16,185,129,.15)':'rgba(100,116,139,.15)'};color:${inProg?'#10B981':'var(--text3)'};">${inProg?'✓ Progress':'Request'}</span></td>
         </tr>`;
       }).join('');
     }
@@ -2557,8 +2692,23 @@ function gcmUpdateAutoFill() {
     });
     gcmUpdateSetDate(); // Always reset to today
     gcmToggleUpdatePrinciples();
-    // Reject justify
-    const rj = el('gcm-u-justify'); if(rj) rj.value = rec['Reject Justify'] || '';
+    // Reject justify — readonly if already filled (once only)
+    const rj = el('gcm-u-justify');
+    if(rj){
+      const existingJustify = rec['Reject Justify'] || '';
+      rj.value = existingJustify;
+      if(existingJustify.trim()){
+        rj.readOnly = true;
+        rj.style.opacity = '0.6';
+        rj.style.cursor = 'not-allowed';
+        rj.title = 'Justification already submitted — cannot change';
+      } else {
+        rj.readOnly = false;
+        rj.style.opacity = '1';
+        rj.style.cursor = '';
+        rj.title = '';
+      }
+    }
   } else {
     if(curDiv) curDiv.style.display = 'none';
     if(noMatch) noMatch.style.display = '';
@@ -2587,50 +2737,93 @@ function applyProgFilter() {
   const mkFilter = document.getElementById('pf-marketer')?.value || '';
   const monthFilter = document.getElementById('pf-month')?.value || '';
   const countEl = document.getElementById('pf-count');
-
-  // Re-populate JMB dropdown with filter applied
   const sel = document.getElementById('gcm-p-jmb');
   if (!sel) return;
   const cur = sel.value;
   sel.innerHTML = '<option value="">-- Select JMB --</option>';
 
-  let expiring = getExpiringJMBs();
+  const users = getUsers();
+  const isAdminUser = !!(cu && users[cu] && (users[cu].role === 'admin' || users[cu].role === 'management'));
 
-  // Apply marketer filter
-  if (mkFilter) {
-    expiring = expiring.filter(j => {
-      const rec = masterJmbData.find(m => m.name === j.name);
-      return rec && rec.marketer === mkFilter;
+  // Get done set
+  const done = new Set();
+  progData.forEach(r=>{ if(r['JMB Name']) done.add(r['JMB Name'].toLowerCase()); });
+  try{ JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]').forEach(r=>{ if(r['JMB Name']) done.add(r['JMB Name'].toLowerCase()); }); }catch(e){}
+
+  const todayMs = new Date().setHours(0,0,0,0);
+  const MONTHS_FULL = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  if (isAdminUser) {
+    // Admin: all JMB from master list, filter by selected marketer/month, grouped by month
+    let jmbs = masterJmbData.filter(j => {
+      if(!j.name || !j.expiryDate) return false;
+      if(done.has(j.name.toLowerCase())) return false;
+      if(mkFilter && (j.marketer||'') !== mkFilter) return false;
+      return true;
+    }).map(j => {
+      const d = new Date(j.expiryDate);
+      if(d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
+      const days = Math.ceil((d.getTime() - todayMs) / 86400000);
+      return {name: j.name, days, month: d.getMonth(), year: d.getFullYear(), d};
     });
-  }
 
-  // Apply month filter
-  if (monthFilter) {
-    expiring = expiring.filter(j => {
-      const exp = j._effectiveExp || (j.expiryDate ? new Date(j.expiryDate) : null);
-      return exp && exp.getMonth() + 1 === parseInt(monthFilter);
+    if(monthFilter) jmbs = jmbs.filter(j => j.month + 1 === parseInt(monthFilter));
+
+    if(!jmbs.length){
+      const opt=document.createElement('option'); opt.value='';
+      opt.textContent='— No JMB available —'; opt.disabled=true;
+      sel.appendChild(opt);
+      if(countEl) countEl.textContent = '0 JMB found';
+      return;
+    }
+
+    // Group by month
+    const groups = {};
+    jmbs.forEach(j => {
+      const key = j.year + '-' + String(j.month+1).padStart(2,'0');
+      const label = MONTHS_FULL[j.month] + ' ' + j.year + (j.days<=60?' ⚠':'');
+      if(!groups[key]) groups[key] = {label, items:[]};
+      groups[key].items.push(j);
     });
-  }
+    Object.keys(groups).sort().forEach(key => {
+      const grp = document.createElement('optgroup');
+      grp.label = groups[key].label + ' (' + groups[key].items.length + ')';
+      groups[key].items.sort((a,b)=>a.days-b.days).forEach(j => {
+        const opt = document.createElement('option');
+        opt.value = j.name;
+        opt.textContent = j.name + '  — ' + j.days + 'd';
+        if(j.name === cur) opt.selected = true;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+    if(countEl) countEl.textContent = jmbs.length + ' JMB available';
 
-  if (expiring.length === 0) {
-    const opt = document.createElement('option');
-    opt.value = ''; opt.textContent = '— No JMB matches filter —'; opt.disabled = true;
-    sel.appendChild(opt);
-    if (countEl) countEl.textContent = '0 JMB found';
-    return;
+  } else {
+    // Marketer: <60 days only
+    let expiring = getExpiringJMBs();
+    if(mkFilter) expiring = expiring.filter(j => { const rec = masterJmbData.find(m=>m.name===j.name); return rec && rec.marketer===mkFilter; });
+    if(monthFilter) expiring = expiring.filter(j => { const exp = j._effectiveExp||(j.expiryDate?new Date(j.expiryDate):null); return exp && exp.getMonth()+1===parseInt(monthFilter); });
+    const avail = expiring.filter(j => !done.has(j.name.toLowerCase()));
+    if(!avail.length){
+      const opt=document.createElement('option'); opt.value='';
+      opt.textContent='— No JMB available —'; opt.disabled=true;
+      sel.appendChild(opt);
+      if(countEl) countEl.textContent = '0 JMB found';
+      return;
+    }
+    const grp = document.createElement('optgroup');
+    grp.label = '⚠ Expiring ≤ 60 Days (' + avail.length + ')';
+    avail.forEach(j => {
+      const opt = document.createElement('option');
+      opt.value = j.name;
+      opt.textContent = j.name + '  — ' + (j._effectiveDays||0) + 'd';
+      if(j.name === cur) opt.selected = true;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+    if(countEl) countEl.textContent = avail.length + ' JMB found';
   }
-
-  const grp = document.createElement('optgroup');
-  grp.label = '⚠ Expiring ≤ 60 Days (' + expiring.length + ' JMB)';
-  expiring.forEach(j => {
-    const opt = document.createElement('option');
-    opt.value = j.name;
-    opt.textContent = j.name + '  — ' + (j._effectiveDays||0) + 'd';
-    if (j.name === cur) opt.selected = true;
-    grp.appendChild(opt);
-  });
-  sel.appendChild(grp);
-  if (countEl) countEl.textContent = expiring.length + ' JMB found';
 }
 
 // Override saveGlobalCase for Update mode
@@ -2655,6 +2848,7 @@ function saveUpdateStage() {
     stage: newStage,
     date: newDate,
     ts: now,
+    justify: newStage === 'Rejected' ? (el('gcm-u-justify')?.value||'') : '',
     p1: el('gcm-u-prin1')?.value || '',
     p1s: el('gcm-u-p1status')?.value || '',
     p2: el('gcm-u-prin2')?.value || '',
@@ -2688,7 +2882,7 @@ function saveUpdateStage() {
     'P3 Quote Status': histEntry.p3s,
     'Principle 4': histEntry.p4,
     'P4 Quote Status': histEntry.p4s,
-    'Reject Justify': newStage === 'Rejected' ? (el('gcm-u-justify')?.value||'') : '',
+    'Reject Justify': newStage === 'Rejected' ? (existing && existing['Reject Justify'] ? existing['Reject Justify'] : (el('gcm-u-justify')?.value||'')) : (existing && existing['Reject Justify'] ? existing['Reject Justify'] : ''),
     '_lastUpdated': now,
     '_history': history,
   };
@@ -2715,7 +2909,7 @@ function saveUpdateStage() {
   if(typeof markJMBAware==='function') markJMBAware(jmb);
   if(typeof markJMBAware==='function') markJMBAware(jmb);
   if(typeof markJMBAware==='function') markJMBAware(jmb);
-  updateProgStats(); renderProgCards();
+  updateProgStats(); renderProgCards(); if(typeof renderWonRejList==='function') renderWonRejList();
   if (typeof renderProgStagePills === 'function') renderProgStagePills();
   if(typeof renderExpiringJmb==='function') renderExpiringJmb();
   if(typeof renderMasterJmb==='function') renderMasterJmb();
@@ -2731,22 +2925,44 @@ function saveUpdateStage() {
 function populateProgFilterMonths() {
   const monthSel = document.getElementById('pf-month');
   if (!monthSel) return;
-  const expiring = getExpiringJMBs();
-  const months = new Set();
-  expiring.forEach(j => {
-    const exp = j._effectiveExp;
-    if (exp) months.add(exp.getMonth() + 1);
-  });
   const cur = monthSel.value;
   monthSel.innerHTML = '<option value="">All Months</option>';
   const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  [...months].sort((a,b)=>a-b).forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = monthNames[m] + ' 2026';
-    if (String(m) === cur) opt.selected = true;
-    monthSel.appendChild(opt);
-  });
+
+  const users = getUsers();
+  const isAdminUser = !!(cu && users[cu] && (users[cu].role === 'admin' || users[cu].role === 'management'));
+  const todayMs = new Date().setHours(0,0,0,0);
+
+  const months = new Set();
+  if(isAdminUser) {
+    // Admin: show all months from master list
+    masterJmbData.forEach(j => {
+      if(!j.expiryDate) return;
+      const d = new Date(j.expiryDate);
+      if(isNaN(d)) return;
+      if(d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
+      months.add((d.getFullYear()*100) + (d.getMonth()+1));
+    });
+    [...months].sort((a,b)=>a-b).forEach(ym => {
+      const y = Math.floor(ym/100), m = ym%100;
+      const opt = document.createElement('option');
+      opt.value = m + '-' + y;
+      opt.textContent = monthNames[m] + ' ' + y;
+      if((m + '-' + y) === cur) opt.selected = true;
+      monthSel.appendChild(opt);
+    });
+  } else {
+    // Marketer: only expiring months
+    const expiring = getExpiringJMBs();
+    expiring.forEach(j => { const exp = j._effectiveExp; if(exp) months.add(exp.getMonth()+1); });
+    [...months].sort((a,b)=>a-b).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = monthNames[m];
+      if(String(m) === cur) opt.selected = true;
+      monthSel.appendChild(opt);
+    });
+  }
 }
 
 
@@ -2968,7 +3184,7 @@ function setSettleMode(mode) {
         const st = getPayStatus(r, r['Payment Plan']);
         const opt = document.createElement('option');
         opt.value = r['JMB Name'];
-        opt.textContent = r['JMB Name'] + '  [' + (r['Payment Plan']||'') + ' — ' + (st.completed?'✓ Settled':'Pending') + ']';
+        opt.textContent = r['JMB Name'] + '  [' + (r['Payment Plan']||'') + ' — ' + (st.completed?'✓ Settled':'Request') + ']';
         sel.appendChild(opt);
       });
     }
@@ -3224,13 +3440,14 @@ function deletePaymentEntry(jmbName){
 
 function deleteSalesEntry(jmb,mi,mk){
   if(!isAdmin()){alert('Only Admin can delete records.');return;}
-  if(!confirm('Delete sales record for "'+jmb+'"?'))return;
-  rawData=rawData.filter(r=>!(r.jmb===jmb&&r.mi===mi&&r.mk===mk));
-  try{
-    const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
-    localStorage.setItem('sd_gcm_sales_v1',JSON.stringify(saved.filter(r=>!(r.jmb===jmb&&r.mi===mi&&r.mk===mk))));
-  }catch(e){}
-  renderDash();renderLb();
+  inlineConfirm('Delete sales record for "'+jmb+'"?', function(){
+    rawData=rawData.filter(r=>!(r.jmb===jmb&&r.mi===mi&&r.mk===mk));
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
+      localStorage.setItem('sd_gcm_sales_v1',JSON.stringify(saved.filter(r=>!(r.jmb===jmb&&r.mi===mi&&r.mk===mk))));
+    }catch(e){}
+    renderDash();renderLb();
+  });
 }
 
 function editProgressEntry(jmbName){
@@ -3256,17 +3473,104 @@ function editProgressEntry(jmbName){
   }
 }
 
+
+function resetNavFilters(tab) {
+  if(tab === 'progress') {
+    // Reset marketer pills
+    ['all','hazim','shahira','admin'].forEach(id => {
+      const b = document.getElementById('pmk-'+id);
+      if(b) b.classList.toggle('active', id==='all');
+    });
+    progFilterMk = 'all';
+    // Reset search
+    const ps = document.getElementById('progSearch'); if(ps) ps.value = '';
+    // Reset month pills
+    const mp = document.getElementById('monthPills');
+    if(mp) mp.querySelectorAll('.fp').forEach(b => b.classList.remove('a-all'));
+  }
+  if(tab === 'transactions') {
+    // Reset payment marketer filter
+    ['all','hazim','shahira','admin'].forEach(id => {
+      const b = document.getElementById('pf-mk-'+id);
+      if(b) b.className = 'fp' + (id==='all' ? ' a-all' : '');
+    });
+    payFilterMk = 'all';
+    payFilterPlan = 'all';
+    // Reset plan cards
+    ['4x','3x','2x','Full'].forEach(p => {
+      const card = document.getElementById('payplan-'+p);
+      if(card) { card.classList.remove('ppactive'); card.style.background='var(--card)'; card.style.borderColor='var(--border)'; }
+    });
+  }
+  if(tab === 'ciamend') {
+    ciStageFilter = null;
+    const ci = document.getElementById('ciSearch'); if(ci) ci.value = '';
+    const jf = document.getElementById('ciFilterJMB'); if(jf) jf.value = '';
+    const sf = document.getElementById('ciFilterStaff'); if(sf) sf.value = '';
+  }
+  if(tab === 'dashboard') {
+    mkFilter = 'all';
+    ['all','hazim','shahira','admin'].forEach(id => {
+      const b = document.getElementById('fmk-'+id);
+      if(b) b.className = 'fp' + (id==='all' ? ' a-all' : '');
+    });
+  }
+}
+
 function go(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const screen=document.getElementById('screen-'+name);if(screen)screen.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const active=document.getElementById('tnav-'+name);if(active)active.classList.add('active');
-  if(name==='dashboard'){buildDonutLeg();buildPrinLeg();renderDash();}
+  // Reset filters for each tab
+  resetNavFilters(name);
+  if(name==='dashboard'){
+    // Reload sales data fresh
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
+      rawData=[];
+      saved.forEach(r=>rawData.push(r));
+    }catch(e){}
+    chartsBuilt=false;
+    [cM,cMk,cD,cCase,cPrin,cMkP,cTgt].forEach(c=>{try{if(c)c.destroy();}catch(e){}});
+    cM=cMk=cD=cCase=cPrin=cMkP=cTgt=null;
+    buildDonutLeg();buildPrinLeg();renderDash();
+  }
   if(name==='leaderboard')renderLb();
-  if(name==='transactions'){buildPayYearPills();renderPaymentTable();setTimeout(function(){if(typeof renderPayStagePills==='function')renderPayStagePills();},50);}
-  if(name==='progress'){fetchProgressData();fetchMasterJMB();setTimeout(function(){if(typeof renderProgStagePills==='function')renderProgStagePills();},700);}
+  if(name==='transactions'){
+    // Reload payment data FRESH from localStorage
+    try{
+      const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
+      if(py.length>0) paymentData=py;
+    }catch(e){}
+    buildPayYearPills();renderPaymentTable();
+    setTimeout(function(){if(typeof renderPayStagePills==='function')renderPayStagePills();},50);
+  }
+  if(name==='progress'){
+    // Reload progress data FRESH from localStorage
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+      if(saved.length>0){
+        const pm=new Map();
+        saved.forEach(r=>{if(r['JMB Name'])pm.set(r['JMB Name'],r);});
+        progData=[...pm.values()];
+      } else {
+        progData=[];
+      }
+    }catch(e){}
+    fetchProgressData();fetchMasterJMB();setTimeout(()=>{ if(typeof renderWonRejList==='function') renderWonRejList(); },400);
+    setTimeout(function(){if(typeof renderProgStagePills==='function')renderProgStagePills();},700);
+  }
   if(name==='ciamend'){buildCIYearPills();renderCIAll();setTimeout(function(){const b=document.getElementById('ci-stage-bar');if(b&&typeof renderCIStagePills==='function'){b.innerHTML='';renderCIStagePills();}},50);}
-  if(name==='settlement'){renderSettlement();setTimeout(function(){if(typeof renderSettleStagePills==='function')renderSettleStagePills();},50);}
+  if(name==='settlement'){
+    // Reload payment/settlement data FRESH
+    try{
+      const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
+      if(py.length>0) paymentData=py;
+    }catch(e){}
+    renderSettlement();
+    setTimeout(function(){if(typeof renderSettleStagePills==='function')renderSettleStagePills();},50);
+  }
   if(name==='setup'){renderSetup();renderUserList();}
   if(typeof updateNewCaseBtn==='function')updateNewCaseBtn();
 }
@@ -3501,23 +3805,19 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
     <div id="gcm-form-sales">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field">
-          <label>JMB Name</label>
-          <select id="gcm-s-jmb" style="width:100%;"><option value="">-- Select JMB --</option></select>
-        </div>
-        <div class="field">
           <label>Marketer</label>
-          <select id="gcm-s-mk" disabled style="width:100%;opacity:.7;">
-            <option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="sbm">SBM</option>
+          <select id="gcm-s-mk" onchange="filterSalesJMB()" style="width:100%;">
+            <option value="">-- Select Marketer --</option>
+            <option value="hazim">Hazim</option><option value="shahira">Shahira</option><option value="admin">SBM</option>
           </select>
         </div>
         <div class="field">
-          <label>Month of Sales</label>
-          <select id="gcm-s-month" style="width:100%;">
-            <option value="0">January</option><option value="1">February</option><option value="2">March</option>
-            <option value="3">April</option><option value="4">May</option><option value="5">June</option>
-            <option value="6">July</option><option value="7">August</option><option value="8">September</option>
-            <option value="9">October</option><option value="10">November</option><option value="11">December</option>
-          </select>
+          <label>JMB Name</label>
+          <select id="gcm-s-jmb" style="width:100%;"><option value="">-- Select Marketer First --</option></select>
+        </div>
+        <div class="field">
+          <label>Date of Hold Cover</label>
+          <input type="date" id="gcm-s-month" style="width:100%;">
         </div>
         <div class="field"><label>Year</label><input type="number" id="gcm-s-year" value="2026" min="2020" max="2035" style="width:100%;"></div>
         <div class="field"><label>Case Type</label><select id="gcm-s-casetype" style="width:100%;"><option value="Renewal">Renewal</option><option value="New">New</option></select></div>
@@ -3603,13 +3903,13 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div class="field"><label>Principle 1</label><select id="gcm-p-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 2</label><select id="gcm-p-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 3</label><select id="gcm-p-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P3 Quote Status</label><select id="gcm-p-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P3 Quote Status</label><select id="gcm-p-p3status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 4</label><select id="gcm-p-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P4 Quote Status</label><select id="gcm-p-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P4 Quote Status</label><select id="gcm-p-p4status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
           </div>
         </div>
 
@@ -3653,13 +3953,13 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
           <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 6px;">Update Quote Status</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             <div class="field"><label>Principle 1</label><select id="gcm-u-prin1" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P1 Status</label><select id="gcm-u-p1status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P1 Status</label><select id="gcm-u-p1status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 2</label><select id="gcm-u-prin2" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P2 Status</label><select id="gcm-u-p2status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P2 Status</label><select id="gcm-u-p2status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 3</label><select id="gcm-u-prin3" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P3 Status</label><select id="gcm-u-p3status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P3 Status</label><select id="gcm-u-p3status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
             <div class="field"><label>Principle 4</label><select id="gcm-u-prin4" style="width:100%;"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-            <div class="field"><label>P4 Status</label><select id="gcm-u-p4status" style="width:100%;"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+            <div class="field"><label>P4 Status</label><select id="gcm-u-p4status" style="width:100%;"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
           </div>
         </div>
         <div id="gcm-u-reject-box" style="display:none;margin-top:4px;">
@@ -3912,60 +4212,79 @@ function populateJMBSelect(selId, source) {
   sel.innerHTML = '<option value="">-- Select JMB --</option>';
 
   if (selId === 'gcm-p-jmb') {
-    // Progress dropdown: ONLY show JMBs from expiring <60 days list
-    const expiring = getExpiringJMBs();
     const users = getUsers();
-    const isAdminUser = !!(cu && users[cu] && users[cu].role === 'admin');
-
-    if (expiring.length === 0 && !isAdminUser) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = '— No JMB expiring in next 60 days —';
-      opt.disabled = true;
-      sel.appendChild(opt);
-      return;
-    }
-
-    // Expiring group
-    if (expiring.length > 0) {
-      const grp = document.createElement('optgroup');
-      grp.label = '⚠ Expiring ≤ 60 Days (' + expiring.length + ' JMB)';
-      expiring.forEach(j => {
-        const opt = document.createElement('option');
-        opt.value = j.name;
-        opt.textContent = j.name + '  — ' + (j._effectiveDays||0) + ' days';
-        if (j.name === cur) opt.selected = true;
-        grp.appendChild(opt);
-      });
-      sel.appendChild(grp);
-    }
-
-    // Admin: show next 60 days more (60-90 days) as a secondary group
+    const isAdminUser = !!(cu && users[cu] && (users[cu].role === 'admin' || users[cu].role === 'management'));
+    const todayMs = new Date().setHours(0,0,0,0);
+    // DEBUG
     if (isAdminUser) {
-      const todayMs = new Date().setHours(0,0,0,0);
-      const next30 = masterJmbData.filter(j => {
-        if (!j.name || !j.expiryDate) return false;
-        if (expiring.some(e => e.name === j.name)) return false;
+      // Admin: see ALL JMB from master list, grouped by month
+      const MONTHS_FULL = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const groups = {};
+      masterJmbData.forEach(j => {
+        if(!j.name || !j.expiryDate) return;
         const d = new Date(j.expiryDate);
-        if (isNaN(d)) return false;
-        if (d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
+        if(isNaN(d)) return;
+        if(d.getTime() < todayMs) d.setFullYear(d.getFullYear() + 1);
         const days = Math.ceil((d.getTime() - todayMs) / 86400000);
-        j._adminDays = days;
-        return days > 60 && days <= 90;
-      }).sort((a,b) => (a._adminDays||0) - (b._adminDays||0));
-
-      if (next30.length) {
+        const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        const label = MONTHS_FULL[d.getMonth()] + ' ' + d.getFullYear() + (days<=60?' ⚠':'');
+        if(!groups[key]) groups[key] = {label, items:[]};
+        groups[key].items.push({name:j.name, days});
+      });
+      Object.keys(groups).sort().forEach(key => {
         const grp = document.createElement('optgroup');
-        grp.label = '📋 Expiring 61–90 Days (' + next30.length + ')';
-        next30.forEach(j => {
+        // Filter already-done JMBs
+        const doneSet = new Set();
+        progData.forEach(r => { if(r['JMB Name']) doneSet.add(r['JMB Name'].toLowerCase()); });
+        try{
+          const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+          saved.forEach(r => { if(r['JMB Name']) doneSet.add(r['JMB Name'].toLowerCase()); });
+        }catch(e){}
+        const availItems = groups[key].items.filter(j => !doneSet.has(j.name.toLowerCase()));
+        if(!availItems.length) return; // skip month if all done
+        grp.label = groups[key].label + ' (' + availItems.length + ' remaining)';
+        availItems.sort((a,b)=>a.days-b.days).forEach(j => {
           const opt = document.createElement('option');
           opt.value = j.name;
-          opt.textContent = j.name + '  — ' + (j._adminDays||0) + 'd';
-          if (j.name === cur) opt.selected = true;
+          opt.textContent = j.name + '  — ' + j.days + 'd';
+          if(j.name === cur) opt.selected = true;
           grp.appendChild(opt);
         });
         sel.appendChild(grp);
+      });
+    } else {
+      // Marketer: only <60 days
+      const expiring = getExpiringJMBs();
+      if (expiring.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '— No JMB expiring in next 60 days —'; opt.disabled = true;
+        sel.appendChild(opt);
+        return;
       }
+      // Get JMBs already with progress entries
+      const doneJMBs = new Set();
+      progData.forEach(r => { if(r['JMB Name']) doneJMBs.add(r['JMB Name'].toLowerCase()); });
+      try{
+        const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+        saved.forEach(r => { if(r['JMB Name']) doneJMBs.add(r['JMB Name'].toLowerCase()); });
+      }catch(e){}
+      const remaining = expiring.filter(j => !doneJMBs.has(j.name.toLowerCase()));
+      if(remaining.length === 0){
+        const opt = document.createElement('option');
+        opt.value=''; opt.textContent='— All expiring JMBs have progress entries —'; opt.disabled=true;
+        sel.appendChild(opt);
+        return;
+      }
+      const grp = document.createElement('optgroup');
+      grp.label = '⚠ Expiring ≤ 60 Days — Pending (' + remaining.length + ')';
+      remaining.forEach(j => {
+        const opt = document.createElement('option');
+        opt.value = j.name;
+        opt.textContent = j.name + '  — ' + (j._effectiveDays||0) + 'd';
+        if(j.name === cur) opt.selected = true;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
     }
     return;
   }
@@ -3980,6 +4299,58 @@ function populateJMBSelect(selId, source) {
 }
 
 // ── Auto-fill marketer based on who is logged in ──
+function filterSalesJMB() {
+  const mk = document.getElementById('gcm-s-mk')?.value || '';
+  const sel = document.getElementById('gcm-s-jmb');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">-- Select JMB --</option>';
+  if(!mk){ sel.innerHTML = '<option value="">-- Select Marketer First --</option>'; return; }
+
+  // Load progress data fresh from localStorage
+  const allProg = [];
+  try{
+    const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    saved.forEach(r=>{ if(r['JMB Name']) allProg.push(r); });
+  }catch(e){}
+  // Also include in-memory progData
+  progData.forEach(r=>{ if(r['JMB Name']&&!allProg.find(p=>p['JMB Name']===r['JMB Name'])) allProg.push(r); });
+
+  const wonStages = ['won','hold cover','policy issued','jmb received policy'];
+  const wonJMBs = allProg
+    .filter(r => {
+      if((r._marketer||'').toLowerCase() !== mk.toLowerCase()) return false;
+      const stage = (r['Current Stage']||'').toLowerCase();
+      return wonStages.some(s => stage.includes(s));
+    })
+    .map(r => r['JMB Name'])
+    .filter(Boolean);
+
+  // Exclude JMBs already in sales data for this marketer
+  const salesDone = new Set();
+  rawData.forEach(r => { if(r.jmb && r.mk === mk) salesDone.add(r.jmb.toLowerCase()); });
+  try{ JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]').forEach(r=>{ if(r.jmb && r.mk===mk) salesDone.add(r.jmb.toLowerCase()); }); }catch(e){}
+
+  const available = [...new Set(wonJMBs)].filter(n => !salesDone.has(n.toLowerCase())).sort();
+
+  if(!available.length){
+    const opt = document.createElement('option');
+    opt.value=''; opt.textContent='— No Won JMBs available —'; opt.disabled=true;
+    sel.appendChild(opt);
+    return;
+  }
+  const grp = document.createElement('optgroup');
+  grp.label = '✓ Won JMBs (' + available.length + ')';
+  available.forEach(name => {
+    const prog = allProg.find(r=>r['JMB Name']===name);
+    const stage = prog ? prog['Current Stage'] : '';
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name + (stage ? '  [' + stage + ']' : '');
+    grp.appendChild(opt);
+  });
+  sel.appendChild(grp);
+}
+
 function gcmSetMarketer() {
   const users = getUsers();
   const u = users[cu];
@@ -3991,8 +4362,10 @@ function gcmSetMarketer() {
     if (role === 'marketer') {
       mkSel.value = cu;
       mkSel.disabled = true;
+      // Auto-filter JMB for marketer
+      filterSalesJMB();
     } else {
-      mkSel.disabled = false; // admin/management can pick
+      mkSel.disabled = false;
     }
   }
   // Progress PIC: same logic
@@ -4195,15 +4568,33 @@ function renderProgStagePills() {
   const sel = document.getElementById('stage-tracker-jmb');
   if (sel) {
     const curVal = sel.value;
-    sel.innerHTML = '<option value="">— All JMB —</option>';
-    const names = [...new Set(data.map(r => r['JMB Name']).filter(Boolean))].sort();
-    names.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      if (name === curVal) opt.selected = true;
-      sel.appendChild(opt);
+    sel.innerHTML = '<option value="">— Select JMB —</option>';
+
+    const wonStages = ['won','hold cover','policy issued','jmb received policy'];
+    const inProgress = data.filter(r => {
+      const s = (r['Current Stage']||'').toLowerCase();
+      return !wonStages.includes(s) && s !== 'rejected';
     });
+    const wonList = data.filter(r => wonStages.includes((r['Current Stage']||'').toLowerCase()));
+    const rejList = data.filter(r => (r['Current Stage']||'').toLowerCase() === 'rejected');
+
+    function addGroup(label, items){
+      if(!items.length) return;
+      const grp = document.createElement('optgroup');
+      grp.label = label + ' (' + items.length + ')';
+      items.sort((a,b)=>(a['JMB Name']||'').localeCompare(b['JMB Name']||'')).forEach(r=>{
+        const opt = document.createElement('option');
+        opt.value = r['JMB Name'];
+        opt.textContent = r['JMB Name'] + '  [' + (r['Current Stage']||'') + ']';
+        if(r['JMB Name'] === curVal) opt.selected = true;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    }
+
+    addGroup('🔄 In Progress', inProgress);
+    addGroup('✅ Won', wonList);
+    addGroup('❌ Rejected', rejList);
   }
 
   const selectedJMB = sel ? sel.value : '';
@@ -4217,86 +4608,80 @@ function renderProgStagePills() {
     const isRejected = curStage.toLowerCase().includes('reject');
     const curIdx = stageOrder.findIndex(s => s.toLowerCase() === curStage.toLowerCase());
 
+    // Layout from sketch:
+    // [Pros]→[Quoting]→[Comparative]→[Appoint]→[Decision]─→[Won]→[HC]→[PI]→[JMB]
+    //                                                    ↓
+    //                                              [Rejected]→[Justify]
+
+    const mainFlow = ['Prospecting','Quoting','Comparative','Appointment','Decision'];
+    const wonPath  = ['Won','Hold Cover','Policy Issued','JMB Received Policy'];
+    const hasJustify = !!(rec['Reject Justify'] && rec['Reject Justify'].trim());
+
+    // pill helper
+    function mkPill(label, ind, active, done, faded, extraStyle){
+      const p = document.createElement('div');
+      let bg, border, color;
+      if(done)   { bg='rgba(16,185,129,.25)'; border='#10B981'; color='#34d399'; }
+      else if(active){ bg='rgba(239,68,68,.2)'; border='#EF4444'; color='#fc8181'; }
+      else       { bg='rgba(100,116,139,.08)'; border='var(--border)'; color='var(--text3)'; }
+      p.style.cssText = 'font-size:9.5px;flex:1;text-align:center;padding:5px 3px;border-radius:6px;cursor:default;'
+        +'background:'+bg+';border:1px solid '+border+';color:'+color+';'
+        +(faded?'opacity:0.25;':'')+(extraStyle||'');
+      p.innerHTML = '<div style="font-weight:600;font-size:9px;">'+label+'</div>'
+        +'<div style="font-size:8px;margin-top:1px;">'+(done?'✓':active?'◉ NOW':'—')+'</div>';
+      return p;
+    }
+    function mkArr(txt){ const a=document.createElement('div'); a.style.cssText='font-size:11px;color:#64748b;align-self:center;flex-shrink:0;padding:0 1px;'; a.textContent=txt||'→'; return a; }
+
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
 
-    // Row 1: Main flow
-    const row1 = document.createElement('div');
-    row1.style.cssText = 'display:flex;align-items:center;gap:0;flex-wrap:nowrap;';
-
-    stageOrder.forEach((stage, i) => {
-      const isCurrent = i === curIdx;
-      const isDone = curIdx > i && !isRejected;
-      const isBlurred = isRejected && i > 4; // after Decision, blur Won path if rejected
-
-      let bg, border, color, indicator;
-      if (isDone) {
-        bg = 'rgba(16,185,129,.25)'; border = '#10B981'; color = '#34d399';
-        indicator = '<div style="font-size:9px;font-weight:700;margin-top:2px;">✓</div>';
-      } else if (isCurrent && !isRejected) {
-        bg = 'rgba(239,68,68,.25)'; border = '#EF4444'; color = '#fc8181';
-        indicator = '<div style="font-size:9px;font-weight:700;margin-top:2px;">◉ NOW</div>';
-      } else {
-        bg = 'rgba(100,116,139,.08)'; border = 'var(--border)'; color = 'var(--text3)';
-        indicator = '<div style="font-size:9px;margin-top:2px;">—</div>';
-      }
-
-      const pill = document.createElement('div');
-      pill.className = 'ci-stage-pill';
-      pill.style.cssText = [
-        'min-width:68px', 'font-size:9.5px', 'flex:1', 'cursor:default',
-        'background:' + bg, 'border:1px solid ' + border, 'color:' + color,
-        isBlurred ? 'opacity:0.2;filter:grayscale(1);' : '',
-      ].filter(Boolean).join(';');
-      pill.innerHTML = '<div style="font-weight:600;">' + stage + '</div>' + indicator;
-      row1.appendChild(pill);
-
-      if (i < stageOrder.length - 1) {
-        const a = document.createElement('div');
-        a.className = 'ci-arrow'; a.style.cssText = 'font-size:12px;align-self:center;flex-shrink:0;';
-        a.textContent = '→'; row1.appendChild(a);
-      }
+    // LEFT COLUMN: Pros→Quot→Comp→Appt→Dec (tall, spans both rows)
+    const leftCol = document.createElement('div');
+    leftCol.style.cssText = 'display:flex;align-items:center;gap:0;flex-shrink:0;';
+    mainFlow.forEach((s,i)=>{
+      const cur = s.toLowerCase()===curStage.toLowerCase() && !isRejected;
+      const done = curIdx > i;
+      const p = mkPill(s,'',cur,done,false,'height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;');
+      leftCol.appendChild(p);
+      leftCol.appendChild(mkArr());
     });
-    wrap.appendChild(row1);
+    wrap.appendChild(leftCol);
 
-    // Row 2: Reject branch
+    // RIGHT COLUMN: Won path (top) + Rejected/Justify (bottom)
+    const rightCol = document.createElement('div');
+    rightCol.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;';
+
+    // Top row: Won→HC→PI→JMB
+    const topRow = document.createElement('div');
+    topRow.style.cssText = 'display:flex;align-items:stretch;gap:0;flex:1;';
+    wonPath.forEach((ws,wi)=>{
+      const curW = ws.toLowerCase()===curStage.toLowerCase() && !isRejected;
+      const doneW = wonPath.findIndex(w=>w.toLowerCase()===curStage.toLowerCase())>wi && !isRejected;
+      topRow.appendChild(mkPill(ws,'',curW,doneW,isRejected));
+      if(wi<wonPath.length-1) topRow.appendChild(mkArr());
+    });
+    rightCol.appendChild(topRow);
+
+    // Bottom row: Rejected (under Won+HC) + gap + Justify (under PI+JMB)
+    const botRow = document.createElement('div');
+    botRow.style.cssText = 'display:flex;align-items:stretch;gap:0;flex:1;'+(isRejected?'':'opacity:0.3;');
+    const rp=document.createElement('div');
+    rp.style.cssText='font-size:9.5px;flex:1;text-align:center;padding:5px 3px;border-radius:6px;cursor:default;'
+      +(isRejected?'background:rgba(239,68,68,.25);border:1px solid #EF4444;color:#fc8181;':'background:rgba(100,116,139,.08);border:1px solid var(--border);color:var(--text3);');
+    rp.innerHTML='<div style="font-weight:600;font-size:9px;">Rejected</div><div style="font-size:8px;margin-top:1px;">'+(isRejected?'◉ NOW':'—')+'</div>';
+    botRow.appendChild(rp);
+    // Gap same width as arrow between HC and PI
+    const midGap=document.createElement('div'); midGap.style.cssText='width:13px;flex-shrink:0;'; botRow.appendChild(midGap);
+    const jp=document.createElement('div');
+    jp.style.cssText='font-size:9.5px;flex:1;text-align:center;padding:5px 3px;border-radius:6px;cursor:default;'
+      +(hasJustify&&isRejected?'background:rgba(16,185,129,.2);border:1px solid #10B981;color:#34d399;':'background:rgba(100,116,139,.08);border:1px solid var(--border);color:var(--text3);');
+    jp.innerHTML='<div style="font-weight:600;font-size:9px;">📝 Justify</div><div style="font-size:8px;margin-top:1px;">'+(hasJustify&&isRejected?'✓ filled':'pending')+'</div>';
+    botRow.appendChild(jp);
+    rightCol.appendChild(botRow);
+
+    wrap.appendChild(rightCol);
     const row2 = document.createElement('div');
-    row2.style.cssText = 'display:flex;align-items:center;gap:4px;';
-    const branchLbl = document.createElement('div');
-    branchLbl.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;margin-right:4px;';
-    branchLbl.textContent = 'Decision ↘';
-    row2.appendChild(branchLbl);
-
-    const rejBg = isRejected ? 'rgba(239,68,68,.25)' : 'rgba(100,116,139,.08)';
-    const rejBorder = isRejected ? '#EF4444' : 'var(--border)';
-    const rejColor = isRejected ? '#fc8181' : 'var(--text3)';
-    const rejPill = document.createElement('div');
-    rejPill.className = 'ci-stage-pill';
-    rejPill.style.cssText = [
-      'min-width:80px', 'font-size:9.5px', 'cursor:default',
-      'background:' + rejBg, 'border:1px solid ' + rejBorder, 'color:' + rejColor,
-      !isRejected ? 'opacity:0.2;filter:grayscale(1);' : '',
-    ].filter(Boolean).join(';');
-    rejPill.innerHTML = '<div style="font-weight:600;">Rejected</div>' +
-      (isRejected ? '<div style="font-size:9px;font-weight:700;margin-top:2px;">◉ NOW</div>' : '<div style="font-size:9px;margin-top:2px;">—</div>');
-    row2.appendChild(rejPill);
-
-    // Justify pill
-    const a3 = document.createElement('div'); a3.className='ci-arrow'; a3.style.fontSize='12px'; a3.textContent='→';
-    row2.appendChild(a3);
-    const hasJustify = !!(rec['Reject Justify'] && rec['Reject Justify'].trim());
-    const jPill = document.createElement('div');
-    jPill.className = 'ci-stage-pill';
-    jPill.style.cssText = [
-      'min-width:80px', 'font-size:9.5px', 'cursor:default',
-      hasJustify ? 'background:rgba(16,185,129,.2);border:1px solid #10B981;color:#34d399;' : 'background:rgba(100,116,139,.08);border:1px solid var(--border);color:var(--text3);',
-      !isRejected ? 'opacity:0.2;filter:grayscale(1);' : '',
-    ].filter(Boolean).join(';');
-    jPill.innerHTML = '<div style="font-weight:600;">📝 Justify</div>' +
-      '<div style="font-size:9px;margin-top:2px;">' + (hasJustify ? '✓ filled' : 'pending') + '</div>';
-    row2.appendChild(jPill);
-
-    wrap.appendChild(row2);
 
     // Principles progress (if in quoting+)
     if (curIdx >= 1) {
@@ -4314,13 +4699,62 @@ function renderProgStagePills() {
           const statusColor = p.status==='Received'?'#10B981':p.status==='Declined'?'#EF4444':'#F59E0B';
           const pp = document.createElement('div');
           pp.style.cssText = 'padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:' + statusColor + '22;border:1px solid ' + statusColor + ';color:' + statusColor + ';';
-          pp.textContent = p.prin + ' — ' + (p.status || 'Pending');
+          pp.textContent = p.prin + ' — ' + (p.status || 'Request');
           row3.appendChild(pp);
         });
         wrap.appendChild(row3);
       }
     }
 
+    // ── JMB INFO SECTION below stage tracker ──
+    const infoDiv = document.createElement('div');
+    infoDiv.style.cssText = 'margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;';
+
+    // Row: Name + Marketer + Expiry + Stage
+    const infoTop = document.createElement('div');
+    infoTop.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+    const mkLabel = (rec._marketer||'').toLowerCase()==='hazim'?'Hazim':(rec._marketer||'').toLowerCase()==='shahira'?'Shahira':'SBM';
+    const mkColor = (rec._marketer||'').toLowerCase()==='hazim'?'#60a5fa':(rec._marketer||'').toLowerCase()==='shahira'?'#34d399':'#a78bfa';
+    infoTop.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text);">'+(rec['JMB Name']||'')+'</div>'
+      +'<span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+mkColor+'22;border:1px solid '+mkColor+';color:'+mkColor+';">'+mkLabel+'</span>'
+      +(rec['Expiry Date']?'<span style="font-size:11px;color:var(--text3);">Exp: '+rec['Expiry Date']+'</span>':'')
+      +'<span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(100,116,139,.1);border:1px solid var(--border);color:var(--text2);">'+curStage+'</span>';
+    infoDiv.appendChild(infoTop);
+
+    // History timeline
+    if(rec._history && rec._history.length>0){
+      const histDiv = document.createElement('div');
+      histDiv.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
+      const histLbl = document.createElement('div'); histLbl.style.cssText='font-size:10px;color:var(--text3);margin-bottom:2px;'; histLbl.textContent='History:';
+      histDiv.appendChild(histLbl);
+      rec._history.slice().reverse().forEach((h,hi)=>{
+        const row = document.createElement('div');
+        row.style.cssText='display:flex;justify-content:space-between;font-size:11px;padding:3px 8px;border-radius:5px;'+(hi===0?'background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);':'background:var(--card2);');
+        const stageSpan = document.createElement('span'); stageSpan.style.cssText='color:var(--text);font-weight:600;'; stageSpan.textContent=h.stage+(h.justify?' — 📝 '+h.justify:'');
+        const timeSpan = document.createElement('span'); timeSpan.style.cssText='color:var(--text3);font-size:10px;'; timeSpan.textContent=new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true});
+        row.appendChild(stageSpan); row.appendChild(timeSpan);
+        histDiv.appendChild(row);
+      });
+      infoDiv.appendChild(histDiv);
+    }
+
+    // Admin buttons
+    if(typeof isAdmin==='function' && isAdmin()){
+      const btnRow = document.createElement('div');
+      btnRow.style.cssText='display:flex;gap:6px;padding-top:4px;';
+      const editBtn=document.createElement('button');
+      editBtn.style.cssText='padding:5px 12px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;';
+      editBtn.innerHTML='✏️ Edit';
+      editBtn.onclick=()=>openEditProgress(rec['JMB Name']);
+      const delBtn=document.createElement('button');
+      delBtn.style.cssText='padding:5px 12px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;';
+      delBtn.innerHTML='🗑️ Delete';
+      delBtn.onclick=()=>deleteProgressEntry(rec['JMB Name']);
+      btnRow.appendChild(editBtn); btnRow.appendChild(delBtn);
+      infoDiv.appendChild(btnRow);
+    }
+
+    wrap.appendChild(infoDiv);
     bar.appendChild(wrap);
 
   } else {
@@ -4584,16 +5018,10 @@ function openGlobalCreate() {
     }
   });
 
-  // Populate all JMB dropdowns
-  populateJMBSelect('gcm-p-jmb', 'all');
-  populateJMBSelect('gcm-s-jmb', 'all');
-  populateJMBSelect('gcm-ci-jmb', 'all');
-  populateJMBSelect('gcm-py-jmb', 'all');
-  populateJMBSelect('gcm-py-update-jmb', 'all');
-  populateJMBSelect('gcm-st-jmb', 'all');
-  populateJMBSelect('gcm-st-update-jmb', 'all');
+  // 1. Reset form first (clears all fields)
+  resetGlobalForm();
 
-  // Auto-fill CI Case ID
+  // 2. Auto-fill CI Case ID
   const cases = getCICases ? getCICases() : [];
   const nextNum = cases.length > 0 
     ? String(Math.max(...cases.map(c => parseInt((c.id||'CI-000').split('-')[1])||0)) + 1).padStart(3,'0')
@@ -4601,24 +5029,124 @@ function openGlobalCreate() {
   const ciIdEl = document.getElementById('gcm-ci-id');
   if (ciIdEl) ciIdEl.value = 'CI-' + nextNum;
 
-  // Set today's date defaults
+  // 3. Set today's date defaults
   const today = new Date().toISOString().split('T')[0];
-  ['gcm-ci-date','gcm-ci-u-date','gcm-u-stagedate'].forEach(id => {
+  ['gcm-ci-date','gcm-ci-u-date','gcm-u-stagedate','gcm-p-stagedate'].forEach(id => {
     const el = document.getElementById(id);
-    if (el && !el.value) el.value = today;
+    if (el) el.value = today;
   });
+  const hcEl = document.getElementById('gcm-s-month');
+  if(hcEl) hcEl.value = today;
 
+  // 4. Set marketer
   gcmSetMarketer();
+
+  // 5. Switch tab
   switchGCMTab(tab);
 
+  // 6. Show modal
   document.getElementById('globalCreateModal').classList.add('show');
   updateGCMPayChecks();
   if (typeof updateGCMSettleChecks === 'function') updateGCMSettleChecks();
 
+  // 7. Populate JMB dropdowns AFTER reset (so they don't get wiped)
   setTimeout(() => {
     populateJMBSelect('gcm-p-jmb', 'all');
+    populateJMBSelect('gcm-ci-jmb', 'all');
+    populateJMBSelect('gcm-py-jmb', 'all');
+    populateJMBSelect('gcm-py-update-jmb', 'all');
+    populateJMBSelect('gcm-st-jmb', 'all');
+    populateJMBSelect('gcm-st-update-jmb', 'all');
     if (typeof populateProgFilterMonths === 'function') populateProgFilterMonths();
-  }, 80);
+    // Auto-populate sales JMB for marketer users
+    const users = getUsers();
+    if(cu && users[cu] && users[cu].role === 'marketer') {
+      const mkSel = document.getElementById('gcm-s-mk');
+      if(mkSel) { mkSel.value = cu; mkSel.disabled = true; }
+      filterSalesJMB();
+    }
+  }, 50);
+}
+
+function resetGlobalForm() {
+  // Clear progress filter pills
+  const pfMk = document.getElementById('pf-marketer');
+  if(pfMk) pfMk.selectedIndex = 0;
+  const pfMo = document.getElementById('pf-month');
+  if(pfMo) pfMo.selectedIndex = 0;
+  const pfCount = document.getElementById('pf-count');
+  if(pfCount) pfCount.textContent = 'Showing all expiring JMB';
+  const progSearch = document.getElementById('progSearch');
+  if(progSearch) progSearch.value = '';
+  // Clear text inputs
+  ['gcm-p-stagedate','gcm-p-expiry','gcm-u-stagedate','gcm-ci-date',
+   'gcm-ci-u-date','gcm-py-prem','gcm-st-prem'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type==='date') el.value = new Date().toISOString().split('T')[0];
+    else el.value = '';
+  });
+  // Set year fields
+  ['gcm-s-year','gcm-py-year'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='2026';});
+  // Set date of hold cover to today
+  const hc = document.getElementById('gcm-s-month');
+  if(hc) hc.value = new Date().toISOString().split('T')[0];
+  // Reset selects to first option
+  ['gcm-p-stage','gcm-u-stage','gcm-p-mk',
+   'gcm-p-prin1','gcm-p-prin2','gcm-p-prin3','gcm-p-prin4',
+   'gcm-p-p1status','gcm-p-p2status','gcm-p-p3status','gcm-p-p4status',
+   'gcm-u-prin1','gcm-u-prin2','gcm-u-prin3','gcm-u-prin4',
+   'gcm-u-p1status','gcm-u-p2status','gcm-u-p3status','gcm-u-p4status',
+   'gcm-ci-stage','gcm-ci-status','gcm-ci-staff',
+   'gcm-py-plan','gcm-py-mk','gcm-st-plan','gcm-st-mk',
+   'gcm-s-casetype','gcm-s-prin','gcm-s-pay'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.selectedIndex = 0;
+  });
+  // Clear textareas
+  ['gcm-p-justify','gcm-u-justify'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.readOnly=false;el.style.opacity='1';el.style.cursor='';}});
+  // Reset JMB dropdowns
+  ['gcm-p-jmb','gcm-u-jmb','gcm-s-jmb','gcm-ci-jmb',
+   'gcm-py-jmb','gcm-py-update-jmb','gcm-st-jmb','gcm-st-update-jmb'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML='<option value="">-- Select JMB --</option>';
+  });
+  // Reset marketer for sales - clear selection so user picks fresh
+  const sMk = document.getElementById('gcm-s-mk');
+  if(sMk && !sMk.disabled) sMk.selectedIndex = 0;
+  // Also reset sales JMB dropdown
+  const sJmb = document.getElementById('gcm-s-jmb');
+  if(sJmb) sJmb.innerHTML = '<option value="">-- Select Marketer First --</option>';
+  // Hide banners and clear their content
+  ['gcm-p-lastupdate','gcm-p-notice','gcm-u-current','gcm-ci-current',
+   'gcm-py-current','gcm-st-current','gcm-st-update-fields','gcm-u-nomatch',
+   'gcm-p-prin-section','gcm-p-reject-box','gcm-u-prin-section','gcm-u-reject-box',
+   'gcm-sync-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+
+  // Clear current record display spans
+  ['gcm-u-cur-stage','gcm-u-cur-date','gcm-u-cur-mk','gcm-u-cur-updated',
+   'gcm-ci-cur-jmb','gcm-ci-cur-stage','gcm-ci-cur-status','gcm-ci-cur-date',
+   'gcm-py-cur-plan','gcm-py-cur-prem','gcm-py-cur-prin','gcm-py-cur-mk',
+   'gcm-st-cur-plan','gcm-st-cur-prem','gcm-st-cur-prin','gcm-st-cur-status'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
+
+  // Clear checkbox containers
+  ['gcm-py-cur-checks','gcm-py-update-checks','gcm-st-cur-checks','gcm-st-update-checks',
+   'gcm-py-checks','gcm-st-checks'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML='';
+  });
+
+  // Reset mode toggles back to 'new'
+  ['prog','ci','pay','settle'].forEach(prefix=>{
+    const newBtn=document.getElementById(prefix===('pay')?'pay-mode-new':prefix+'-mode-new');
+    const updBtn=document.getElementById(prefix===('pay')?'pay-mode-update':prefix+'-mode-update');
+    const newPanel=document.getElementById(prefix===('pay')?'pay-panel-new':prefix+'-panel-new');
+    const updPanel=document.getElementById(prefix===('pay')?'pay-panel-update':prefix+'-panel-update');
+    if(newBtn) newBtn.classList.add('active');
+    if(updBtn) updBtn.classList.remove('active');
+    if(newPanel) newPanel.style.display='';
+    if(updPanel) updPanel.style.display='none';
+  });
 }
 
 function closeGlobalCreate() {
@@ -4700,8 +5228,10 @@ function saveGlobalCase() {
       const jmb = document.getElementById('gcm-s-jmb').value.trim();
       if (!jmb) { alert('JMB Name wajib diisi'); btn.textContent = '💾 Save Case'; btn.disabled = false; return; }
       const mk = document.getElementById('gcm-s-mk').value;
-      const mi = parseInt(document.getElementById('gcm-s-month').value);
-      const year = parseInt(document.getElementById('gcm-s-year').value);
+      const holdDate = document.getElementById('gcm-s-month').value || new Date().toISOString().split('T')[0];
+      const holdDateObj = new Date(holdDate);
+      const mi = holdDateObj.getMonth();
+      const year = holdDateObj.getFullYear();
       const caseType = document.getElementById('gcm-s-casetype').value;
       const prin = document.getElementById('gcm-s-prin').value;
       const premTax = parseFloat(document.getElementById('gcm-s-prem').value) || 0;
@@ -4730,7 +5260,7 @@ function saveGlobalCase() {
       syncToGSheet('sales', sheetRow).then(ok => {
         showGCMSync(ok ? '✓ Saved locally & synced to GSheet!' : '✓ Saved locally — GSheet sync failed (check Apps Script)', ok);
       });
-      renderDash(); renderLb();
+      renderDash(); renderLb(); renderSalesTable();
       showGCMSync('✓ Saved locally, syncing to GSheet...', true);
 
     } else if (gcmCurrentTab === 'progress') {
@@ -4770,7 +5300,7 @@ function saveGlobalCase() {
         showGCMSync(ok ? '✓ Saved locally & synced to GSheet!' : '✓ Saved locally — GSheet sync failed', ok);
       });
       if(typeof markJMBAware==='function') markJMBAware(jmb);
-      updateProgStats(); renderProgCards(); renderProgStagePills();
+      updateProgStats(); renderProgCards(); if(typeof renderWonRejList==='function') renderWonRejList(); renderProgStagePills();
       if(typeof renderExpiringJmb==='function') renderExpiringJmb();
       if(typeof renderMasterJmb==='function') renderMasterJmb();
       showGCMSync('✓ Saved! JMB marked as handled.', true);
@@ -4831,6 +5361,8 @@ function saveGlobalCase() {
   }
   btn.textContent = '💾 Save Case';
   btn.disabled = false;
+  // Auto close modal after successful save
+  setTimeout(function(){ closeGlobalCreate(); }, 1200);
 }
 
 // Load locally saved cases into memory on startup
@@ -4924,9 +5456,9 @@ const CI_STAGE_ORDER = [
         <div class="field"><label>Expiry Date</label><input type="date" id="gcm-p-expiry"></div>
         <div class="field"><label>Year</label><input type="number" id="gcm-p-year" value="2026" min="2020" max="2035"></div>
         <div class="field"><label>Principle 1</label><select id="gcm-p-prin1"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+        <div class="field"><label>P1 Quote Status</label><select id="gcm-p-p1status"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
         <div class="field"><label>Principle 2</label><select id="gcm-p-prin2"><option value="">None</option><option>Etiqa</option><option>STM</option><option>Zurich</option><option>Tokio Marine</option><option>MPI</option><option>Allianz</option></select></div>
-        <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status"><option value="">-</option><option>Pending</option><option>Received</option><option>Declined</option></select></div>
+        <div class="field"><label>P2 Quote Status</label><select id="gcm-p-p2status"><option value="">-</option><option>Request</option><option>Received</option><option>Declined</option></select></div>
       </div>
     </div>
 
