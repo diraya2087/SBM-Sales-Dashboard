@@ -1578,7 +1578,25 @@ function renderProgCards(){
     if(stageDate){const sd=new Date(stageDate);if(!isNaN(sd)){const diff=Math.floor((new Date()-sd)/(1000*60*60*24));if(diff>=0)stageDays=`${diff} days in this stage`;}}
     const prins=[[r['Principle 1']||'',r['P1 Quote Status']||''],[r['Principle 2']||'',r['P2 Quote Status']||''],[r['Principle 3']||'',r['P3 Quote Status']||''],[r['Principle 4']||'',r['P4 Quote Status']||'']].filter(([p])=>p);
     const prinsHTML=prins.length?prins.map(([p,s])=>`<span class="prin-pill ${prinClass(p)}">${p}${quoteIcon(s)}</span>`).join(''):`<span class="prin-pill empty">No quote requested</span>`;
-    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>`<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${h.stage}${h.justify?' — 📝 '+h.justify:''}</span><span class="jcard-hist-time">${new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div>`).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
+    return `<div class="jmb-card"><div class="jcard-top"><div class="jcard-left"><div class="jcard-name">${name}</div><div class="jcard-meta"><span class="mk-tag ${mk}">${mk.charAt(0).toUpperCase()+mk.slice(1)}</span>${expiryStr?`<span class="exp-txt">Exp: ${expiryStr}</span>`:''}</div></div>${cdHTML}</div><div class="jcard-div"></div><div class="jcard-stage"><div class="stage-name"><div class="stage-dot" style="background:${dotColor};box-shadow:0 0 6px ${dotColor}66;"></div>${stage}</div>${stageDays?`<span class="stage-days">${stageDays}</span>`:''}</div><div class="jcard-history">${(r._history&&r._history.length>0)?r._history.slice().reverse().map((h,hi)=>{
+        const extras=[];
+        if(h.status)extras.push('📋 '+h.status);
+        if(h.apptDate)extras.push('📅 Appt: '+h.apptDate);
+        if(h.decisionDate)extras.push('📅 Date: '+h.decisionDate);
+        const extraStr=extras.length?' — '+extras.join(' · '):'';
+        const timeStr=new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true});
+        const quoteDetails=[];
+        ['1','2','3','4'].forEach(n=>{
+          const p=h['p'+n],ps=h['p'+n+'s'],pp=h['p'+n+'_prev'];
+          if(p&&ps){
+            const tag=pp!==undefined&&pp!==ps?(pp?pp+'→'+ps:ps):ps;
+            quoteDetails.push(p+': '+tag);
+          }
+        });
+        const hasQuote=quoteDetails.length>0;
+        const stageLabel=h.isUpdate&&hasQuote?'✏️ Update Quote ['+quoteDetails.join(' | ')+']':h.stage;
+        return `<div class="jcard-hist-row${hi===0?' jcard-hist-current':''}"><span class="jcard-hist-stage">${stageLabel}${h.justify?' — 📝 '+h.justify:''}${extraStr}</span><span class="jcard-hist-time">${timeStr}</span></div>`;
+      }).join(''):stageDate?`<div class="jcard-hist-row jcard-hist-current"><span class="jcard-hist-stage">${stage}</span><span class="jcard-hist-time">${stageDate}</span></div>`:''}</div><div class="jcard-div"></div><div class="jcard-prins">${prinsHTML}</div>
     ${isAdmin()?`<div style="display:flex;gap:6px;padding:8px 16px;border-top:1px solid var(--border);">
       <button onclick="openEditProgress('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;">✏️ Edit</button>
       <button onclick="deleteProgressEntry('${name}')" style="padding:5px 10px;font-size:11px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;">🗑️ Delete</button>
@@ -2888,11 +2906,40 @@ function saveUpdateStage() {
   const idx = progData.findIndex(r => r['JMB Name'] === jmb);
   const now = new Date().toISOString();
   // Build history entry
+  // Get existing record first so we can compare changes
+  let existingRec = idx >= 0 ? progData[idx] : null;
+  if (!existingRec || !existingRec._history) {
+    try {
+      const lsData = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
+      const lsRec = lsData.find(r => r['JMB Name'] === jmb);
+      if (lsRec) existingRec = lsRec;
+    } catch(e) {}
+  }
+  existingRec = existingRec || {};
+
+  // Only record principles that CHANGED vs previous
+  const prevRec = existingRec;
+  const changedPrins = {};
+  ['1','2','3','4'].forEach(n=>{
+    const newP = el('gcm-u-prin'+n)?.value||'';
+    const newS = el('gcm-u-p'+n+'status')?.value||'';
+    const oldP = prevRec['Principle '+n]||'';
+    const oldS = prevRec['P'+n+' Quote Status']||'';
+    if(newP && (newP!==oldP || newS!==oldS)){
+      changedPrins['p'+n] = newP;
+      changedPrins['p'+n+'s'] = newS;
+      changedPrins['p'+n+'_prev'] = oldS; // previous status for reference
+    }
+  });
+
   const histEntry = {
     stage: newStage,
     date: newDate,
     ts: now,
+    isUpdate: true,
     justify: newStage === 'Rejected' ? (el('gcm-u-justify')?.value||'') : '',
+    ...changedPrins,
+    // Keep full set for record update (not history display)
     p1: el('gcm-u-prin1')?.value || '',
     p1s: el('gcm-u-p1status')?.value || '',
     p2: el('gcm-u-prin2')?.value || '',
@@ -2903,16 +2950,6 @@ function saveUpdateStage() {
     p4s: el('gcm-u-p4status')?.value || '',
   };
 
-  // Get existing record to append history (check both progData and localStorage)
-  let existingRec = idx >= 0 ? progData[idx] : null;
-  if (!existingRec || !existingRec._history) {
-    try {
-      const lsData = JSON.parse(localStorage.getItem('sd_gcm_prog_v1') || '[]');
-      const lsRec = lsData.find(r => r['JMB Name'] === jmb);
-      if (lsRec) existingRec = lsRec;
-    } catch(e) {}
-  }
-  existingRec = existingRec || {};
   const history = [...(existingRec._history || []), histEntry];
 
   const update = {
@@ -2926,7 +2963,7 @@ function saveUpdateStage() {
     'P3 Quote Status': histEntry.p3s,
     'Principle 4': histEntry.p4,
     'P4 Quote Status': histEntry.p4s,
-    'Reject Justify': newStage === 'Rejected' ? (existing && existing['Reject Justify'] ? existing['Reject Justify'] : (el('gcm-u-justify')?.value||'')) : (existing && existing['Reject Justify'] ? existing['Reject Justify'] : ''),
+    'Reject Justify': newStage === 'Rejected' ? (existingRec && existingRec['Reject Justify'] ? existingRec['Reject Justify'] : (el('gcm-u-justify')?.value||'')) : (existingRec && existingRec['Reject Justify'] ? existingRec['Reject Justify'] : ''),
     '_lastUpdated': now,
     '_history': history,
   };
@@ -3957,6 +3994,42 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
           </div>
         </div>
 
+        <!-- STATUS section: Comparative/Hold Cover/Policy Issued/JMB Received -->
+        <div id="gcm-p-status-section" style="display:none;margin-top:8px;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Status</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Status</label>
+              <select id="gcm-p-status" style="width:100%;">
+                <option value="Pending">Pending</option>
+                <option value="Sending">Sending</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPOINTMENT DATE section -->
+        <div id="gcm-p-appt-section" style="display:none;margin-top:8px;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Appointment Details</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Appointment Date</label>
+              <input type="date" id="gcm-p-apptdate" style="width:100%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- DECISION / WON DATE section -->
+        <div id="gcm-p-decision-section" style="display:none;margin-top:8px;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Decision / Won Details</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Date</label>
+              <input type="date" id="gcm-p-decisiondate" style="width:100%;">
+            </div>
+          </div>
+        </div>
+
         <div id="gcm-p-reject-box" style="display:none;margin-top:4px;">
           <div class="field"><label>🚫 Rejection Justification</label><textarea id="gcm-p-justify" rows="3" placeholder="Reason rejected by JMB / Principal..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea></div>
         </div>
@@ -4774,7 +4847,22 @@ function renderProgStagePills() {
       rec._history.slice().reverse().forEach((h,hi)=>{
         const row = document.createElement('div');
         row.style.cssText='display:flex;justify-content:space-between;font-size:11px;padding:3px 8px;border-radius:5px;'+(hi===0?'background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);':'background:var(--card2);');
-        const stageSpan = document.createElement('span'); stageSpan.style.cssText='color:var(--text);font-weight:600;'; stageSpan.textContent=h.stage+(h.justify?' — 📝 '+h.justify:'');
+        const stageSpan = document.createElement('span'); stageSpan.style.cssText='color:var(--text);font-weight:600;'; const _extras=[];
+        if(h.status)_extras.push('📋 '+h.status);
+        if(h.apptDate)_extras.push('📅 Appt: '+h.apptDate);
+        if(h.decisionDate)_extras.push('📅 Date: '+h.decisionDate);
+        const _qd=[];
+        ['1','2','3','4'].forEach(n=>{
+          const p=h['p'+n],ps=h['p'+n+'s'],pp=h['p'+n+'_prev'];
+          if(p&&ps){
+            const changed=pp!==undefined&&pp!==ps;
+            const tag=changed?(pp?pp+'→'+ps:ps):ps;
+            _qd.push(p+': '+tag);
+          }
+        });
+        const _hasQuote=_qd.length>0;
+        const _stageLabel=h.isUpdate&&_hasQuote?'✏️ Update Quote ['+_qd.join(' | ')+']':h.stage;
+        stageSpan.textContent=_stageLabel+(h.justify?' — 📝 '+h.justify:'')+(  _extras.length?' — '+_extras.join(' · '):'');
         const timeSpan = document.createElement('span'); timeSpan.style.cssText='color:var(--text3);font-size:10px;'; timeSpan.textContent=new Date(h.ts).toLocaleString('en-MY',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true});
         row.appendChild(stageSpan); row.appendChild(timeSpan);
         histDiv.appendChild(row);
@@ -4942,19 +5030,45 @@ function updateNewCaseBtn() {
 // Auto-set stage date when stage changes
 function gcmProgSetStageDate() {
   const sd = document.getElementById('gcm-p-stagedate');
-  if (sd) sd.value = new Date().toISOString().split('T')[0];
+  if(sd) sd.value = new Date().toISOString().split('T')[0];
+  // Clear optional date fields when stage changes
+  const apptDate = document.getElementById('gcm-p-apptdate');
+  if(apptDate) apptDate.value = '';
+  const decDate = document.getElementById('gcm-p-decisiondate');
+  if(decDate) decDate.value = '';
 }
 
 // Show/hide principle section based on stage
 function gcmTogglePrinciples() {
   const stage = document.getElementById('gcm-p-stage')?.value || '';
+
+  // Principles section — Quoting only
   const prinSection = document.getElementById('gcm-p-prin-section');
-  // Only show principles for Quoting and Comparative
-  const quotingStages = ['Quoting','Comparative'];
-  const show = quotingStages.includes(stage);
-  if (prinSection) {
-    prinSection.style.display = show ? '' : 'none';
-    prinSection.style.opacity = show ? '1' : '0.4';
+  if(prinSection) prinSection.style.display = stage==='Quoting' ? '' : 'none';
+
+  // Status section — Comparative, Hold Cover, Policy Issued, JMB Received Policy
+  const statusSection = document.getElementById('gcm-p-status-section');
+  const statusStages = ['Comparative','Hold Cover','Policy Issued','JMB Received Policy'];
+  if(statusSection) statusSection.style.display = statusStages.includes(stage) ? '' : 'none';
+
+  // Appointment date section — Appointment
+  const apptSection = document.getElementById('gcm-p-appt-section');
+  if(apptSection) {
+    apptSection.style.display = stage==='Appointment' ? '' : 'none';
+    if(stage==='Appointment') {
+      const apptDate = document.getElementById('gcm-p-apptdate');
+      if(apptDate && !apptDate.value) apptDate.value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  // Decision / Won date section — Decision, Won
+  const decSection = document.getElementById('gcm-p-decision-section');
+  if(decSection) {
+    decSection.style.display = (stage==='Decision'||stage==='Won') ? '' : 'none';
+    if(stage==='Decision'||stage==='Won') {
+      const decDate = document.getElementById('gcm-p-decisiondate');
+      if(decDate && !decDate.value) decDate.value = new Date().toISOString().split('T')[0];
+    }
   }
 }
 
@@ -5326,8 +5440,25 @@ function saveGlobalCase() {
         'Principle 4': document.getElementById('gcm-p-prin4')?.value || '',
         'P4 Quote Status': document.getElementById('gcm-p-p4status')?.value || '',
         'Reject Justify': stage==='Rejected' ? (document.getElementById('gcm-p-justify')?.value||'') : '',
+        'Status': document.getElementById('gcm-p-status')?.value||'',
+        'Appt Date': document.getElementById('gcm-p-apptdate')?.value||'',
+        'Decision Date': document.getElementById('gcm-p-decisiondate')?.value||'',
         '_lastUpdated': new Date().toISOString(),
-        '_history': [{ stage: stage, date: document.getElementById('gcm-p-stagedate').value || new Date().toISOString().split('T')[0], ts: new Date().toISOString() }],
+        '_history': [(()=>{
+        const _s=stage, _d=document.getElementById('gcm-p-stagedate')?.value||new Date().toISOString().split('T')[0];
+        const _h={stage:_s,date:_d,ts:new Date().toISOString(),isUpdate:false,
+          status:document.getElementById('gcm-p-status')?.value||'',
+          apptDate:document.getElementById('gcm-p-apptdate')?.value||'',
+          decisionDate:document.getElementById('gcm-p-decisiondate')?.value||''};
+        const _prins=[
+          {p:document.getElementById('gcm-p-prin1')?.value||'',ps:document.getElementById('gcm-p-p1status')?.value||'',n:'1'},
+          {p:document.getElementById('gcm-p-prin2')?.value||'',ps:document.getElementById('gcm-p-p2status')?.value||'',n:'2'},
+          {p:document.getElementById('gcm-p-prin3')?.value||'',ps:document.getElementById('gcm-p-p3status')?.value||'',n:'3'},
+          {p:document.getElementById('gcm-p-prin4')?.value||'',ps:document.getElementById('gcm-p-p4status')?.value||'',n:'4'},
+        ];
+        _prins.forEach(x=>{if(x.p&&x.ps){_h['p'+x.n]=x.p;_h['p'+x.n+'s']=x.ps;}});
+        return _h;
+      })()],
         year: new Date().getFullYear(),
       };
       // Upsert: update existing JMB record, don't create duplicate
