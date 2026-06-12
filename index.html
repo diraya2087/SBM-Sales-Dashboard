@@ -498,6 +498,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <button class="nav-btn" id="tnav-dashboard" onclick="go('dashboard')">📊 Sales</button>
       <button class="nav-btn" id="tnav-leaderboard" onclick="go('leaderboard')">🏆 Leaderboard</button>
       <button class="nav-btn" id="tnav-ciamend" onclick="go('ciamend')">📝 CI Amendment</button>
+      <button class="nav-btn" id="tnav-jmbclaim" onclick="go('jmbclaim')">📋 JMB Claim</button>
       <button class="nav-btn" id="tnav-transactions" onclick="go('transactions')">💳 Payment</button>
       <button class="nav-btn" id="tnav-settlement" onclick="go('settlement')" style="display:none;">💰 Settlement</button>
       <button class="nav-btn" id="tnav-setup" onclick="go('setup')" style="display:none;">⚙️ Setup</button>
@@ -765,6 +766,141 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
   <div class="card-full">
     <div class="ct" style="margin-bottom:12px;">📊 Monthly Performance Table</div>
     <div style="overflow-x:auto;"><table class="dt" id="lbMonthTbl"></table></div>
+  </div>
+</div>
+
+<!-- JMB CLAIM -->
+<div class="screen" id="screen-jmbclaim">
+  <div class="ph">
+    <div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">JMB CLAIM TRACKING</div>
+      <h1>📋 JMB Claim</h1>
+      <p>Claim submission & status tracking</p>
+    </div>
+    <div class="ph-ctrl">
+      <button class="btn btn-primary" onclick="openJMBClaimModal()">+ New Claim</button>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">TOTAL CLAIMS</div>
+      <div style="font-size:32px;font-weight:700;color:#f1f5f9;line-height:1;" id="jmbc-total">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onclick="filterJMBClaims('Pending')">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PENDING</div>
+      <div style="font-size:32px;font-weight:700;color:#F59E0B;line-height:1;" id="jmbc-pending">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#F59E0B;"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onclick="filterJMBClaims('Submitted')">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">SUBMITTED</div>
+      <div style="font-size:32px;font-weight:700;color:#3B82F6;line-height:1;" id="jmbc-submitted">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#3B82F6;"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;cursor:pointer;" onclick="filterJMBClaims('Approved')">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">APPROVED</div>
+      <div style="font-size:32px;font-weight:700;color:#10B981;line-height:1;" id="jmbc-approved">0</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:#10B981;"></div>
+    </div>
+  </div>
+
+  <!-- Stage Tracker -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto;">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Claim Stage Tracker</div>
+    <div style="display:flex;align-items:center;gap:0;min-width:600px;" id="jmbc-stage-bar"></div>
+  </div>
+
+  <!-- Search + Filter -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+    <input id="jmbc-search" type="text" placeholder="🔍 Search JMB..." onkeyup="renderJMBClaimTable()" style="flex:1;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;">
+    <select id="jmbc-filter-status" onchange="renderJMBClaimTable()" style="padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Submitted</option>
+      <option>Approved</option>
+      <option>Rejected</option>
+    </select>
+    <select id="jmbc-filter-mk" onchange="renderJMBClaimTable()" style="padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;">
+      <option value="">All Marketers</option>
+      <option value="hazim">Hazim</option>
+      <option value="shahira">Shahira</option>
+      <option value="admin">SBM</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="tcard">
+    <div style="overflow-x:auto;">
+      <table class="dt" id="jmbcTable">
+        <thead><tr>
+          <th>#</th><th>Claim ID</th><th>JMB Name</th><th>Marketer</th>
+          <th>Principle</th><th>Claim Type</th><th>Amount (RM)</th>
+          <th>Status</th><th>Days</th><th>Last Update</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="jmbcTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- JMB CLAIM MODAL -->
+<div class="modal" id="jmbcModal">
+  <div class="modal-card" style="max-width:500px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 id="jmbcModalTitle" style="margin:0;">New JMB Claim</h3>
+      <button onclick="closeJMBClaimModal()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:20px;">✕</button>
+    </div>
+    <input type="hidden" id="stcEditId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field" style="grid-column:1/-1;">
+        <label>JMB Name</label>
+        <select id="jmbcFormJMB" style="width:100%;"><option value="">-- Select JMB --</option></select>
+      </div>
+      <div class="field">
+        <label>Marketer</label>
+        <select id="jmbcFormMK" style="width:100%;">
+          <option value="hazim">Hazim</option>
+          <option value="shahira">Shahira</option>
+          <option value="admin">SBM</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Principle</label>
+        <select id="jmbcFormPrin" style="width:100%;">
+          <option>Etiqa</option><option>STM</option><option>Zurich</option>
+          <option>Tokio Marine</option><option>MPI</option><option>Allianz</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Claim Type</label>
+        <select id="jmbcFormType" style="width:100%;">
+          <option>Fire</option><option>Burglary</option><option>Public Liability</option>
+          <option>Machinery</option><option>Others</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Claim Amount (RM)</label>
+        <input type="number" id="jmbcFormAmount" placeholder="0.00" min="0" step="0.01" style="width:100%;">
+      </div>
+      <div class="field">
+        <label>Current Status</label>
+        <select id="jmbcFormStatus" style="width:100%;">
+          <option>Pending</option><option>Submitted</option>
+          <option>Approved</option><option>Rejected</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Remarks</label>
+        <textarea id="jmbcFormRemarks" rows="2" placeholder="Notes..." style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--card2);color:var(--text);outline:none;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeJMBClaimModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveJMBClaim()">💾 Save Claim</button>
+    </div>
   </div>
 </div>
 
@@ -3637,6 +3773,9 @@ function go(name){
     setTimeout(function(){if(typeof renderProgStagePills==='function')renderProgStagePills();},700);
   }
   if(name==='ciamend'){buildCIYearPills();renderCIAll();setTimeout(function(){const b=document.getElementById('ci-stage-bar');if(b&&typeof renderCIStagePills==='function'){b.innerHTML='';renderCIStagePills();}},50);}
+  if(name==='jmbclaim'){
+    renderJMBClaimKPI();renderJMBClaimTable();renderJMBCStagePills();
+  }
   if(name==='settlement'){
     // Reload payment/settlement data FRESH
     try{
@@ -3649,6 +3788,192 @@ function go(name){
   if(name==='setup'){renderSetup();renderUserList();}
   if(typeof updateNewCaseBtn==='function')updateNewCaseBtn();
 }
+
+// ── JMB CLAIM LOGIC ───────────────────────────────────────────────────────
+const JMBC_KEY = 'sd_jmbc_v1';
+
+function getJMBClaims(){ try{return JSON.parse(localStorage.getItem(JMBC_KEY)||'[]');}catch(e){return[];} }
+function saveJMBClaims(data){ localStorage.setItem(JMBC_KEY,JSON.stringify(data)); }
+
+function openJMBClaimModal(){
+  document.getElementById('jmbcModalTitle').textContent='New JMB Claim';
+  document.getElementById('stcEditId').value='';
+  document.getElementById('jmbcFormAmount').value='';
+  document.getElementById('jmbcFormRemarks').value='';
+  document.getElementById('jmbcFormStatus').value='Pending';
+  // Populate JMB from sales
+  const sel=document.getElementById('jmbcFormJMB');
+  sel.innerHTML='<option value="">-- Select JMB --</option>';
+  getSalesJMBList().forEach(name=>{
+    const opt=document.createElement('option');opt.value=name;opt.textContent=name;sel.appendChild(opt);
+  });
+  document.getElementById('jmbcModal').classList.add('show');
+}
+
+function closeJMBClaimModal(){ document.getElementById('jmbcModal').classList.remove('show'); }
+
+function saveJMBClaim(){
+  const jmb=document.getElementById('jmbcFormJMB').value;
+  if(!jmb){alert('Select JMB Name.');return;}
+  const now=new Date().toISOString();
+  const editId=document.getElementById('stcEditId').value;
+  const status=document.getElementById('jmbcFormStatus').value;
+  const entry={stage:status,date:now.split('T')[0],ts:now};
+  let claims=getJMBClaims();
+
+  if(editId){
+    const idx=claims.findIndex(r=>r.id===editId);
+    if(idx>=0){
+      const prev=claims[idx];
+      const changed=prev.status!==status;
+      const history=[...(prev._history||[]),...(changed?[entry]:[])];
+      claims[idx]={...prev,
+        mk:document.getElementById('jmbcFormMK').value,
+        prin:document.getElementById('jmbcFormPrin').value,
+        type:document.getElementById('jmbcFormType').value,
+        amount:parseFloat(document.getElementById('jmbcFormAmount').value)||0,
+        status,remarks:document.getElementById('jmbcFormRemarks').value,
+        _lastUpdated:now,_history:history};
+    }
+  } else {
+    const id='JMBC-'+String(claims.length+1).padStart(3,'0');
+    claims.push({id,jmb,
+      mk:document.getElementById('jmbcFormMK').value,
+      prin:document.getElementById('jmbcFormPrin').value,
+      type:document.getElementById('jmbcFormType').value,
+      amount:parseFloat(document.getElementById('jmbcFormAmount').value)||0,
+      status,remarks:document.getElementById('jmbcFormRemarks').value,
+      _createdAt:now,_lastUpdated:now,_history:[entry]});
+  }
+  saveJMBClaims(claims);
+  closeJMBClaimModal();
+  renderJMBClaimTable();
+  renderJMBClaimKPI();
+  renderJMBCStagePills();
+}
+
+function editJMBClaim(id){
+  const r=getJMBClaims().find(c=>c.id===id);if(!r)return;
+  document.getElementById('jmbcModalTitle').textContent='Edit JMB Claim';
+  document.getElementById('stcEditId').value=id;
+  const sel=document.getElementById('jmbcFormJMB');
+  sel.innerHTML='<option value="'+r.jmb+'">'+r.jmb+'</option>';
+  document.getElementById('jmbcFormMK').value=r.mk||'hazim';
+  document.getElementById('jmbcFormPrin').value=r.prin||'Etiqa';
+  document.getElementById('jmbcFormType').value=r.type||'Fire';
+  document.getElementById('jmbcFormAmount').value=r.amount||0;
+  document.getElementById('jmbcFormStatus').value=r.status||'Pending';
+  document.getElementById('jmbcFormRemarks').value=r.remarks||'';
+  document.getElementById('jmbcModal').classList.add('show');
+}
+
+function deleteJMBClaim(id){
+  inlineConfirm('Delete JMB Claim '+id+'?',function(){
+    saveJMBClaims(getJMBClaims().filter(r=>r.id!==id));
+    renderJMBClaimTable();renderJMBClaimKPI();renderJMBCStagePills();
+  });
+}
+
+function filterJMBClaims(status){
+  document.getElementById('jmbc-filter-status').value=status;
+  renderJMBClaimTable();
+}
+
+function renderJMBClaimKPI(){
+  const data=getJMBClaims();
+  const el=id=>document.getElementById(id);
+  if(el('jmbc-total'))el('jmbc-total').textContent=data.length;
+  if(el('jmbc-pending'))el('jmbc-pending').textContent=data.filter(r=>r.status==='Pending').length;
+  if(el('jmbc-submitted'))el('jmbc-submitted').textContent=data.filter(r=>r.status==='Submitted').length;
+  if(el('jmbc-approved'))el('jmbc-approved').textContent=data.filter(r=>r.status==='Approved').length;
+}
+
+function renderJMBCStagePills(){
+  const bar=document.getElementById('jmbc-stage-bar');if(!bar)return;
+  bar.innerHTML='';
+  const stages=[
+    {label:'Pending',color:'#F59E0B'},{label:'Submitted',color:'#3B82F6'},
+    {label:'Approved',color:'#10B981'},{label:'Rejected',color:'#EF4444'}
+  ];
+  const data=getJMBClaims();
+  stages.forEach((s,i)=>{
+    const cnt=data.filter(r=>r.status===s.label).length;
+    const pill=document.createElement('div');
+    pill.className='ci-stage-pill';
+    pill.style.cssText='background:'+s.color+'22;border:1px solid '+s.color+';color:'+s.color+';cursor:pointer;min-width:80px;';
+    pill.innerHTML='<div style="font-weight:700;">'+s.label+'</div><div style="font-size:9px;margin-top:3px;">'+cnt+' claims</div>';
+    pill.onclick=()=>filterJMBClaims(s.label);
+    bar.appendChild(pill);
+    if(i<stages.length-1){const a=document.createElement('div');a.className='ci-arrow';a.textContent='→';bar.appendChild(a);}
+  });
+}
+
+function renderJMBClaimTable(){
+  const tbody=document.getElementById('jmbcTableBody');if(!tbody)return;
+  const search=(document.getElementById('jmbc-search')?.value||'').toLowerCase();
+  const statusF=document.getElementById('jmbc-filter-status')?.value||'';
+  const mkF=document.getElementById('jmbc-filter-mk')?.value||'';
+  const mkLabel=mk=>mk==='hazim'?'Hazim':mk==='shahira'?'Shahira':'SBM';
+  const mkColor=mk=>mk==='hazim'?'#60a5fa':mk==='shahira'?'#34d399':'#a78bfa';
+  const statusColor=s=>s==='Approved'?'#10B981':s==='Submitted'?'#3B82F6':s==='Rejected'?'#EF4444':'#F59E0B';
+  let data=getJMBClaims();
+  if(search)data=data.filter(r=>(r.jmb||'').toLowerCase().includes(search)||(r.id||'').toLowerCase().includes(search));
+  if(statusF)data=data.filter(r=>r.status===statusF);
+  if(mkF)data=data.filter(r=>r.mk===mkF);
+  data.sort((a,b)=>new Date(b._lastUpdated||0)-new Date(a._lastUpdated||0));
+  tbody.innerHTML='';
+  if(!data.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text3);">No JMB Claims yet.</td></tr>';return;}
+  const adminUser=typeof isAdmin==='function'&&isAdmin();
+  data.forEach((r,i)=>{
+    const days=r._createdAt?Math.floor((new Date()-new Date(r._createdAt))/86400000):0;
+    const lastDate=r._lastUpdated?new Date(r._lastUpdated).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'}):'-';
+    const sc=statusColor(r.status),mkC=mkColor(r.mk||'admin');
+    const tr=document.createElement('tr');
+    tr.style.cssText='border-bottom:1px solid var(--border);transition:background .15s;';
+    tr.onmouseover=()=>tr.style.background='rgba(59,130,246,.05)';
+    tr.onmouseout=()=>tr.style.background='';
+    tr.innerHTML='<td style="color:var(--text3);font-size:11px;">'+(i+1)+'</td>'
+      +'<td style="font-family:monospace;font-size:12px;color:var(--accent);font-weight:600;">'+r.id+'</td>'
+      +'<td style="font-weight:600;font-size:12px;">'+(r.jmb||'-')+'</td>'
+      +'<td><span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:'+mkC+'22;color:'+mkC+';border:1px solid '+mkC+'44;">'+mkLabel(r.mk||'admin')+'</span></td>'
+      +'<td style="font-size:12px;">'+(r.prin||'-')+'</td>'
+      +'<td style="font-size:12px;">'+(r.type||'-')+'</td>'
+      +'<td style="font-weight:700;color:#60a5fa;">'+(r.amount?'RM '+r.amount.toLocaleString():'-')+'</td>'
+      +'<td><span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'44;">'+(r.status||'-')+'</span></td>'
+      +'<td style="font-size:12px;color:var(--text3);">'+days+'d</td>'
+      +'<td style="font-size:11px;color:var(--text3);">'+lastDate+'</td>';
+    if(adminUser){
+      const td=document.createElement('td');
+      const editBtn=document.createElement('button');
+      editBtn.style.cssText='background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;margin-right:4px;';
+      editBtn.innerHTML='✏️';editBtn.onclick=()=>editJMBClaim(r.id);
+      const delBtn=document.createElement('button');
+      delBtn.style.cssText='background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;';
+      delBtn.innerHTML='🗑️';delBtn.onclick=()=>deleteJMBClaim(r.id);
+      td.appendChild(editBtn);td.appendChild(delBtn);tr.appendChild(td);
+    } else {
+      tr.innerHTML+='<td></td>';
+    }
+    tbody.appendChild(tr);
+    // History rows
+    if(r._history&&r._history.length>1){
+      r._history.slice().reverse().forEach((h,hi)=>{
+        const hRow=document.createElement('tr');
+        hRow.style.cssText='background:rgba(59,130,246,.03);border-bottom:1px solid rgba(59,130,246,.08);';
+        const hDays=r._createdAt&&h.ts?Math.floor((new Date(h.ts)-new Date(r._createdAt))/86400000):0;
+        hRow.innerHTML='<td></td><td></td>'
+          +'<td colspan="5" style="font-size:11px;color:var(--text3);padding:4px 9px;">'
+          +(hi===0?'🔵':'⚪')+' <span style="color:'+(hi===0?'#60a5fa':'var(--text3)')+';">'+h.stage+'</span>'
+          +'</td>'
+          +'<td colspan="2" style="font-size:11px;color:var(--text3);padding:4px 9px;">Day '+hDays+'</td>'
+          +'<td style="font-size:11px;color:var(--text3);padding:4px 9px;">'+(h.date||'-')+'</td>'
+          +'<td></td>';
+        tbody.appendChild(hRow);
+      });
+    }
+  });
+}
+
 
 window.addEventListener('load',function(){
   if(typeof loadLocalCases==='function')loadLocalCases();
