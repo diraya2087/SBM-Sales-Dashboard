@@ -1136,29 +1136,16 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
           <option>Closed</option>
         </select>
       </div>
-      <div class="field">
-        <label>Status</label>
-        <select id="ciFormStatus">
-          <option value="New">New</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Overdue">Overdue</option>
-          <option value="Validation">Validation</option>
-          <option value="Closed">Closed</option>
-        </select>
-      </div>
+<input type="hidden" id="ciFormStatus" value="In Progress">
       <div class="field">
         <label>Assigned Staff</label>
         <select id="ciFormStaff">
           <option value="Hazim">Hazim</option>
           <option value="Shahira">Shahira</option>
-          <option value="Admin">Admin</option>
+          <option value="SBM">SBM</option>
         </select>
       </div>
-      <div class="field"><label>Last Activity Date</label><input type="date" id="ciFormDate"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field"><label>Days at Staff</label><input type="number" id="ciFormDaysStaff" placeholder="0" min="0"></div>
-        <div class="field"><label>Days at Principle</label><input type="number" id="ciFormDaysPrin" placeholder="0" min="0"></div>
-      </div>
+<input type="hidden" id="ciFormDate"><input type="hidden" id="ciFormDaysStaff" value="0"><input type="hidden" id="ciFormDaysPrin" value="0">
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="closeCIModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveCICase()">Save Case</button>
@@ -3188,16 +3175,23 @@ function saveCIUpdate() {
   const id = document.getElementById('gcm-ci-update-id')?.value;
   if (!id) { alert('Select a case.'); if(btn){btn.textContent='💾 Save Entry';btn.disabled=false;} return; }
   const el = i => document.getElementById(i);
-  const update = {
-    stage:  el('gcm-ci-u-stage')?.value,
+  const now = new Date().toISOString();
+  const actDate = el('gcm-ci-u-date')?.value || now.split('T')[0];
+  const newEntry = {
+    stage: el('gcm-ci-u-stage')?.value,
     status: el('gcm-ci-u-status')?.value,
-    lastActivity: el('gcm-ci-u-date')?.value || new Date().toISOString().split('T')[0],
+    date: actDate, ts: now,
     daysStaff: parseInt(el('gcm-ci-u-dstaff')?.value)||0,
-    daysPrin:  parseInt(el('gcm-ci-u-dprin')?.value)||0,
+    daysPrin: parseInt(el('gcm-ci-u-dprin')?.value)||0,
   };
+  const update = {...newEntry, lastActivity: actDate, _lastUpdated: now};
   const cases = getCICases();
   const idx = cases.findIndex(r => r.id === id);
-  if (idx >= 0) { cases[idx] = {...cases[idx], ...update}; saveCICases(cases); }
+  if (idx >= 0) {
+    const history = [...(cases[idx]._history||[]), newEntry];
+    cases[idx] = {...cases[idx], ...update, _history: history};
+    saveCICases(cases);
+  }
   if(typeof renderCIAll==='function') renderCIAll();
   const ss = document.getElementById('gcm-sync-status');
   if(ss){ss.textContent='✓ Case '+id+' updated.';ss.style.display='';ss.style.background='rgba(16,185,129,.1)';ss.style.color='#34d399';}
@@ -3782,8 +3776,28 @@ function renderCITable(){
     const loc=locationFromStage(r.stage);
     const locCol=loc==='Principle'?'#F59E0B':loc==='JMB'?'#3B82F6':'#94a3b8';
     const odHtml=r.status==='Closed'?'<span style="color:var(--text3);">—</span>':od>0?`<span style="font-weight:700;color:${od>7?'#EF4444':'#F59E0B'};display:flex;align-items:center;gap:4px;">${od}${od>7?' 🚩':''}</span>`:'<span style="color:#10B981;font-weight:600;">0</span>';
+    // Days since created
+    const createdDays = r._createdAt ? Math.floor((new Date()-new Date(r._createdAt))/86400000) : od;
+    // History rows
+    const histRows = (r._history||[]).slice().reverse().map((h,hi)=>{
+      const hDate = h.date||h.ts?.split('T')[0]||'-';
+      // Days from case creation
+      const caseCreated = r._createdAt ? new Date(r._createdAt) : new Date(h.ts||now);
+      const hDays = h.ts ? Math.floor((new Date(h.ts)-caseCreated)/86400000) : '-';
+      return `<tr style="background:rgba(59,130,246,.04);border-bottom:1px solid rgba(59,130,246,.1);">
+        <td></td>
+        <td colspan="2" style="font-size:11px;color:var(--text3);padding:4px 9px;">
+          ${hi===0?'🔵':'⚪'} <span style="color:${hi===0?'#60a5fa':'var(--text3)'};">${h.stage}</span>
+          ${h.status?'<span style="margin-left:6px;padding:1px 6px;border-radius:8px;font-size:10px;background:rgba(59,130,246,.15);color:#60a5fa;">'+h.status+'</span>':''}
+        </td>
+        <td style="font-size:11px;color:var(--text3);padding:4px 9px;">${hDate}</td>
+        <td style="font-size:11px;color:var(--text3);padding:4px 9px;">${typeof hDays==='number'?'Day '+hDays:'-'}</td>
+        <td colspan="2" style="font-size:11px;color:var(--text3);padding:4px 9px;">Staff: ${h.daysStaff||0}d · Prin: ${h.daysPrin||0}d</td>
+      </tr>`;
+    }).join('');
+
     return `<tr onmouseenter="showCITooltip(event,'${r.id}','${r.jmb}',${r.daysStaff||0},${r.daysPrin||0})" onmouseleave="hideCITooltip()">
-      <td style="font-family:monospace;font-size:12px;color:var(--accent);font-weight:600;">${r.id}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--accent);font-weight:600;">${r.id}<div style="font-size:10px;color:var(--text3);font-weight:400;margin-top:2px;">${createdDays}d total</div></td>
       <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${r.jmb}</td>
       <td style="font-size:12px;font-family:monospace;color:var(--text2);">${r.lastActivity||'-'}</td>
       <td>${statusBadgeCI(r.status)}</td>
@@ -3793,7 +3807,7 @@ function renderCITable(){
         ${isAdmin()?`<button onclick="editCICase('${r.id}')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;">Edit</button>
         <button onclick="deleteCICase('${r.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;margin-left:4px;">✕</button>`:'<span style="font-size:11px;color:var(--text3);">View only</span>'}
       </td>
-    </tr>`;
+    </tr>${histRows}`;
   }).join('');
 }
 
@@ -3843,10 +3857,32 @@ function saveCICase(){
   const id=document.getElementById('ciFormId').value.trim();
   const jmb=document.getElementById('ciFormJMB').value.trim();
   if(!id||!jmb){alert('Case ID and JMB Name are required.');return;}
-  const rec={id,jmb,stage:document.getElementById('ciFormStage').value,status:document.getElementById('ciFormStatus').value,staff:document.getElementById('ciFormStaff').value,lastActivity:document.getElementById('ciFormDate').value,daysStaff:parseInt(document.getElementById('ciFormDaysStaff').value)||0,daysPrin:parseInt(document.getElementById('ciFormDaysPrin').value)||0,year:ciYear};
+  const now=new Date().toISOString();
+  const stage=document.getElementById('ciFormStage').value;
+  const stageRaw=document.getElementById('ciFormStage').value;
+  const status=stageRaw==='Closed'?'Closed':'In Progress';
+  const actDate=now.split('T')[0]; // Always auto today
+  const newEntry={stage,status,date:actDate,ts:now,
+    daysStaff:parseInt(document.getElementById('ciFormDaysStaff').value)||0,
+    daysPrin:parseInt(document.getElementById('ciFormDaysPrin').value)||0};
   let cases=getCICases();
-  if(editId){const idx=cases.findIndex(c=>c.id===editId);if(idx>=0)cases[idx]=rec;else cases.push(rec);}
-  else{cases=cases.filter(c=>c.id!==id);cases.push(rec);}
+  if(editId){
+    const idx=cases.findIndex(c=>c.id===editId);
+    if(idx>=0){
+      const existing=cases[idx];
+      const history=[...(existing._history||[]),newEntry];
+      cases[idx]={...existing,stage,status,lastActivity:actDate,
+        daysStaff:newEntry.daysStaff,daysPrin:newEntry.daysPrin,
+        _history:history,_lastUpdated:now};
+    }else cases.push({id,jmb,stage,status,staff:document.getElementById('ciFormStaff').value,lastActivity:actDate,daysStaff:newEntry.daysStaff,daysPrin:newEntry.daysPrin,year:ciYear,_history:[newEntry],_createdAt:now});
+  } else {
+    cases=cases.filter(c=>c.id!==id);
+    cases.push({id,jmb,stage,status,
+      staff:document.getElementById('ciFormStaff').value,
+      lastActivity:actDate,
+      daysStaff:newEntry.daysStaff,daysPrin:newEntry.daysPrin,
+      year:ciYear,_history:[newEntry],_createdAt:now});
+  }
   saveCICases(cases);
   closeCIModal();
   renderCIAll();
@@ -4110,19 +4146,14 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
               <option>Staff Email to Principle</option><option>Principle Amend</option>
               <option>Staff Receive &amp; Validate</option><option>Staff Email back to JMB</option><option>Closed</option>
             </select></div>
-          <div class="field"><label>Status</label>
-            <select id="gcm-ci-status" style="width:100%;">
-              <option value="New">New</option><option value="In Progress">In Progress</option>
-              <option value="Overdue">Overdue</option><option value="Validation">Validation</option><option value="Closed">Closed</option>
-            </select></div>
+<input type="hidden" id="gcm-ci-status" value="In Progress">
           <div class="field"><label>Assigned Staff</label>
             <select id="gcm-ci-staff" style="width:100%;">
-              <option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="Admin">Admin</option>
+              <option value="Hazim">Hazim</option><option value="Shahira">Shahira</option><option value="SBM">SBM</option>
             </select></div>
           <div class="field"><label>Last Activity <span style="font-size:10px;color:var(--text3);">(auto)</span></label>
             <input type="date" id="gcm-ci-date" style="width:100%;"></div>
-          <div class="field"><label>Days at Staff</label><input type="number" id="gcm-ci-dstaff" placeholder="0" min="0" style="width:100%;"></div>
-          <div class="field"><label>Days at Principle</label><input type="number" id="gcm-ci-dprin" placeholder="0" min="0" style="width:100%;"></div>
+<input type="hidden" id="gcm-ci-dstaff" value="0"><input type="hidden" id="gcm-ci-dprin" value="0">
         </div>
       </div>
 
@@ -4150,15 +4181,10 @@ function closeCIModal(){document.getElementById('ciModal').classList.remove('sho
               <option>Staff Email to Principle</option><option>Principle Amend</option>
               <option>Staff Receive &amp; Validate</option><option>Staff Email back to JMB</option><option>Closed</option>
             </select></div>
-          <div class="field"><label>Status</label>
-            <select id="gcm-ci-u-status" style="width:100%;">
-              <option value="New">New</option><option value="In Progress">In Progress</option>
-              <option value="Overdue">Overdue</option><option value="Validation">Validation</option><option value="Closed">Closed</option>
-            </select></div>
+<input type="hidden" id="gcm-ci-u-status" value="In Progress">
           <div class="field"><label>Last Activity <span style="font-size:10px;color:var(--text3);">(auto)</span></label>
             <input type="date" id="gcm-ci-u-date" style="width:100%;"></div>
-          <div class="field"><label>Days at Staff</label><input type="number" id="gcm-ci-u-dstaff" placeholder="0" min="0" style="width:100%;"></div>
-          <div class="field"><label>Days at Principle</label><input type="number" id="gcm-ci-u-dprin" placeholder="0" min="0" style="width:100%;"></div>
+<input type="hidden" id="gcm-ci-u-dstaff" value="0"><input type="hidden" id="gcm-ci-u-dprin" value="0">
         </div>
       </div>
     </div>
@@ -4301,6 +4327,14 @@ const GCM_PAY_KEY   = 'sd_gcm_pay_v1';
 let gcmCurrentTab = 'sales';
 
 // ── Helper: get all unique JMB names from a source ──
+function getSalesJMBList() {
+  // Return unique JMB names that have sales entries
+  const names = new Set();
+  rawData.forEach(r => { if(r.jmb) names.add(r.jmb); });
+  try{ JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]').forEach(r=>{ if(r.jmb) names.add(r.jmb); }); }catch(e){}
+  return [...names].sort((a,b)=>a.localeCompare(b));
+}
+
 function getJMBList(source) {
   const names = new Set();
   // Always include master JMB list
@@ -4406,8 +4440,14 @@ function populateJMBSelect(selId, source) {
     return;
   }
 
-  // Default: all JMB sorted
-  getJMBList(source).forEach(name => {
+  // CI JMB: only from sales data
+  const jmbList = (selId === 'gcm-ci-jmb') ? getSalesJMBList() : getJMBList(source);
+  if(!jmbList.length){
+    const opt=document.createElement('option');opt.value='';
+    opt.textContent=(selId==='gcm-ci-jmb'?'— No sales entries yet —':'— No JMB —');opt.disabled=true;
+    sel.appendChild(opt);return;
+  }
+  jmbList.forEach(name => {
     const opt = document.createElement('option');
     opt.value = name; opt.textContent = name;
     if (name === cur) opt.selected = true;
@@ -4435,7 +4475,9 @@ function filterSalesJMB() {
   const wonStages = ['won','hold cover','policy issued','jmb received policy'];
   const wonJMBs = allProg
     .filter(r => {
-      if((r._marketer||'').toLowerCase() !== mk.toLowerCase()) return false;
+      const rmk = (r._marketer||'').toLowerCase();
+      const matchMk = mk==='admin' ? (rmk==='admin'||rmk==='sbm') : rmk===mk.toLowerCase();
+      if(!matchMk) return false;
       const stage = (r['Current Stage']||'').toLowerCase();
       return wonStages.some(s => stage.includes(s));
     })
@@ -4444,8 +4486,9 @@ function filterSalesJMB() {
 
   // Exclude JMBs already in sales data for this marketer
   const salesDone = new Set();
-  rawData.forEach(r => { if(r.jmb && r.mk === mk) salesDone.add(r.jmb.toLowerCase()); });
-  try{ JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]').forEach(r=>{ if(r.jmb && r.mk===mk) salesDone.add(r.jmb.toLowerCase()); }); }catch(e){}
+  const mkMatch = r => mk==='admin' ? (r.mk==='admin'||r.mk==='sbm') : r.mk===mk;
+  rawData.forEach(r => { if(r.jmb && mkMatch(r)) salesDone.add(r.jmb.toLowerCase()); });
+  try{ JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]').forEach(r=>{ if(r.jmb && mkMatch(r)) salesDone.add(r.jmb.toLowerCase()); }); }catch(e){}
 
   const available = [...new Set(wonJMBs)].filter(n => !salesDone.has(n.toLowerCase())).sort();
 
