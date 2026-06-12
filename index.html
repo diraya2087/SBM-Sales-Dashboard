@@ -121,7 +121,12 @@ window.SBMChart={
     const cv=inst.cv;if(!cv)return;const ctx=cv.getContext('2d');
     const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
     const data=inst.data||[],colors=inst.colors||[],labels=inst.labels||[];
-    const total=data.reduce((a,b)=>a+(+b||0),0);if(!total)return;
+    const total=data.reduce((a,b)=>a+(+b||0),0);
+  if(!total){
+    ctx.fillStyle='#1e2433';ctx.beginPath();ctx.arc(W*0.4,H/2,Math.min(W*0.4,H/2)*0.82,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#64748b';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('No Data',W*0.4,H/2+5);
+    return;
+  }
     const cx=W*0.4,cy=H/2,R=Math.min(cx,cy)*0.82,r=R*0.55;
     let angle=-Math.PI/2;
     data.forEach((v,i)=>{
@@ -914,11 +919,11 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     </div>
   </div>
   <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
-    <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All Marketers</button>
-    <div style="display:flex;gap:5px;">
-      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')">Hazim</button>
-      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')">Shahira</button>
-      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')">SBM</button>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <button class="fp a-all" id="pf-mk-all" onclick="setPayFilter('all','mk')">All</button>
+      <button class="fp" id="pf-mk-hazim" onclick="setPayFilter('hazim','mk')" style="color:#60a5fa;">Hazim</button>
+      <button class="fp" id="pf-mk-shahira" onclick="setPayFilter('shahira','mk')" style="color:#34d399;">Shahira</button>
+      <button class="fp" id="pf-mk-admin" onclick="setPayFilter('admin','mk')" style="color:#a78bfa;">SBM</button>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;">
@@ -2305,7 +2310,7 @@ function buildCharts(){
   ],{targetLine:250});
   const pt=PS.map(p=>sumPrem(data.filter(r=>r.prin===p)));
   const ps=pt.reduce((a,b)=>a+b,0);
-  cD=SBMChart.donut('cDonut',PS,ps?pt.map(v=>Math.round(v/ps*100)):PS.map(()=>17),PC);
+  cD=SBMChart.donut('cDonut',PS,ps?pt.map(v=>Math.round(v/ps*100)):PS.map(()=>0),PC);
   cCase=null;
   cPrin=SBMChart.line('cPrin',MS,PS.map((p,pi)=>({label:p,color:PC[pi],data:MS.map((_,mi)=>Math.round(sumPrem(data.filter(r=>r.prin===p&&r.mi===mi))/1000))})),{});
   cMkP=SBMChart.bar('cMkPrin',PS,[
@@ -2327,7 +2332,7 @@ function refreshCharts(){
   if(cTgt){['hazim','shahira','admin'].forEach((mk,di)=>{if(cTgt.datasets[di])cTgt.datasets[di].data=MS.map((_,i)=>Math.round(sumPrem(data.filter(r=>r.mk===mk&&r.mi===i))/1000));});SBMChart.update(cTgt);}
   if(cPrin){cPrin.datasets=PS.map((p,pi)=>({label:p,color:PC[pi],data:MS.map((_,mi)=>Math.round(sumPrem(data.filter(r=>r.prin===p&&r.mi===mi))/1000))}));SBMChart.update(cPrin);}
   if(cMkP){['hazim','shahira','admin'].forEach((mk,di)=>{if(cMkP.datasets[di])cMkP.datasets[di].data=PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk===mk&&r.prin===p))/1000));});SBMChart.update(cMkP);}
-  if(cD){const pt=PS.map(p=>sumPrem(data.filter(r=>r.prin===p)));const ps=pt.reduce((a,b)=>a+b,0);cD.data=ps?pt.map(v=>Math.round(v/ps*100)):PS.map(()=>17);SBMChart.update(cD);}
+  if(cD){const pt=PS.map(p=>sumPrem(data.filter(r=>r.prin===p)));const ps=pt.reduce((a,b)=>a+b,0);cD.data=ps?pt.map(v=>Math.round(v/ps*100)):PS.map(()=>0);SBMChart.update(cD);}
   buildBands(data);
 }
 
