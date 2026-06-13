@@ -1818,6 +1818,50 @@ function populateLoginDropdown(){
 }
 
 function doLogin(){
+  const SYNC_READ_URL = 'https://script.google.com/macros/s/AKfycbwxHTfQLT0b2-dZpq8qkSSaylN6vtdVH4GWg-h61cU98hhXLew7zx3syD-Au31BMxC-/exec';
+
+async function loadFromGSheet() {
+  setSyncUI('spin', 'Syncing from cloud...');
+  const types = [
+    { type: 'progress', key: 'sd_gcm_prog_v1', idField: 'JMB Name' },
+    { type: 'sales', key: 'sd_gcm_sales_v1', idField: 'jmb' },
+    { type: 'payment', key: 'sd_gcm_pay_v1', idField: 'JMB Name' },
+    { type: 'ci', key: 'sd_ci_cases_v1', idField: 'id' },
+    { type: 'jmbclaim', key: 'sd_jmbc_v1', idField: 'id' },
+    { type: 'settlement', key: 'sd_stl_v1', idField: 'jmb' },
+  ];
+  let synced = 0;
+  for (const t of types) {
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const cbName = '_gcb_' + t.type + '_' + Date.now();
+        const timeout = setTimeout(() => { delete window[cbName]; reject('timeout'); }, 8000);
+        window[cbName] = (d) => { clearTimeout(timeout); delete window[cbName]; resolve(d); };
+        const script = document.createElement('script');
+        script.src = SYNC_READ_URL + '?type=' + t.type + '&callback=' + cbName;
+        script.onerror = () => { clearTimeout(timeout); delete window[cbName]; reject('error'); };
+        document.head.appendChild(script);
+        setTimeout(() => { try { document.head.removeChild(script); } catch(e) {} }, 10000);
+      });
+      if (!Array.isArray(data) || !data.length) continue;
+      // Merge: latest wins by _lastUpdated
+      const local = JSON.parse(localStorage.getItem(t.key) || '[]');
+      const merged = new Map();
+      local.forEach(r => { const id = r[t.idField]; if(id) merged.set(id, r); });
+      data.forEach(r => {
+        const id = r[t.idField];
+        if (!id) return;
+        const existing = merged.get(id);
+        if (!existing || new Date(r['_lastUpdated']||0) >= new Date(existing['_lastUpdated']||0)) {
+          merged.set(id, r);
+        }
+      });
+      localStorage.setItem(t.key, JSON.stringify([...merged.values()]));
+      synced++;
+    } catch(e) { /* skip if type fails */ }
+  }
+  setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
+}
   const uid=document.getElementById('lu').value;
   const p=document.getElementById('lp').value;
   const users=getUsers();
@@ -1836,7 +1880,7 @@ function doLogin(){
   const setupBtn=document.getElementById('tnav-setup');if(setupBtn)setupBtn.style.display=u.role==='admin'?'':'none';
   const settleBtn=document.getElementById('tnav-settlement');if(settleBtn)settleBtn.style.display=(u.role==='admin'||u.role==='management')?'':'none';
   buildYearPills();
-  go('progress');
+  loadFromGSheet().catch(()=>{}).finally(()=>{ go('progress'); });
 }
 
 function logout(){
