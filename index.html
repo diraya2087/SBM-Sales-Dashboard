@@ -3034,7 +3034,6 @@ function applyProgFilter() {
     // Admin: all JMB from master list, filter by selected marketer/month, grouped by month
     let jmbs = masterJmbData.filter(j => {
       if(!j.name || !j.expiryDate) return false;
-      if(mkFilter && (j.marketer||'') !== mkFilter) return false;
       return true;
     }).map(j => {
       const d = new Date(j.expiryDate);
