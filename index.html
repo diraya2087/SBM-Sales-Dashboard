@@ -1842,19 +1842,14 @@ async function loadFromGSheet() {
         document.head.appendChild(script);
         setTimeout(() => { try { document.head.removeChild(script); } catch(e) {} }, 10000);
       });
-      if (!Array.isArray(data) || !data.length) continue;
-      const local = JSON.parse(localStorage.getItem(t.key) || '[]');
-      const merged = new Map();
-      local.forEach(r => { const id = r[t.idField]; if(id) merged.set(id, r); });
-      data.forEach(r => {
-        const id = r[t.idField];
-        if (!id) return;
-        const existing = merged.get(id);
-        if (!existing || new Date(r['_lastUpdated']||0) >= new Date(existing['_lastUpdated']||0)) {
-          merged.set(id, r);
-        }
-      });
-      localStorage.setItem(t.key, JSON.stringify([...merged.values()]));
+      if (!Array.isArray(data) || !data.length) {
+        // GSheet empty = clear localStorage for this type
+        localStorage.setItem(t.key, '[]');
+        synced++;
+        continue;
+      }
+      // GSheet wins — replace localStorage with GSheet data
+      localStorage.setItem(t.key, JSON.stringify(data));
       synced++;
     } catch(e) { /* skip if type fails */ }
   }
@@ -1867,8 +1862,11 @@ function startAutoSync() {
   stopAutoSync();
   _autoSyncTimer = setInterval(function(){
     if(!cu) { stopAutoSync(); return; }
-    loadFromGSheet().then(function(){
-      // Refresh current active tab UI
+    loadFromGSheet().then(function(){ refreshAllUI(); }).catch(function(){});
+  }, 30000);
+}
+
+function refreshAllUI(){
       const screens = ['progress','transactions','ciamend','jmbclaim','settlement','dashboard'];
       screens.forEach(function(s){
         const el = document.getElementById('screen-'+s);
@@ -1881,8 +1879,6 @@ function startAutoSync() {
           if(s==='dashboard'){ try{const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');rawData=[];saved.forEach(r=>rawData.push(r));}catch(e){} renderDash(); }
         }
       });
-    }).catch(function(){});
-  }, 30000);
 }
 
 function stopAutoSync() {
