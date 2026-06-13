@@ -6229,12 +6229,35 @@ function showGCMSync(msg, ok) {
   el.style.color = ok ? '#34d399' : '#fc8181';
 }
 
-async function syncToGSheet(type, row) {
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwxHTfQLT0b2-dZpq8qkSSaylN6vtdVH4GWg-h61cU98hhXLew7zx3syD-Au31BMxC-/exec';
+
+async function syncToGSheet(type, data) {
+  if (!SYNC_URL) return false;
   try {
-    const url = AS_BASE + '?type=write&datatype=' + type + '&data=' + encodeURIComponent(JSON.stringify(row));
-    await fetch(url, { mode: 'no-cors' });
+    var payload = {};
+    if (type === 'sales') {
+      payload = {'JMB Name':data.jmb||'','Marketer':data.mk==='hazim'?'Hazim':data.mk==='shahira'?'Shahira':'Admin','Principle':data.prin||'','Case Type':data.caseType||'','Hold Cover Date':data.ts?data.ts.split('T')[0]:'',' Premium (Tax)':data.premTax||0,'Premium (No Tax)':data.premNoTax||0,'Payment Plan':data.payment||''};
+    } else if (type === 'progress' || type === 'progress_update') {
+      payload = {'JMB Name':data['JMB Name']||data.jmb||'','Marketer':data['_marketer']||'','Current Stage':data['Current Stage']||'','Stage Date':data['Stage Date']||'','Expiry Date':data['Expiry Date']||'','Principle 1':data['Principle 1']||'','P1 Quote Status':data['P1 Quote Status']||'','Principle 2':data['Principle 2']||'','P2 Quote Status':data['P2 Quote Status']||'','Principle 3':data['Principle 3']||'','P3 Quote Status':data['P3 Quote Status']||'','Principle 4':data['Principle 4']||'','P4 Quote Status':data['P4 Quote Status']||'','Reject Justify':data['Reject Justify']||'','_lastUpdated':data['_lastUpdated']||new Date().toISOString()};
+    } else if (type === 'ci') {
+      payload = {'Case ID':data.id||'','JMB Name':data.jmb||'','Stage':data.stage||'','Status':data.status||'','Staff':data.staff||'','Last Activity':data.lastActivity||'','Days Staff':data.daysStaff||0,'Days Principle':data.daysPrin||0,'Year':data.year||new Date().getFullYear()};
+    } else if (type === 'payment') {
+      payload = {'JMB Name':data['JMB Name']||'','Marketer':data['Marketer']||'','Principle':data['Principle']||'','Premium Total (RM)':data['Premium Total (RM)']||0,'Payment Plan':data['Payment Plan']||'','4x Pay 1':data['4x Pay 1 ✓']||false,'4x Pay 2':data['4x Pay 2 ✓']||false,'4x Pay 3':data['4x Pay 3 ✓']||false,'4x Pay 4':data['4x Pay 4 ✓']||false,'3x Pay 1':data['3x Pay 1 ✓']||false,'3x Pay 2':data['3x Pay 2 ✓']||false,'3x Pay 3':data['3x Pay 3 ✓']||false,'2x Pay 1':data['2x Pay 1 ✓']||false,'2x Pay 2':data['2x Pay 2 ✓']||false,'Full Pay':data['Full Pay ✓']||false};
+    } else if (type === 'jmbclaim') {
+      payload = {'Claim ID':data.id||'','JMB Name':data.jmb||'','Marketer':data.mk||'','Principle':data.prin||'','Claim Type':data.type||'','Amount':data.amount||0,'Status':data.status||'','Remarks':data.remarks||'','Created At':data._createdAt||new Date().toISOString()};
+    } else if (type === 'settlement') {
+      payload = {'JMB Name':data.jmb||'','Marketer':data.mk||'','Principle':data.prin||'','Payment Type':data.payType||'','Amount':data.amount||0,'Status':data.status||'','Remarks':data.remarks||'','Created At':data._createdAt||new Date().toISOString()};
+    } else { payload = data; }
+
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, data: payload })
+    });
     return true;
   } catch(e) {
+    console.warn('GSheet sync failed:', type, e);
     return false;
   }
 }
