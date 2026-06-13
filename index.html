@@ -1818,9 +1818,6 @@ function populateLoginDropdown(){
 }
 
 function doLogin(){
-  const SYNC_READ_URL = 'https://script.google.com/macros/s/AKfycbwxHTfQLT0b2-dZpq8qkSSaylN6vtdVH4GWg-h61cU98hhXLew7zx3syD-Au31BMxC-/exec';
-
-async function loadFromGSheet() {
   setSyncUI('spin', 'Syncing from cloud...');
   const types = [
     { type: 'progress', key: 'sd_gcm_prog_v1', idField: 'JMB Name' },
