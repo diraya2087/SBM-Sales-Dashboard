@@ -1876,6 +1876,7 @@ async function loadFromGSheet() {
   const av=document.getElementById('uav');if(av){av.textContent=u.label[0];av.style.background=u.color;}
   const ul=document.getElementById('ulabel');if(ul)ul.textContent=u.label;
   ['upill','btnOut','navWrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});
+  const sp=document.getElementById('syncPill');if(sp)sp.style.display='flex';
   const btnNC=document.getElementById('btnNewCase');if(btnNC)btnNC.style.display='';
   const setupBtn=document.getElementById('tnav-setup');if(setupBtn)setupBtn.style.display=u.role==='admin'?'':'none';
   const settleBtn=document.getElementById('tnav-settlement');if(settleBtn)settleBtn.style.display=(u.role==='admin'||u.role==='management')?'':'none';
