@@ -1867,18 +1867,43 @@ function startAutoSync() {
 }
 
 function refreshAllUI(){
-      const screens = ['progress','transactions','ciamend','jmbclaim','settlement','dashboard'];
-      screens.forEach(function(s){
-        const el = document.getElementById('screen-'+s);
-        if(el && el.classList.contains('active')){
-          if(s==='progress'){ try{ const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]'); if(saved.length>0){const pm=new Map();saved.forEach(r=>{if(r['JMB Name'])pm.set(r['JMB Name'],r);});progData=[...pm.values()];}updateProgStats();renderProgCards();if(typeof renderWonRejList==='function')renderWonRejList();if(typeof renderExpiringJmb==='function')renderExpiringJmb();}catch(e){} }
-          if(s==='transactions'){ try{const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');if(py.length>0)paymentData=py;renderPaymentTable();if(typeof renderPayStagePills==='function')renderPayStagePills();}catch(e){} }
-          if(s==='ciamend'){ if(typeof renderCIAll==='function')renderCIAll(); }
-          if(s==='jmbclaim'){ if(typeof renderJMBClaimTable==='function'){renderJMBClaimTable();renderJMBClaimKPI();} }
-          if(s==='settlement'){ if(typeof renderSettlement==='function')renderSettlement(); }
-          if(s==='dashboard'){ try{const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');rawData=[];saved.forEach(r=>rawData.push(r));}catch(e){} renderDash(); }
-        }
-      });
+  // Reload all data from localStorage into memory first
+  try{
+    const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+    const pm=new Map();
+    saved.forEach(r=>{if(r['JMB Name'])pm.set(r['JMB Name'],r);});
+    progData=[...pm.values()];
+  }catch(e){}
+  try{
+    const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
+    paymentData=py;
+  }catch(e){}
+  try{
+    const sy=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
+    rawData=sy;
+  }catch(e){}
+
+  // Re-render active screen
+  const screens=['progress','transactions','ciamend','jmbclaim','settlement','dashboard','leaderboard'];
+  screens.forEach(function(s){
+    const el=document.getElementById('screen-'+s);
+    if(el && el.classList.contains('active')){
+      if(s==='progress'){
+        updateProgStats();
+        renderProgCards();
+        if(typeof renderWonRejList==='function')renderWonRejList();
+        if(typeof renderExpiringJmb==='function')renderExpiringJmb();
+        if(typeof renderProgStagePills==='function')renderProgStagePills();
+        if(typeof renderMasterJmb==='function')renderMasterJmb();
+      }
+      if(s==='transactions'){renderPaymentTable();if(typeof renderPayStagePills==='function')renderPayStagePills();}
+      if(s==='ciamend'){if(typeof renderCIAll==='function')renderCIAll();}
+      if(s==='jmbclaim'){if(typeof renderJMBClaimTable==='function'){renderJMBClaimTable();renderJMBClaimKPI();renderJMBCStagePills();}}
+      if(s==='settlement'){if(typeof renderSettlement==='function')renderSettlement();}
+      if(s==='dashboard'){renderDash();}
+      if(s==='leaderboard'){renderLb();}
+    }
+  });
 }
 
 function stopAutoSync() {
