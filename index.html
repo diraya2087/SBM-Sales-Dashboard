@@ -6313,7 +6313,7 @@ function showGCMSync(msg, ok) {
 
 const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwxHTfQLT0b2-dZpq8qkSSaylN6vtdVH4GWg-h61cU98hhXLew7zx3syD-Au31BMxC-/exec';
 
-async function syncToGSheet(type, data) {
+window.syncToGSheet = async function(type, data) {
   if (!SYNC_URL) return false;
   try {
     var payload = {};
