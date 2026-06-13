@@ -5138,8 +5138,7 @@ function populateJMBSelect(selId, source) {
           const saved = JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
           saved.forEach(r => { if(r['JMB Name']) doneSet.add(r['JMB Name'].toLowerCase()); });
         }catch(e){}
-        const availItems = groups[key].items;
-        if(!availItems.length) return; // skip month if all done
+        const availItems = groups[key].items.filter(j => !doneSet.has(j.name.toLowerCase())); if(!availItems.length) return;
         grp.label = groups[key].label + ' (' + availItems.length + ' remaining)';
         availItems.sort((a,b)=>a.days-b.days).forEach(j => {
           const opt = document.createElement('option');
