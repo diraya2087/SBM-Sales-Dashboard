@@ -2758,9 +2758,16 @@ function renderExpiringJmb() {
   // Count JMBs that have progress entries — read fresh from localStorage
   let freshProg = [...progData];
   try{const lsp=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');if(lsp.length>0)freshProg=lsp;}catch(e){}
-  const doneCount = expiring.filter(j => {
-    return freshProg.some(r => (r['JMB Name']||'').toLowerCase() === (j.name||'').toLowerCase());
-  }).length;
+  const todayMs2 = new Date().setHours(0,0,0,0);
+const allExpiring60 = masterJmbData.filter(j => {
+  if(!j.name||!j.expiryDate) return false;
+  const d=new Date(j.expiryDate); if(isNaN(d)) return false;
+  if(d.getTime()<todayMs2) d.setFullYear(d.getFullYear()+1);
+  return Math.ceil((d.getTime()-todayMs2)/86400000)<=60;
+});
+const doneCount = allExpiring60.filter(j =>
+  freshProg.some(r=>(r['JMB Name']||'').toLowerCase()===(j.name||'').toLowerCase())
+).length;
   if (doneEl) doneEl.textContent = doneCount;
 
   if (!bodyEl) return;
@@ -3027,7 +3034,6 @@ function applyProgFilter() {
     // Admin: all JMB from master list, filter by selected marketer/month, grouped by month
     let jmbs = masterJmbData.filter(j => {
       if(!j.name || !j.expiryDate) return false;
-      if(done.has(j.name.toLowerCase())) return false;
       if(mkFilter && (j.marketer||'') !== mkFilter) return false;
       return true;
     }).map(j => {
