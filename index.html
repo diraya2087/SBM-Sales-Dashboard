@@ -1786,12 +1786,12 @@ let filterPrin=null;
 try{localStorage.removeItem(USERS_KEY);}catch(e){}
 // Clear ALL old data from previous test/dummy sessions
 // Version stamp — if version changes, clear all data
-const DATA_VERSION = 'v2026-06-08c';
+const DATA_VERSION = 'v2026-06-13a';
 try{
   const storedVer = localStorage.getItem('sd_data_version');
   if(storedVer !== DATA_VERSION){
     // New version — wipe all old data
-    ['sd_ci_cases_v1','sd_gcm_sales_v1','sd_gcm_prog_v1','sd_gcm_pay_v1','sd_master_jmb_v1'].forEach(k=>{
+    ['sd_ci_cases_v1','sd_gcm_sales_v1','sd_gcm_prog_v1','sd_gcm_pay_v1','sd_jmbc_v1','sd_stl_v1'].forEach(k=>{
       try{localStorage.removeItem(k);}catch(e){}
     });
     localStorage.setItem('sd_data_version', DATA_VERSION);
