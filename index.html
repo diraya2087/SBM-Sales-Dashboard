@@ -1817,7 +1817,9 @@ function populateLoginDropdown(){
   }
 }
 
-function doLogin(){
+const SYNC_READ_URL = 'https://script.google.com/macros/s/AKfycbwxHTfQLT0b2-dZpq8qkSSaylN6vtdVH4GWg-h61cU98hhXLew7zx3syD-Au31BMxC-/exec';
+
+async function loadFromGSheet() {
   setSyncUI('spin', 'Syncing from cloud...');
   const types = [
     { type: 'progress', key: 'sd_gcm_prog_v1', idField: 'JMB Name' },
@@ -1841,7 +1843,6 @@ function doLogin(){
         setTimeout(() => { try { document.head.removeChild(script); } catch(e) {} }, 10000);
       });
       if (!Array.isArray(data) || !data.length) continue;
-      // Merge: latest wins by _lastUpdated
       const local = JSON.parse(localStorage.getItem(t.key) || '[]');
       const merged = new Map();
       local.forEach(r => { const id = r[t.idField]; if(id) merged.set(id, r); });
@@ -1859,6 +1860,8 @@ function doLogin(){
   }
   setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
 }
+
+function doLogin(){
   const uid=document.getElementById('lu').value;
   const p=document.getElementById('lp').value;
   const users=getUsers();
