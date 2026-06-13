@@ -1861,6 +1861,34 @@ async function loadFromGSheet() {
   setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
 }
 
+let _autoSyncTimer = null;
+
+function startAutoSync() {
+  stopAutoSync();
+  _autoSyncTimer = setInterval(function(){
+    if(!cu) { stopAutoSync(); return; }
+    loadFromGSheet().then(function(){
+      // Refresh current active tab UI
+      const screens = ['progress','transactions','ciamend','jmbclaim','settlement','dashboard'];
+      screens.forEach(function(s){
+        const el = document.getElementById('screen-'+s);
+        if(el && el.classList.contains('active')){
+          if(s==='progress'){ try{ const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]'); if(saved.length>0){const pm=new Map();saved.forEach(r=>{if(r['JMB Name'])pm.set(r['JMB Name'],r);});progData=[...pm.values()];}updateProgStats();renderProgCards();if(typeof renderWonRejList==='function')renderWonRejList();if(typeof renderExpiringJmb==='function')renderExpiringJmb();}catch(e){} }
+          if(s==='transactions'){ try{const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');if(py.length>0)paymentData=py;renderPaymentTable();if(typeof renderPayStagePills==='function')renderPayStagePills();}catch(e){} }
+          if(s==='ciamend'){ if(typeof renderCIAll==='function')renderCIAll(); }
+          if(s==='jmbclaim'){ if(typeof renderJMBClaimTable==='function'){renderJMBClaimTable();renderJMBClaimKPI();} }
+          if(s==='settlement'){ if(typeof renderSettlement==='function')renderSettlement(); }
+          if(s==='dashboard'){ try{const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');rawData=[];saved.forEach(r=>rawData.push(r));}catch(e){} renderDash(); }
+        }
+      });
+    }).catch(function(){});
+  }, 30000);
+}
+
+function stopAutoSync() {
+  if(_autoSyncTimer){ clearInterval(_autoSyncTimer); _autoSyncTimer=null; }
+}
+
 function doLogin(){
   const uid=document.getElementById('lu').value;
   const p=document.getElementById('lp').value;
@@ -1881,11 +1909,11 @@ function doLogin(){
   const setupBtn=document.getElementById('tnav-setup');if(setupBtn)setupBtn.style.display=u.role==='admin'?'':'none';
   const settleBtn=document.getElementById('tnav-settlement');if(settleBtn)settleBtn.style.display=(u.role==='admin'||u.role==='management')?'':'none';
   buildYearPills();
-  loadFromGSheet().catch(()=>{}).finally(()=>{ go('progress'); });
+  loadFromGSheet().catch(()=>{}).finally(()=>{ go('progress'); startAutoSync(); });
 }
 
 function logout(){
-  cu=null;stopTimer();chartsBuilt=false;rawData=[];filterPrin=null;progData=[];
+  cu=null;stopTimer();stopAutoSync();chartsBuilt=false;rawData=[];filterPrin=null;progData=[];
   ['upill','btnOut','navWrap','syncPill','btnNewCase'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const lu=document.getElementById('lu');if(lu)lu.value='';
   const lp=document.getElementById('lp');if(lp)lp.value='';
@@ -3783,6 +3811,7 @@ function deleteProgressEntry(jmbName){
       const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
       localStorage.setItem('sd_gcm_prog_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
     }catch(e){}
+    syncToGSheet('delete_progress',{idField:'JMB Name',idValue:jmbName});
     updateProgStats();
     renderProgCards();
     if(typeof renderProgAnalysis==='function')renderProgAnalysis(progData);
@@ -3815,6 +3844,7 @@ function deletePaymentEntry(jmbName){
       const saved=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');
       localStorage.setItem('sd_gcm_pay_v1',JSON.stringify(saved.filter(r=>r['JMB Name']!==jmbName)));
     }catch(e){}
+    syncToGSheet('delete_payment',{idField:'JMB Name',idValue:jmbName});
     renderPaymentTable();renderSettlement();
     if(typeof renderPayStagePills==='function')renderPayStagePills();
     if(typeof renderSettleStagePills==='function')renderSettleStagePills();
@@ -3829,6 +3859,7 @@ function deleteSalesEntry(jmb,mi,mk){
       const saved=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');
       localStorage.setItem('sd_gcm_sales_v1',JSON.stringify(saved.filter(r=>!(r.jmb===jmb&&r.mi===mi&&r.mk===mk))));
     }catch(e){}
+    syncToGSheet('delete_sales',{idField:'JMB Name',idValue:jmb});
     renderDash();renderLb();
   });
 }
@@ -4034,6 +4065,7 @@ function editJMBClaim(id){
 function deleteJMBClaim(id){
   inlineConfirm('Delete JMB Claim '+id+'?',function(){
     saveJMBClaims(getJMBClaims().filter(r=>r.id!==id));
+    syncToGSheet('delete_jmbclaim',{idField:'Claim ID',idValue:id});
     renderJMBClaimTable();renderJMBClaimKPI();renderJMBCStagePills();
   });
 }
@@ -4491,6 +4523,7 @@ function saveCICase(){
 function deleteCICase(id){
   inlineConfirm('Delete CI case '+id+'?', function(){
     saveCICases(getCICases().filter(c=>c.id!==id));
+    syncToGSheet('delete_ci',{idField:'Case ID',idValue:id});
     renderCIAll();
   });
 }
