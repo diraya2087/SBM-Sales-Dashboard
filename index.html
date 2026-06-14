@@ -1938,15 +1938,43 @@ function refreshAllUI(){
     rawData=sy;
   }catch(e){}
 
-  // Re-render active screen by reloading the tab
-  const screens=['progress','transactions','ciamend','jmbclaim','settlement','dashboard','leaderboard'];
-  screens.forEach(function(s){
-    const el=document.getElementById('screen-'+s);
-    if(el && el.classList.contains('active')){
-      // Use go() to fully reload the tab with fresh data
-      if(typeof go==='function') go(s);
-    }
-  });
+  // Silent re-render — update data in memory then re-render without resetting UI
+  const activeScreen = document.querySelector('.screen.active');
+  if(!activeScreen) return;
+  const s = activeScreen.id.replace('screen-','');
+
+  if(s==='progress'){
+    // Reload progData silently
+    try{
+      const saved=JSON.parse(localStorage.getItem('sd_gcm_prog_v1')||'[]');
+      const pm=new Map();
+      saved.forEach(r=>{if(r['JMB Name'])pm.set(r['JMB Name'],r);});
+      progData=[...pm.values()];
+    }catch(e){}
+    if(typeof updateProgStats==='function') updateProgStats();
+    if(typeof renderProgCards==='function') renderProgCards();
+    if(typeof renderWonRejList==='function') renderWonRejList();
+    if(typeof renderExpiringJmb==='function') renderExpiringJmb();
+    if(typeof renderProgStagePills==='function') renderProgStagePills();
+    if(typeof renderMasterJmb==='function') renderMasterJmb();
+  }
+  else if(s==='transactions'){
+    try{const py=JSON.parse(localStorage.getItem('sd_gcm_pay_v1')||'[]');if(py.length>=0)paymentData=py;}catch(e){}
+    if(typeof renderPaymentTable==='function') renderPaymentTable();
+    if(typeof renderPayStagePills==='function') renderPayStagePills();
+  }
+  else if(s==='ciamend'){if(typeof renderCIAll==='function') renderCIAll();}
+  else if(s==='jmbclaim'){
+    if(typeof renderJMBClaimTable==='function') renderJMBClaimTable();
+    if(typeof renderJMBClaimKPI==='function') renderJMBClaimKPI();
+    if(typeof renderJMBCStagePills==='function') renderJMBCStagePills();
+  }
+  else if(s==='settlement'){if(typeof renderSettlement==='function') renderSettlement();}
+  else if(s==='dashboard'){
+    try{const sy=JSON.parse(localStorage.getItem('sd_gcm_sales_v1')||'[]');rawData=sy;}catch(e){}
+    if(typeof renderDash==='function') renderDash();
+  }
+  else if(s==='leaderboard'){if(typeof renderLb==='function') renderLb();}
 }
 
 function stopAutoSync() {
