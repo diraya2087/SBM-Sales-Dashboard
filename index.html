@@ -1938,25 +1938,13 @@ function refreshAllUI(){
     rawData=sy;
   }catch(e){}
 
-  // Re-render active screen
+  // Re-render active screen by reloading the tab
   const screens=['progress','transactions','ciamend','jmbclaim','settlement','dashboard','leaderboard'];
   screens.forEach(function(s){
     const el=document.getElementById('screen-'+s);
     if(el && el.classList.contains('active')){
-      if(s==='progress'){
-        updateProgStats();
-        renderProgCards();
-        if(typeof renderWonRejList==='function')renderWonRejList();
-        if(typeof renderExpiringJmb==='function')renderExpiringJmb();
-        if(typeof renderProgStagePills==='function')renderProgStagePills();
-        if(typeof renderMasterJmb==='function')renderMasterJmb();
-      }
-      if(s==='transactions'){renderPaymentTable();if(typeof renderPayStagePills==='function')renderPayStagePills();}
-      if(s==='ciamend'){if(typeof renderCIAll==='function')renderCIAll();}
-      if(s==='jmbclaim'){if(typeof renderJMBClaimTable==='function'){renderJMBClaimTable();renderJMBClaimKPI();renderJMBCStagePills();}}
-      if(s==='settlement'){if(typeof renderSettlement==='function')renderSettlement();}
-      if(s==='dashboard'){renderDash();}
-      if(s==='leaderboard'){renderLb();}
+      // Use go() to fully reload the tab with fresh data
+      if(typeof go==='function') go(s);
     }
   });
 }
