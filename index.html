@@ -1892,26 +1892,26 @@ async function loadFromGSheet() {
     } catch(e) { /* skip if type fails */ }
   }
   setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
-  // Apply synced custom JMB
+  // Apply synced custom JMB from GSheet (sd_master_jmb_custom_v1 = GSheet data)
   try {
     const customJMB = JSON.parse(localStorage.getItem('sd_master_jmb_custom_v1')||'[]');
-    if(customJMB.length > 0) {
-      // Apply adds/edits
-      customJMB.filter(r=>r.action!=='delete').forEach(r=>{
-        const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
-        if(ei>=0) masterJmbData[ei]={name:r.name,marketer:r.marketer,expiryDate:r.expiryDate};
-        else masterJmbData.push({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate});
-      });
-      // Apply deletes
-      customJMB.filter(r=>r.action==='delete').forEach(r=>{
-        const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
-        if(ei>=0) masterJmbData.splice(ei,1);
-      });
-    }
-    // Save to custom localStorage
+    // Apply adds/edits from GSheet data
+    customJMB.filter(r=>r.action!=='delete').forEach(r=>{
+      if(!r.name) return;
+      const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
+      if(ei>=0) masterJmbData[ei]={name:r.name,marketer:r.marketer,expiryDate:r.expiryDate};
+      else masterJmbData.push({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate});
+    });
+    // Apply deletes from GSheet data
+    customJMB.filter(r=>r.action==='delete').forEach(r=>{
+      if(!r.name) return;
+      const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
+      if(ei>=0) masterJmbData.splice(ei,1);
+    });
+    // Save clean copy to custom localStorage
     const toSave = customJMB.filter(r=>r.action!=='delete').map(r=>({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate}));
     localStorage.setItem('sd_custom_jmb_v1', JSON.stringify(toSave));
-    // Update UI if on setup screen
+    // Update UI
     if(typeof renderJMBManage==='function') renderJMBManage();
     if(typeof renderMasterJmb==='function') renderMasterJmb();
     if(typeof renderExpiringJmb==='function') renderExpiringJmb();
