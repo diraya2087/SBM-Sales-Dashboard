@@ -1908,6 +1908,13 @@ async function loadFromGSheet() {
         if(ei>=0) masterJmbData.splice(ei,1);
       });
     }
+    // Save to custom localStorage
+    const toSave = customJMB.filter(r=>r.action!=='delete').map(r=>({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate}));
+    localStorage.setItem('sd_custom_jmb_v1', JSON.stringify(toSave));
+    // Update UI if on setup screen
+    if(typeof renderJMBManage==='function') renderJMBManage();
+    if(typeof renderMasterJmb==='function') renderMasterJmb();
+    if(typeof renderExpiringJmb==='function') renderExpiringJmb();
   }catch(e){}
 }
 
