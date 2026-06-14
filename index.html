@@ -86,6 +86,35 @@ window.SBMChart={
       ctx.setLineDash([]);ctx.fillStyle='#F59E0B';ctx.font='bold 9px sans-serif';ctx.textAlign='left';
       ctx.fillText('Target RM'+tv+'K',pad.l+2,ty-3);
     }
+    // Tooltip on hover
+    inst._barMeta=[];
+    const n2=lbl.length,nd2=ds.length,gw2=cw/Math.max(n2,1);
+    const bw2=Math.max(6,Math.min(28,(gw2-4)/Math.max(nd2,1)-2)),dep2=5;
+    ds.forEach((d,di)=>{
+      (d.data||[]).forEach((val,li)=>{
+        const bx=pad.l+li*gw2+(di*(bw2+2))+gw2*0.1;
+        const bh=Math.max(2,ch*Math.min(+val,mx)/mx);
+        const by=pad.t+ch-bh;
+        inst._barMeta.push({x:bx,y:by,w:bw2+dep2,h:bh+dep2,label:lbl[li],dataset:d.label||'',value:val});
+      });
+    });
+    cv.onmousemove=function(e){
+      const rect=cv.getBoundingClientRect();
+      const scaleX=cv.width/rect.width,scaleY=cv.height/rect.height;
+      const mx2=(e.clientX-rect.left)*scaleX,my2=(e.clientY-rect.top)*scaleY;
+      let found=null;
+      for(const b of inst._barMeta){if(mx2>=b.x&&mx2<=b.x+b.w&&my2>=b.y-dep2&&my2<=b.y+b.h){found=b;break;}}
+      const tt=document.getElementById('tooltip');
+      if(found&&tt){
+        const val=found.value;
+        const dispVal=val>=1000?'RM '+(val).toFixed(1)+'K':val?'RM '+val:'0';
+        tt.innerHTML='<div class="tt-title">'+(found.dataset?found.dataset+' — ':'')+found.label+'</div><div class="tt-row"><span>Value</span><span>'+(found.dataset?dispVal:val+'K')+'</span></div>';
+        tt.style.display='block';
+        tt.style.left=Math.min(e.clientX+12,window.innerWidth-260)+'px';
+        tt.style.top=(e.clientY-60)+'px';
+      } else if(tt){tt.style.display='none';}
+    };
+    cv.onmouseleave=function(){const tt=document.getElementById('tooltip');if(tt)tt.style.display='none';};
   },
   _line:function(inst){
     const cv=inst.cv;if(!cv)return;const ctx=cv.getContext('2d');
@@ -1175,8 +1204,15 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
     <div class="ph-ctrl">
       <div class="ypills" id="ypills-ci"></div>
       <button class="btn btn-outline" onclick="manualRefresh()">🔄 Refresh</button>
-      
     </div>
+  </div>
+  <div style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="fp a-all" id="ci-mk-all" onclick="setCIMK('all',this)">All</button>
+    <button class="fp" id="ci-mk-hazim" onclick="setCIMK('hazim',this)" style="color:#60a5fa;">Hazim</button>
+    <button class="fp" id="ci-mk-shahira" onclick="setCIMK('shahira',this)" style="color:#34d399;">Shahira</button>
+    <button class="fp" id="ci-mk-admin" onclick="setCIMK('admin',this)" style="color:#a78bfa;">SBM</button>
+  </div>
+  <div style="display:none">
   </div>
 
   <!-- FILTERS PANEL -->
@@ -1249,6 +1285,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
             <th style="min-width:110px;">Last Activity</th>
             <th style="min-width:120px;">Current Status</th>
             <th style="min-width:90px;">Days Overdue</th>
+            <th style="min-width:80px;">Days Open</th>
             <th style="min-width:100px;">Location</th>
             <th style="min-width:80px;">Action</th>
           </tr>
@@ -1363,7 +1400,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.03);}
       <table class="dt" id="stlTable">
         <thead><tr>
           <th>#</th><th>JMB Name</th><th>Marketer</th><th>Principle</th>
-          <th>Payment Type</th><th>Amount (RM)</th><th>Status</th><th>Date</th><th></th>
+          <th>Payment Type</th><th>Amount (RM)</th><th>Status</th><th>Date</th><th>Days</th><th></th>
         </tr></thead>
         <tbody id="stlTableBody"></tbody>
       </table>
@@ -1773,7 +1810,7 @@ const DEFAULT_USERS={
   hazim:{pass:'hazim123!',label:'Hazim',color:'#3B82F6',role:'marketer'},
   shahira:{pass:'shahira 333@',label:'Shahira',color:'#10B981',role:'marketer'},
   ibrahim:{pass:'ibrahim888*',label:'Ibrahim',color:'#EC4899',role:'management'},
-  natasha:{pass:'natasha901!',label:'Natasha',color:'#64748b',role:'management'},
+  natasha:{pass:'natasha901!',label:'Natasha',color:'#64748b',role:'admin'},
 };
 
 let cu=null,cy=2026,cyLb=2026,cyTx=2026;
@@ -1828,6 +1865,7 @@ async function loadFromGSheet() {
     { type: 'ci', key: 'sd_ci_cases_v1', idField: 'id' },
     { type: 'jmbclaim', key: 'sd_jmbc_v1', idField: 'id' },
     { type: 'settlement', key: 'sd_stl_v1', idField: 'jmb' },
+    { type: 'master_jmb', key: 'sd_master_jmb_custom_v1', idField: 'name' },
   ];
   let synced = 0;
   for (const t of types) {
@@ -1854,6 +1892,23 @@ async function loadFromGSheet() {
     } catch(e) { /* skip if type fails */ }
   }
   setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
+  // Apply synced custom JMB
+  try {
+    const customJMB = JSON.parse(localStorage.getItem('sd_master_jmb_custom_v1')||'[]');
+    if(customJMB.length > 0) {
+      // Apply adds/edits
+      customJMB.filter(r=>r.action!=='delete').forEach(r=>{
+        const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
+        if(ei>=0) masterJmbData[ei]={name:r.name,marketer:r.marketer,expiryDate:r.expiryDate};
+        else masterJmbData.push({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate});
+      });
+      // Apply deletes
+      customJMB.filter(r=>r.action==='delete').forEach(r=>{
+        const ei = masterJmbData.findIndex(j=>j.name.toLowerCase()===r.name.toLowerCase());
+        if(ei>=0) masterJmbData.splice(ei,1);
+      });
+    }
+  }catch(e){}
 }
 
 let _autoSyncTimer = null;
@@ -2169,6 +2224,7 @@ function deleteCustomJMB(idx){
     const blocked=JSON.parse(localStorage.getItem('sd_jmb_deleted_v1')||'[]');
     if(!blocked.map(n=>n.toLowerCase()).includes(nameLower)){blocked.push(j.name.trim());localStorage.setItem('sd_jmb_deleted_v1',JSON.stringify(blocked));}
   }catch(e){}
+  syncToGSheet('master_jmb', {action:'delete', name:j.name, _lastUpdated:new Date().toISOString()});
   renderJMBManage();
   renderMasterJmb();
   renderExpiringJmb();
@@ -2213,6 +2269,7 @@ function addNewJMB(){
   const custom = getCustomJMB();
   custom.push(newEntry);
   saveCustomJMB(custom);
+  syncToGSheet('master_jmb', {action:'add', name:newEntry.name, marketer:newEntry.marketer, expiryDate:newEntry.expiryDate, _lastUpdated:new Date().toISOString()});
   // Clear inputs
   document.getElementById('jmb-add-name').value='';
   renderJMBManage();
@@ -2268,6 +2325,7 @@ function saveJMBEdit(idx){
   const ci = custom.findIndex(c=>c.name===j.name);
   if(ci>=0) custom[ci]={...j}; else custom.push({...j});
   saveCustomJMB(custom);
+  syncToGSheet('master_jmb', {action:'edit', name:j.name, marketer:j.marketer, expiryDate:j.expiryDate, _lastUpdated:new Date().toISOString()});
   renderJMBManage();
   renderMasterJmb();
   renderExpiringJmb();
@@ -2424,7 +2482,7 @@ function buildCharts(){
   const PS=['STM','Etiqa','Zurich','Tokio Marine','Allianz','MPI'];
   const PC=['#10B981','#F59E0B','#2563EB','#38BDF8','#60A5FA','#EF4444'];
   const data=fd(cy);
-  cM=SBMChart.bar('cMonthly',MS,[{label:'Premium',color:'#3B82F6',lightColor:'#93C5FD',darkColor:'#1D4ED8',data:MS.map((_,i)=>Math.round(sumPrem(data.filter(r=>r.mi===i))/1000))}],{});
+  cM=SBMChart.bar('cMonthly',MS,[{label:'Premium',color:'#06B6D4',lightColor:'#67E8F9',darkColor:'#0E7490',data:MS.map((_,i)=>Math.round(sumPrem(data.filter(r=>r.mi===i))/1000))}],{});
   cMk=SBMChart.bar('cMarketer',MS,[
     {label:'Hazim',color:'#60a5fa',lightColor:'#BAE6FD',darkColor:'#1D4ED8',data:MS.map((_,i)=>Math.round(sumPrem(data.filter(r=>r.mk==='hazim'&&r.mi===i))/1000))},
     {label:'Shahira',color:'#34d399',lightColor:'#6EE7B7',darkColor:'#065F46',data:MS.map((_,i)=>Math.round(sumPrem(data.filter(r=>r.mk==='shahira'&&r.mi===i))/1000))},
@@ -2441,9 +2499,9 @@ function buildCharts(){
   cCase=null;
   cPrin=SBMChart.line('cPrin',MS,PS.map((p,pi)=>({label:p,color:PC[pi],data:MS.map((_,mi)=>Math.round(sumPrem(data.filter(r=>r.prin===p&&r.mi===mi))/1000))})),{});
   cMkP=SBMChart.bar('cMkPrin',PS,[
-    {label:'Hazim',color:'#60a5fa',lightColor:'#BAE6FD',darkColor:'#1D4ED8',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='hazim'&&r.prin===p))/1000))},
-    {label:'Shahira',color:'#34d399',lightColor:'#6EE7B7',darkColor:'#065F46',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='shahira'&&r.prin===p))/1000))},
-    {label:'SBM',color:'#a78bfa',lightColor:'#DDD6FE',darkColor:'#5B21B6',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='admin'&&r.prin===p))/1000))}
+    {label:'Hazim',color:'#F97316',lightColor:'#FED7AA',darkColor:'#C2410C',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='hazim'&&r.prin===p))/1000))},
+    {label:'Shahira',color:'#EAB308',lightColor:'#FEF08A',darkColor:'#A16207',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='shahira'&&r.prin===p))/1000))},
+    {label:'SBM',color:'#EF4444',lightColor:'#FECACA',darkColor:'#991B1B',data:PS.map(p=>Math.round(sumPrem(data.filter(r=>r.mk==='admin'&&r.prin===p))/1000))}
   ],{});
   buildDonutLeg();buildPrinLeg();buildBands(data);
 }
@@ -2583,9 +2641,9 @@ function renderPaymentTable(){
   if(payEl('pay-incomplete-rm'))payEl('pay-incomplete-rm').textContent=fmt(iprem);
   const tbody=document.getElementById('paymentTableBody'),thead=document.getElementById('paymentTableHead');
   if(!tbody||!thead)return;
-  thead.innerHTML=`<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th>${isAdmin()?'<th></th>':''}</tr>`;
+  thead.innerHTML=`<tr><th>#</th><th>JMB Name</th><th>Marketer</th><th>Premium Total (RM)</th><th>Payment</th><th>Status</th><th>Days</th>${isAdmin()?'<th></th>':''}</tr>`;
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">No records found<br><small style="margin-top:6px;display:block;">Use + Create New Entry to add payment records</small></td></tr>';return;}
-  tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td><td>${isAdmin()?`<button onclick="openEditPayment('${r['JMB Name']}')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;margin-right:4px;">✏️</button><button onclick="deletePaymentEntry('${r['JMB Name']}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;">🗑️</button>`:'—'}</td></tr>`;}).join('');
+  tbody.innerHTML=filtered.map((r,idx)=>{const plan=r['Payment Plan']||'-';const mk=(r['Marketer']||'').toLowerCase();const mkLabel=mk.includes('hazim')?'Hazim':mk.includes('shahira')?'Shahira':'SBM';const mkBadge=mk.includes('hazim')?'bh':mk.includes('shahira')?'bs':'bn';const prem=parseFloat(String(r['Premium Total (RM)']||0).replace(/[^0-9.]/g,''))||0;const status=getPayStatus(r,plan);const isCompleted=status.completed;return`<tr><td style="color:var(--text3);">${idx+1}</td><td style="font-weight:500;${isCompleted?'color:#10B981;':''}">${r['JMB Name']}</td><td><span class="badge ${mkBadge}">${mkLabel}</span></td><td style="font-weight:600;color:${isCompleted?'#10B981':'var(--accent)'};">${prem?fmt(prem):'-'}</td><td>${status.total>0?renderPayCheckboxes(status.paid,status.total):'-'}</td><td><span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${isCompleted?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${isCompleted?'#10B981':'#EF4444'};">${isCompleted?'✓ Completed':'Incomplete'}</span></td><td style="font-size:11px;color:#F59E0B;font-weight:600;">${(()=>{const d=r['_createdAt']||r['Hold Cover Date']||'';if(!d)return'-';const pd=Math.floor((new Date()-new Date(d))/86400000);return pd>=0?pd+'d':'-';})()}</td><td>${isAdmin()?`<button onclick="openEditPayment('${r['JMB Name']}')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;margin-right:4px;">✏️</button><button onclick="deletePaymentEntry('${r['JMB Name']}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:2px 8px;font-size:11px;border-radius:5px;cursor:pointer;">🗑️</button>`:'—'}</td></tr>`;}).join('');
 }
 
 let settleYear=new Date().getFullYear();
@@ -3972,6 +4030,7 @@ function resetNavFilters(tab) {
   }
   if(tab === 'ciamend') {
     ciStageFilter = null;
+    ciMkFilter = 'all';
     const ci = document.getElementById('ciSearch'); if(ci) ci.value = '';
     const jf = document.getElementById('ciFilterJMB'); if(jf) jf.value = '';
     const sf = document.getElementById('ciFilterStaff'); if(sf) sf.value = '';
@@ -4327,7 +4386,8 @@ function renderSettlementTable(){
       +'<td><span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:'+typeColor+'22;color:'+typeColor+';border:1px solid '+typeColor+'44;">'+(r.payType||'-')+'</span></td>'
       +'<td style="font-weight:700;color:#60a5fa;">'+(r.amount?'RM '+parseFloat(r.amount).toLocaleString():'-')+'</td>'
       +'<td><span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:'+statusColor+'22;color:'+statusColor+';border:1px solid '+statusColor+'44;">'+(r.status||'Pending')+'</span></td>'
-      +'<td style="font-size:11px;color:var(--text3);">'+dateStr+'</td>';
+      +'<td style="font-size:11px;color:var(--text3);">'+dateStr+'</td>'
+      +'<td style="font-size:11px;color:#F59E0B;font-weight:600;">'+(r._createdAt?Math.floor((new Date()-new Date(r._createdAt))/86400000)+'d':'-')+'</td>';
     if(adminUser){
       const td=document.createElement('td');
       const delBtn=document.createElement('button');
@@ -4366,6 +4426,7 @@ function saveCICases(data){localStorage.setItem(CI_KEY,JSON.stringify(data));}
 
 let ciYear=new Date().getFullYear();
 let ciStageFilter=null;
+let ciMkFilter='all';
 
 function buildCIYearPills(){
   const currentYear=new Date().getFullYear();
@@ -4379,6 +4440,15 @@ function setCIYear(yr,btn){
   ciYear=yr;
   document.getElementById('ypills-ci').querySelectorAll('.ypill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  renderCIAll();
+}
+
+function setCIMK(mk,btn){
+  ciMkFilter=mk;
+  ['all','hazim','shahira','admin'].forEach(id=>{
+    const b=document.getElementById('ci-mk-'+id);
+    if(b){b.className='fp';if(id===mk)b.classList.add('a-all');}
+  });
   renderCIAll();
 }
 
@@ -4440,6 +4510,13 @@ function getFilteredCI(){
     if(staffF&&r.staff!==staffF)return false;
     if(dateFrom&&r.lastActivity<dateFrom)return false;
     if(dateTo&&r.lastActivity>dateTo)return false;
+    // Marketer filter
+    if(ciMkFilter&&ciMkFilter!=='all'){
+      const staffLower=(r.staff||'').toLowerCase();
+      if(ciMkFilter==='hazim'&&!staffLower.includes('hazim'))return false;
+      if(ciMkFilter==='shahira'&&!staffLower.includes('shahira'))return false;
+      if(ciMkFilter==='admin'&&!staffLower.includes('sbm')&&!staffLower.includes('admin'))return false;
+    }
     return true;
   });
 }
@@ -4494,6 +4571,7 @@ function renderCITable(){
       <td>${statusBadgeCI(r.status)}</td>
       <td>${odHtml}</td>
       <td style="font-size:12px;font-weight:600;color:${locCol};">${loc}</td>
+      <td style="font-size:11px;color:#F59E0B;font-weight:600;">${r._createdAt?Math.floor((new Date()-new Date(r._createdAt))/86400000)+'d':'-'}</td>
       <td>
         ${isAdmin()?`<button onclick="editCICase('${r.id}')" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;">Edit</button>
         <button onclick="deleteCICase('${r.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#EF4444;padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;margin-left:4px;">✕</button>`:'<span style="font-size:11px;color:var(--text3);">View only</span>'}
@@ -6120,6 +6198,7 @@ function openGlobalCreate() {
   // Show/hide settlement tab
   const settleTab = document.getElementById('gcm-tab-settlement');
   if (settleTab) settleTab.style.display = isAdminOrMgmt ? '' : 'none';
+
 
   // Auto-switch tab based on current active screen
   const screens = ['dashboard','leaderboard','progress','ciamend','transactions','settlement'];
