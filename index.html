@@ -1889,6 +1889,8 @@ async function loadFromGSheet() {
       // GSheet wins — replace localStorage with GSheet data
       localStorage.setItem(t.key, JSON.stringify(data));
       synced++;
+      // DEBUG
+      if(t.type==='master_jmb') alert('master_jmb fetched: '+data.length+' rows, key='+t.key);
     } catch(e) { /* skip if type fails */ }
   }
   setSyncUI('ok', 'Synced ' + synced + '/6 · ' + new Date().toLocaleTimeString('en-MY', {hour:'2-digit',minute:'2-digit'}));
