@@ -1911,6 +1911,8 @@ async function loadFromGSheet() {
     // Save clean copy to custom localStorage
     const toSave = customJMB.filter(r=>r.action!=='delete').map(r=>({name:r.name,marketer:r.marketer,expiryDate:r.expiryDate}));
     localStorage.setItem('sd_custom_jmb_v1', JSON.stringify(toSave));
+    // DEBUG - remove after test
+    if(customJMB.length>0) alert('Master JMB sync: '+customJMB.length+' entries, masterJmbData='+masterJmbData.length);
     // Update UI
     if(typeof renderJMBManage==='function') renderJMBManage();
     if(typeof renderMasterJmb==='function') renderMasterJmb();
